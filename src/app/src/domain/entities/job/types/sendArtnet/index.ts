@@ -46,7 +46,6 @@ export class SendArtnetJob extends Job {
         if (params.host && typeof params.host !== "string")
             throw new Error("host must be a string");
 
-
         if (params.port && (typeof params.port !== "number" || params.port < 0 || params.port > 65535))
             throw new Error("port must be a number between 0 and 65535");
 
@@ -55,7 +54,7 @@ export class SendArtnetJob extends Job {
 
         if (params.interpolationTime !== undefined && (typeof params.interpolationTime !== "number" || params.interpolationTime <= 0))
             throw new Error("interpolationTime must be a number greater than 0");
-
+      
         return params as Record<string, any>;
     }
 
@@ -125,6 +124,7 @@ export class SendArtnetJob extends Job {
                 }
             };
 
+
             if (abortSignal) {
                 abortSignal.addEventListener("abort", () => {
                     finish(new Error(`Job \"${this.name}\" was aborted`));
@@ -132,6 +132,7 @@ export class SendArtnetJob extends Job {
             }
 
             executeSend();
+
         }).finally(() => {
             this.log.info(`Job \"${this.name}\" with ID ${this.id} has finished`);
             this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id, failed: this.failed });

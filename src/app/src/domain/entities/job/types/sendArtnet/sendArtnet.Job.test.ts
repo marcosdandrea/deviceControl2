@@ -55,6 +55,7 @@ describe('SendArtnetJob (integration)', () => {
     expect(receivedValue).toBe(20);
   });
 
+
   it('should abort the job', async () => {
     const job = new SendArtnetJob({
       name: 'Abort Artnet Job',
