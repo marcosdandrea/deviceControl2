@@ -1,6 +1,6 @@
 import { JobType } from "@common/types/job.type";
 import { Job } from "../..";
-import { dmxnet } from "dmxnet";
+import Artnet from "../../../../../services/artnet/index.js";
 import jobEvents from "@common/events/job.events";
 import { jobTypes } from "..";
 
@@ -46,6 +46,7 @@ export class SendArtnetJob extends Job {
         if (params.host && typeof params.host !== "string")
             throw new Error("host must be a string");
 
+
         if (params.port && (typeof params.port !== "number" || params.port < 0 || params.port > 65535))
             throw new Error("port must be a number between 0 and 65535");
 
@@ -54,7 +55,7 @@ export class SendArtnetJob extends Job {
 
         if (params.interpolationTime !== undefined && (typeof params.interpolationTime !== "number" || params.interpolationTime <= 0))
             throw new Error("interpolationTime must be a number greater than 0");
-      
+
         return params as Record<string, any>;
     }
 
@@ -81,25 +82,20 @@ export class SendArtnetJob extends Job {
         const subnet = (universe >> 4) & 0xf;
         const uni = universe & 0xf;
 
-        const dmx = new dmxnet();
-        const sender = dmx.newSender({ ip: host || "255.255.255.255", port, net, subnet, universe: uni });
+        const artnet = Artnet.getInstance();
+        const sender = artnet.getSender({ ip: host || "255.255.255.255", port, net, subnet, universe: uni });
 
         return new Promise<void>((resolve, reject) => {
             let interval: NodeJS.Timeout | null = null;
             const finish = (err?: Error) => {
                 if (interval) clearInterval(interval);
-                setTimeout(() => {
-                    sender.stop();
-                    dmx.listener4.close();
-                    dmx.socket.close();
-                    if (err) {
-                        this.failed = true;
-                        this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error: err });
-                        reject(err);
-                    } else {
-                        resolve();
-                    }
-                }, 10);
+                if (err) {
+                    this.failed = true;
+                    this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error: err });
+                    reject(err);
+                } else {
+                    resolve();
+                }
             };
 
             const executeSend = () => {
@@ -123,7 +119,6 @@ export class SendArtnetJob extends Job {
                     finish(err as Error);
                 }
             };
-
 
             if (abortSignal) {
                 abortSignal.addEventListener("abort", () => {
