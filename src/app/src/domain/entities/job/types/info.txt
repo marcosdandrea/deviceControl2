@@ -1,0 +1,8 @@
+tipos de jobs necesarios
+
+*Enviar UDP
+*Enviar TCP 
+*Enviar Serial (COM)
+*Enviar Artnet
+*Wait
+*controlar otra rutina

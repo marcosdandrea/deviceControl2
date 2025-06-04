@@ -1,0 +1,165 @@
+import { JobInterface, JobType } from "@common/types/job.type";
+import { EventEmitter } from "events";
+import { Log } from "@utils/log";
+import crypto from "crypto";
+import jobEvents from "@common/events/job.events";
+
+export class Job extends EventEmitter implements JobInterface {
+    id: JobInterface["id"];
+    name: JobInterface["name"];
+    description: JobInterface["description"];
+    timeout: JobInterface["timeout"];
+    failed: boolean = false;
+    log: Log;
+    enableTimoutWatcher: boolean = true;
+    timeoutTimer: NodeJS.Timeout | null = null;
+    abortController: AbortController | null = null;
+    type: JobInterface["type"] = "generic"; // Default type, can be overridden in subclasses
+    params: Record<string, any> = {};
+
+    constructor(props: JobType) {
+        super();
+
+        if (props.id && typeof props.id !== 'string')
+            throw new Error("Job id must be a string");
+        this.id = props.id || crypto.randomUUID();
+
+        if (props.name && typeof props.name !== 'string')
+            throw new Error("Job name must be a string");
+        this.name = props.name;
+
+        if (props.description && typeof props.description !== 'string')
+            throw new Error("Job description must be a string");
+        this.description = props.description || "";
+
+        if (props.timeout && (typeof props.timeout !== 'number') || props.timeout <= 0)
+            throw new Error("Job timeout must be a number greater than zero");
+        this.timeout = props.timeout || 5000; // Default to 5000ms if not specified
+
+        if (props.params && typeof props.params !== 'object')
+            throw new Error("Job params must be an object");
+        this.params = props.params || {};
+
+        this.log = new Log(`Job "${this.name}"`, true);
+
+        this.enableTimoutWatcher = props.enableTimoutWatcher || false;
+
+        if (props.type == "generic")
+            throw new Error("Job type must be a defined type, not 'generic'");
+    }
+
+
+    protected job(): Promise<void> {
+        throw new Error("Job method must be implemented in subclasses");
+    }
+
+    #timeoutWatcher({ abortSignal }: { abortSignal: AbortSignal }): Promise<void> {
+
+        return new Promise<void>((resolve, reject) => {
+
+            const cleanUp = () => {
+                if (this.timeoutTimer) {
+                    clearTimeout(this.timeoutTimer);
+                    this.timeoutTimer = null;
+                }
+                this.removeAllListeners(jobEvents.jobFinished);
+                this.removeAllListeners(jobEvents.jobError);
+                this.removeAllListeners(jobEvents.jobAborted);
+                this.log.debug(`Cleaned up job "${this.name}" listeners and timeout`);
+            }
+
+            if (!this.enableTimoutWatcher)
+                this.timeoutTimer = null
+            else
+                this.timeoutTimer = setTimeout(() => {
+                    this.dispatchEvent(jobEvents.jobTimeout, { jobId: this.id });
+                    this.abortController?.abort();
+                    reject(new Error(`Job "${this.name}" timed out after ${this.timeout} ms`));
+                    cleanUp();
+                }, this.timeout);
+            
+
+            // Resolve the promise if the job completes before timeout
+            this.once(jobEvents.jobFinished, () => {
+                cleanUp();
+                resolve();
+                this.log.info(`Job "${this.name}" completed successfully`);
+            });
+
+            // Handle job failure
+            this.once(jobEvents.jobError, (error: Error) => {
+                cleanUp();
+                this.log.error(`Job "${this.name}" failed: ${error.message}`);
+            });
+
+            // Handle job cancellation
+            if (abortSignal) {
+                abortSignal.addEventListener('abort', () => {
+                    cleanUp();
+                    this.log.warn(`Job "${this.name}" was aborted`);
+                    this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
+                    reject(new Error(`Job "${this.name}" was aborted`));
+                });
+            }
+        });
+    }
+
+    async execute({ abortSignal }: { abortSignal: AbortSignal }): Promise<void> {
+        this.log.info(`Executing job "${this.name}" with ID ${this.id}`);
+        this.dispatchEvent(jobEvents.jobRunning, { jobId: this.id, jobName: this.name });
+        this.abortController = new AbortController()
+
+        const handleOnAbort = () => {
+            this.log.warn(`Job "${this.name}" execution was aborted`);
+            this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
+            this.abortController?.abort();
+            return Promise.reject(`Job "${this.name}" was aborted`);
+        }
+
+        if (!abortSignal)
+            throw new Error("AbortSignal is required to execute the job");
+
+        if (abortSignal.aborted) {
+            this.abortController?.abort();
+            return Promise.reject(new Error(`Job "${this.name}" was aborted before execution`))
+        }
+
+        // Usamos esta promesa para abortar desde Promise.race
+        const abortPromise = new Promise<void>((_, reject) => {
+            abortSignal.addEventListener("abort", () => {
+                this.abortController?.abort();
+                this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
+                this.log.warn(`Job "${this.name}" execution was aborted`);
+                reject(new Error(`Job "${this.name}" was aborted`));
+            }, { once: true });
+        });
+
+        try {
+            await Promise.race([
+                this.#timeoutWatcher({ abortSignal }),
+                this.job(),
+                abortPromise
+            ]);
+
+            abortSignal.removeEventListener('abort', handleOnAbort);
+            return Promise.resolve();
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    dispatchEvent(eventName: string, data?: any): void {
+        this.emit(eventName, data);
+        this.log.info(`Event dispatched: ${eventName}`, data);
+    }
+
+    toJson(): JobType {
+        return {
+            id: this.id,
+            name: this.name,
+            description: this.description,
+            timeout: this.timeout,
+            type: this.type,
+        };
+    }
+}

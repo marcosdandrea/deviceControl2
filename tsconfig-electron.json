@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "outDir": "dist-prebuild",
+    "module": "nodenext",
+    "sourceMap": true,
+    "target": "ESNext",
+    "types": ["./types"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@common/*": ["src/common/*"],
+      "@src/*": ["src/app/src/*"],
+      "@utils/*": ["src/app/src/utils/*"],
+      "@assets/*": ["src/app/src/assets/*"],
+      "@domain/*": ["src/app/src/domain/*"],
+      "@services/*": ["src/app/src/services/*"],
+      "@entities/*": ["src/app/src/domain/entities/*"],
+      "@useCases/*": ["src/app/src/domain/useCases/*"]
+    }
+  },
+  "include": ["src/app", "src/common"]
+}

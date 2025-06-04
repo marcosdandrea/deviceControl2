@@ -1,0 +1,21 @@
+{
+  "appId": "com.proyecciones.deviceControl",
+  "productName": "Device Control",
+  "files": ["dist-electron", "dist-react"],
+  "extraResources": ["dist-electron/preload.cjs"],
+  "icon": "./resources/AS_icon.ico",
+  "asar": true,
+  "mac": {
+    "icon": "./resources/AS_icon.icns",
+    "target": "dmg"
+  },
+  "linux": {
+    "icon": "./resources/AS_icon.png",
+    "target": "AppImage",
+    "category": "Utility"
+  },
+  "win": {
+    "icon": "./resources/AS_icon.ico",
+    "target": ["portable", "msi"]
+  }
+}
