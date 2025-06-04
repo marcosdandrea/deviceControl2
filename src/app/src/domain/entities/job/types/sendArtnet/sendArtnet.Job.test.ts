@@ -5,7 +5,7 @@ import { SendArtnetJob } from '.';
 describe('SendArtnetJob (integration)', () => {
   let server: dgram.Socket;
   let messages: Buffer[];
-  const PORT = 6454;
+  const PORT = 16654;
   const HOST = '127.0.0.1';
 
   beforeAll(() => {
@@ -27,12 +27,34 @@ describe('SendArtnetJob (integration)', () => {
     await job.execute({ abortSignal: new AbortController().signal });
     await new Promise((res) => setTimeout(res, 100));
     expect(messages.length).toBeGreaterThan(0);
-    const buf = messages[0];
+    const buf = messages[messages.length - 1];
     const receivedUniverse = buf[14] + (buf[15] << 8);
     const receivedValue = buf[18];
     expect(receivedUniverse).toBe(0);
     expect(receivedValue).toBe(50);
   });
+
+  it('should interpolate values over time', async () => {
+    const job = new SendArtnetJob({
+      name: 'Interpolate Job',
+      params: {
+        channel: 1,
+        universe: 0,
+        value: 20,
+        host: HOST,
+        port: PORT,
+        interpolate: true,
+        interpolationTime: 200
+      }
+    });
+    await job.execute({ abortSignal: new AbortController().signal });
+    await new Promise((res) => setTimeout(res, 300));
+    expect(messages.length).toBeGreaterThan(1);
+    const buf = messages[messages.length - 1];
+    const receivedValue = buf[18];
+    expect(receivedValue).toBe(20);
+  });
+
 
   it('should abort the job', async () => {
     const job = new SendArtnetJob({

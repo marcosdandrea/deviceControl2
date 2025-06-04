@@ -1,6 +1,6 @@
 import { JobType } from "@common/types/job.type";
 import { Job } from "../..";
-import artnet from "artnet";
+import { dmxnet } from "dmxnet";
 import jobEvents from "@common/events/job.events";
 import { jobTypes } from "..";
 
@@ -12,6 +12,8 @@ interface SendArtnetJobParams extends JobType {
         value: number;
         host?: string;
         port?: number;
+        interpolate?: boolean;
+        interpolationTime?: number;
     } & Record<string, any>;
 }
 
@@ -47,6 +49,12 @@ export class SendArtnetJob extends Job {
         if (params.port && (typeof params.port !== "number" || params.port < 0 || params.port > 65535))
             throw new Error("port must be a number between 0 and 65535");
 
+        if (params.interpolate !== undefined && typeof params.interpolate !== "boolean")
+            throw new Error("interpolate must be a boolean");
+
+        if (params.interpolationTime !== undefined && (typeof params.interpolationTime !== "number" || params.interpolationTime <= 0))
+            throw new Error("interpolationTime must be a number greater than 0");
+      
         return params as Record<string, any>;
     }
 
@@ -65,35 +73,66 @@ export class SendArtnetJob extends Job {
             throw error;
         }
 
-        const client = artnet({ host: host || "255.255.255.255", port });
+        const interpolate = this.params.interpolate === true;
+        const interpolationTime = this.params.interpolationTime ?? 1000;
+
+        // convert universe number into net/subnet/universe values
+        const net = (universe >> 8) & 0x7f;
+        const subnet = (universe >> 4) & 0xf;
+        const uni = universe & 0xf;
+
+        const dmx = new dmxnet();
+        const sender = dmx.newSender({ ip: host || "255.255.255.255", port, net, subnet, universe: uni });
 
         return new Promise<void>((resolve, reject) => {
+            let interval: NodeJS.Timeout | null = null;
             const finish = (err?: Error) => {
-                client.close();
-                if (err) {
-                    this.failed = true;
-                    this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error: err });
-                    reject(err);
-                } else {
-                    resolve();
+                if (interval) clearInterval(interval);
+                setTimeout(() => {
+                    sender.stop();
+                    dmx.listener4.close();
+                    dmx.socket.close();
+                    if (err) {
+                        this.failed = true;
+                        this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error: err });
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                }, 10);
+            };
+
+            const executeSend = () => {
+                try {
+                    if (!interpolate) {
+                        sender.setChannel(channel - 1, value);
+                        finish();
+                    } else {
+                        const startValue = sender.values[channel - 1] ?? 0;
+                        const steps = Math.max(1, Math.floor(interpolationTime / 50));
+                        const stepTime = interpolationTime / steps;
+                        let currentStep = 0;
+                        interval = setInterval(() => {
+                            currentStep++;
+                            const newVal = Math.round(startValue + (value - startValue) * (currentStep / steps));
+                            sender.setChannel(channel - 1, newVal);
+                            if (currentStep >= steps) finish();
+                        }, stepTime);
+                    }
+                } catch (err) {
+                    finish(err as Error);
                 }
             };
 
-            client.set(universe, channel, value, (err: Error | null) => {
-                if (err) {
-                    this.log.error(`Failed to send ArtNet packet: ${err.message}`);
-                    finish(err);
-                } else {
-                    this.log.info(`ArtNet packet sent to universe ${universe} channel ${channel}`);
-                    finish();
-                }
-            });
 
             if (abortSignal) {
                 abortSignal.addEventListener("abort", () => {
                     finish(new Error(`Job \"${this.name}\" was aborted`));
                 });
             }
+
+            executeSend();
+
         }).finally(() => {
             this.log.info(`Job \"${this.name}\" with ID ${this.id} has finished`);
             this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id, failed: this.failed });
