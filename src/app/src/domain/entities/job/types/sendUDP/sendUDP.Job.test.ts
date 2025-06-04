@@ -196,7 +196,7 @@ describe('SendUDPJob (integration + extended)', () => {
     const abortController = new AbortController();
     setTimeout(() => abortController.abort(), 6000);
     await expect(job.execute({ abortSignal: abortController.signal })).rejects.toThrow(`Job "Wrong Answer Check" timed out after 5000 ms`);
-  });
+  })
 
   it('should reject if subnetMask is invalid', async () => {
     const job = new SendUDPJob({

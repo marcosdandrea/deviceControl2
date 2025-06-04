@@ -1,11 +1,14 @@
-import { dmxnet, SenderOptions, Sender } from 'dmxnet';
+import { dmxnet, SenderOptions, sender } from 'dmxnet';
 
 class Artnet extends dmxnet {
     private static instance: Artnet | null = null;
-    private senders: Map<string, Sender> = new Map();
+    private senderMap: Map<string, sender> = new Map();
 
     private constructor() {
-        super();
+        super({
+            sName: "Device Control",
+            lName: "Device Control",
+        })
     }
 
     static getInstance(): Artnet {
@@ -15,12 +18,12 @@ class Artnet extends dmxnet {
         return Artnet.instance;
     }
 
-    getSender(options: SenderOptions): Sender {
+    getSender(options: SenderOptions): sender {
         const key = `${options.ip || '255.255.255.255'}:${options.port ?? ''}:${options.net}:${options.subnet}:${options.universe}`;
-        let sender = this.senders.get(key);
+        let sender = this.senderMap.get(key);
         if (!sender) {
             sender = this.newSender(options);
-            this.senders.set(key, sender);
+            this.senderMap.set(key, sender);
         }
         return sender;
     }

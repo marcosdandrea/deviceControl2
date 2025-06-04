@@ -6,14 +6,14 @@ describe('SendArtnetJob (integration)', () => {
   let server: dgram.Socket;
   let messages: Buffer[];
   const PORT = 16654;
-  const HOST = '127.0.0.1';
+  const HOST = '127.0.0.1'
 
   beforeAll(() => {
     messages = [];
     server = dgram.createSocket('udp4');
     server.on('message', (msg) => messages.push(msg));
     return new Promise<void>((resolve) => server.bind(PORT, HOST, resolve));
-  });
+  })
 
   afterAll(() => {
     server.close();
@@ -34,25 +34,46 @@ describe('SendArtnetJob (integration)', () => {
     expect(receivedValue).toBe(50);
   });
 
-  it('should interpolate values over time', async () => {
+  it('should interpolate channel 1 to 255', async () => {
     const job = new SendArtnetJob({
       name: 'Interpolate Job',
       params: {
         channel: 1,
         universe: 0,
-        value: 20,
+        value: 255,
         host: HOST,
         port: PORT,
         interpolate: true,
-        interpolationTime: 200
+        interpolationTime: 1000
       }
-    });
+    })
     await job.execute({ abortSignal: new AbortController().signal });
     await new Promise((res) => setTimeout(res, 300));
     expect(messages.length).toBeGreaterThan(1);
     const buf = messages[messages.length - 1];
     const receivedValue = buf[18];
-    expect(receivedValue).toBe(20);
+    expect(receivedValue).toBe(255);
+  });
+
+  it('should interpolate channel 1 to 0', async () => {
+    const job = new SendArtnetJob({
+      name: 'Interpolate Job to 0',
+      params: {
+        channel: 1,
+        universe: 0,
+        value: 0,
+        host: HOST,
+        port: PORT,
+        interpolate: true,
+        interpolationTime: 1000
+      }
+    })
+    await job.execute({ abortSignal: new AbortController().signal });
+    await new Promise((res) => setTimeout(res, 300));
+    expect(messages.length).toBeGreaterThan(1);
+    const buf = messages[messages.length - 1];
+    const receivedValue = buf[18];
+    expect(receivedValue).toBe(0);
   });
 
 
