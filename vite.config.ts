@@ -37,6 +37,7 @@ export default defineConfig({
       "@utils": path.resolve(__dirname, 'src/app/src/utils'),
       "@entities": path.resolve(__dirname, 'src/app/src/domain/entities'),
       "@src": path.resolve(__dirname, 'src/app/src'),
+      "@services": path.resolve(__dirname, 'src/app/src/services'),
     },
   },
   test: {

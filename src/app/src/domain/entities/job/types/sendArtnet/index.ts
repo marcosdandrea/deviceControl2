@@ -1,6 +1,6 @@
 import { JobType } from "@common/types/job.type";
 import { Job } from "../..";
-import Artnet from "../../../../../services/artnet/index.js";
+import Artnet from "@services/artnet/index";
 import jobEvents from "@common/events/job.events";
 import { jobTypes } from "..";
 
@@ -87,7 +87,8 @@ export class SendArtnetJob extends Job {
 
         return new Promise<void>((resolve, reject) => {
             let interval: NodeJS.Timeout | null = null;
-            const finish = (err?: Error) => {
+
+            const handleOnFinish = (err?: Error) => {
                 if (interval) clearInterval(interval);
                 if (err) {
                     this.failed = true;
@@ -102,7 +103,7 @@ export class SendArtnetJob extends Job {
                 try {
                     if (!interpolate) {
                         sender.setChannel(channel - 1, value);
-                        finish();
+                        handleOnFinish();
                     } else {
                         const startValue = sender.values[channel - 1] ?? 0;
                         const steps = Math.max(1, Math.floor(interpolationTime / 50));
@@ -112,17 +113,17 @@ export class SendArtnetJob extends Job {
                             currentStep++;
                             const newVal = Math.round(startValue + (value - startValue) * (currentStep / steps));
                             sender.setChannel(channel - 1, newVal);
-                            if (currentStep >= steps) finish();
+                            if (currentStep >= steps) handleOnFinish();
                         }, stepTime);
                     }
                 } catch (err) {
-                    finish(err as Error);
+                    handleOnFinish(err as Error);
                 }
             };
 
             if (abortSignal) {
                 abortSignal.addEventListener("abort", () => {
-                    finish(new Error(`Job \"${this.name}\" was aborted`));
+                    handleOnFinish(new Error(`Job \"${this.name}\" was aborted`));
                 });
             }
 
