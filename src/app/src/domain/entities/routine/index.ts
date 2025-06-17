@@ -193,7 +193,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
             routineId: this.id,
             ...args
         }
-        this.emit(event, ...newArgs);
+        this.eventManager.emit(event, ...newArgs);
     }
 
     #taskTimeout({ cancelSignal }: { cancelSignal: AbortSignal }): Promise<void> {
