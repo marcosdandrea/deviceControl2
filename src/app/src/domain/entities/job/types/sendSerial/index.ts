@@ -45,15 +45,9 @@ export class SendSerialJob extends Job {
         const { signal: abortSignal } = this.abortController || {};
         this.log.info(`Starting job \"${this.name}\" with ID ${this.id}`);
 
-        let SerialPort;
-        try {
-            ({ SerialPort } = await import('serialport'));
-        } catch (err) {
-            this.log.error('serialport module is not installed');
-            throw new Error('serialport module not available');
-        }
+        let { SerialPort } = await import('serialport')
 
-        let { port, baudRate, message, encoding };
+        let port: string, baudRate: number, message: string | Buffer, encoding: BufferEncoding;
         try {
             ({ port, baudRate, message, encoding } = this.#getParameters());
         } catch (error) {
@@ -90,6 +84,7 @@ export class SendSerialJob extends Job {
                 cleanUp();
                 resolve();
             });
+            
         }).finally(() => {
             this.log.info(`Job \"${this.name}\" with ID ${this.id} has finished`);
             this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id, failed: this.failed });

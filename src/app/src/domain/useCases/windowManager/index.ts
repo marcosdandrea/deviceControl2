@@ -1,4 +1,4 @@
-import { WindowManager } from "@domain/entities/windowManager/index.js"
+import { WindowManager } from "@src/services/windowManager/index.js"
 import { getUIPath } from "@utils/pathResolver.js"
 import { isDev } from "@utils/index.js"
 import path from "path";

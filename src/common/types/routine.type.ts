@@ -11,6 +11,7 @@ type commonRoutineProps = {
     continueOnError?: boolean;
     taskTimeout?: number | false;
     isRunning?: boolean;
+    hidden?: boolean;
 }
 
 export interface RoutineType extends commonRoutineProps {

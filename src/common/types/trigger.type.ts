@@ -5,15 +5,14 @@ export type TriggerType = {
     id?: id;
     name: name;
     description?: description;
-    triggered?: boolean;
     armed?: boolean;
     type?: string;
-    reArmOnTrigger: boolean;
+    reArmOnTrigger?: boolean;
+    triggered?: boolean;
 }
 
 export interface TriggerInterface extends TriggerType, EventEmitter {
     arm: () => void;
     disarm: () => void;
-    trigger: (...args: any[]) => void;
     toJson: () => TriggerType;
 }

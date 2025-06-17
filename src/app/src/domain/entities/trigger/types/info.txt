@@ -1,0 +1,9 @@
+
+Triggers requeridos:
+
+* Cron
+* UDP
+* TCP
+* API
+* OnStart (withDelay)
+* event

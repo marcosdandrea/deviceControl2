@@ -1,5 +1,5 @@
 import App from "@src/domain/entities/app/index.js";
-import eventManager from "@entities/eventManager/index.js";
+import eventManager from "@src/services/eventManager/index.js";
 import { getMainWindow } from "./index.js"
 import { Log } from "@utils/log.js";
 

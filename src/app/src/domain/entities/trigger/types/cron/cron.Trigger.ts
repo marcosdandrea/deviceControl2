@@ -45,7 +45,7 @@ export class CronTrigger extends Trigger {
         if (this.timeoutTimer) {
             clearTimeout(this.timeoutTimer);
             this.timeoutTimer = null;
-            this.logger.info("Cron trigger re-armed, previous timeout cleared");
+            this.logger.info("Cron trigger armed, previous timeout cleared");
         } else {
             this.logger.info(`Cron trigger armed for day ${this.day} at time ${this.#millisToTime(this.dayTime)}`);
         }
@@ -53,10 +53,6 @@ export class CronTrigger extends Trigger {
 
         try {
             await this.executeTest()
-            if (this.reArmOnTrigger) {
-                this.logger.info("Re-arming cron trigger after trigger");
-                this.arm();
-            }
         } catch (error) {
             this.logger.error("Error while testing condition:", error);
             this.dispatchEvent(triggerEvents.triggerError, { triggerId: this.id, error });
@@ -99,9 +95,7 @@ export class CronTrigger extends Trigger {
 
             this.logger.info(`Cron trigger will fire at ${targetDate.toISOString()}`);
             this.timeoutTimer = setTimeout(() => {
-                this.triggered = true;
-                this.dispatchEvent(triggerEvents.triggered, { triggerId: this.id, args });
-                this.logger.info("Cron trigger has been triggered");
+                this.trigger();
                 resolve();
             }, timeToTrigger);
         });

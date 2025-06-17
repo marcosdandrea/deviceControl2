@@ -11,6 +11,7 @@ export class EventManager extends EventEmitter {
         super();
         this.id = crypto.randomUUID();
         this.logger = new Log(`EventManager_${this.id}`, false);
+        
         if (EventManager.instance)
             return EventManager.instance;
 

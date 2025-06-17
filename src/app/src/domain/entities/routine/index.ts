@@ -13,7 +13,11 @@ import { TaskInterface } from "@common/types/task.type";
 import { TriggerInterface } from "@common/types/trigger.type";
 import { Log } from "@src/utils/log";
 import { EventEmitter } from "events";
+import { EventManager } from "@services/eventManager";
 import crypto from "crypto";
+
+export const RoutineActions = ["enable", "disable", "run", "stop"] as const;
+export type RoutineActions = typeof RoutineActions[number];
 
 export class Routine extends EventEmitter implements RoutineInterface {
 
@@ -25,9 +29,12 @@ export class Routine extends EventEmitter implements RoutineInterface {
     continueOnError: RoutineType["continueOnError"];
     isRunning: RoutineInterface["isRunning"];
     taskTimeout: number | false;
+    hidden?: boolean = false;
     
     private tasks: TaskInterface[] = [];
     private triggers: TriggerInterface[] = [];
+    
+    private eventManager: EventManager;
 
     logger: Log;
     abortController: AbortController | null;
@@ -43,17 +50,44 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.continueOnError = props.continueOnError || true;
         this.triggers = [];
         this.isRunning = false;
+        this.hidden = props.hidden || false;
         this.taskTimeout = props.taskTimeout || 10000;
 
+        this.eventManager = new EventManager();
         this.logger = new Log(`Routine "${this.name}"`, true);
         this.abortController = null
+
+        this.#initializeControlThroughEventManager();
     }
 
-    /**
-     * 
-     * @param runInSync - If true, tasks will be executed in sync mode, one after another.
-     * If false, tasks will be executed in parallel.
-     */
+
+    #initializeControlThroughEventManager(): void {
+
+        const handleOnTriggerEvent = (action: string, source:string) => {
+
+            this.logger.info(`Event received from EventManager: ${thisRutineEventChannel} - Action: ${action} - Source: ${source}`);
+
+            switch (action) {
+                case "enable":
+                    this.enable();
+                    break;
+                case "disable":
+                    this.disable();
+                    break;
+                case "run":
+                    this.run();
+                    break;
+                case "stop":
+                    this.abort(`by trigger event`);
+                    break;
+                default:
+                    this.logger.warn(`Unknown trigger event: ${action}`);
+            }   
+        }
+
+        const thisRutineEventChannel = `routineId:${this.id}`
+        this.eventManager.on(thisRutineEventChannel, ({ action, source }) =>  handleOnTriggerEvent(action, source))
+    }  
 
     setExecutionModeInSync(runInSync: boolean): void {
         if (typeof runInSync !== 'boolean')
@@ -121,12 +155,12 @@ export class Routine extends EventEmitter implements RoutineInterface {
     }
 
     #bindTriggerEvents(trigger: TriggerInterface): void {
-        trigger.on(triggerEvents.triggerTriggered, this.#onTriggerExecute.bind(this, trigger));
+        trigger.on(triggerEvents.triggered, this.#onTriggerExecute.bind(this, trigger));
         this.logger.info(`Trigger "${trigger.name}" bound`);
     }
 
     #unbindTriggerEvents(trigger: TriggerInterface): void {
-        trigger.off(triggerEvents.triggerTriggered, this.#onTriggerExecute.bind(this, trigger));
+        trigger.off(triggerEvents.triggered, this.#onTriggerExecute.bind(this, trigger));
         this.logger.info(`Trigger "${trigger.name}" unbound`);
     }
 
@@ -326,9 +360,10 @@ export class Routine extends EventEmitter implements RoutineInterface {
             continueOnError: this.continueOnError,
             isRunning: this.isRunning,
             taskTimeout: this.taskTimeout,
+            hidden: this.hidden,
             triggers: this.triggers.map(trigger => trigger.toJson()),
             tasks: this.tasks.map(task => task.toJson())
-        };
+        }
     }
 
 }

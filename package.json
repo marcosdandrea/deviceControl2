@@ -24,12 +24,14 @@
   "dependencies": {
     "dmxnet": "^0.9.0",
     "dotenv": "^16.5.0",
+    "express": "^5.1.0",
     "ip": "^2.0.1",
     "middleware": "^1.0.0",
     "os-utils": "^0.0.14",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.5.3"
+    "react-router-dom": "^7.5.3",
+    "serialport": "^13.0.0"
   },
   "devDependencies": {
     "@types/ip": "^1.1.3",

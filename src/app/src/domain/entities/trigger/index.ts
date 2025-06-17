@@ -40,6 +40,32 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         this.emit(eventName, ...args);
     }
 
+    protected trigger(): void {
+        
+        if (!this.armed) {
+            this.logger.warn("Trigger is not armed, cannot trigger");
+            return;
+        }
+
+        if (this.triggered) {
+            this.logger.warn("Trigger is already triggered");
+            return;
+        }
+
+        this.logger.info("Triggering...");
+        this.triggered = true;
+        this.dispatchEvent(triggerEvents.triggered, { triggerId: this.id });
+        this.logger.info(`${this.type.charAt(0).toUpperCase() + this.type.slice(1).toLowerCase()} trigger (id: ${this.id}) triggered`);
+        this.disarm();
+
+        if (!this.reArmOnTrigger)
+            return
+
+        this.logger.info("Rearming trigger after triggering");
+        this.arm();
+
+    }
+
     arm(): void {
         if (this.armed)
             this.logger.warn("Trigger is already armed");
@@ -60,10 +86,6 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         }
     }
 
-
-    trigger(...args: any[]): void {
-
-    }
 
     toJson(): TriggerType {
         return {
