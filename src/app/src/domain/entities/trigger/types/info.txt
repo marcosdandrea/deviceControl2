@@ -6,4 +6,4 @@ Triggers requeridos:
 * TCP
 * API
 * OnStart (withDelay)
-* event
+* OnRoutineEvent
