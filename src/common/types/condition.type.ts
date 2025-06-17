@@ -4,10 +4,12 @@ export type ConditionType = {
     id: id;
     name: name;
     description: description;
-    timeout: number | false;
+    timeoutValue: number;
+    type: string;
 }
 
 export interface ConditionInterface extends ConditionType {
     evaluate: ({ abortSignal }: { abortSignal: AbortSignal }) => Promise<boolean>;
+    setTimeoutValue: (timeout: number) => void;
     toJson: () => ConditionType;
 }

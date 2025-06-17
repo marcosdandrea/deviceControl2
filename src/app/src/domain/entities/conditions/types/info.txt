@@ -1,6 +1,7 @@
 
 require:
 
-* Ping
+* Ping: debe realizar unping
+* Time
 * TCP Answer
 * UDP Answer

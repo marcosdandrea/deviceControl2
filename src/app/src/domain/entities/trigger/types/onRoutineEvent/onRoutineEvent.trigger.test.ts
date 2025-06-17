@@ -24,7 +24,7 @@ describe('OnRoutineEventTrigger', () => {
             eventManager.emit(routineEvents.routineRunning, { routineId: ROUTINE_ID });
         });
 
-        trigger.disarm();
+        trigger.disarm()
     });
 
     it('should not trigger when routine id does not match', async () => {
