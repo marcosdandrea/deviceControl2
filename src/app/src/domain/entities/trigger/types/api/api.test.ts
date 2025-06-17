@@ -9,8 +9,7 @@ describe("API Trigger Tests", () => {
         const apiTrigger = new APITrigger({
             name: "Test API Trigger",
             description: "This is a test API trigger",
-            endpoint: "/test-api-trigger",
-            action: "run"
+            endpoint: "/test-api-trigger"
         })
 
         expect(apiTrigger).toBeDefined();
@@ -18,7 +17,6 @@ describe("API Trigger Tests", () => {
         expect(apiTrigger.name).toBe("Test API Trigger");
         expect(apiTrigger.description).toBe("This is a test API trigger");
         expect(apiTrigger.endpoint).toBe("/test-api-trigger");
-        expect(apiTrigger.action).toBe("run");
         expect(apiTrigger.armed).toBe(false);
         expect(apiTrigger.triggered).toBe(false);
         expect(apiTrigger.reArmOnTrigger).toBe(true);
