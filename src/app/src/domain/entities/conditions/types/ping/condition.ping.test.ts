@@ -2,18 +2,21 @@ import { describe, it, expect } from 'vitest';
 import ConditionPing from './index';
 
 describe('ConditionPing', () => {
+
+    const testingIp = "127.0.0.1"
+
     it('should resolve true when pinging localhost', async () => {
-        const condition = new ConditionPing({ ipAddress: '127.0.0.1', name: 'Ping Localhost' });
+        const condition = new ConditionPing({ ipAddress: testingIp, name: 'Ping Localhost' });
         const result = await condition.evaluate({ abortSignal: new AbortController().signal });
         expect(result).toBe(true);
-    });
+    })
 
     it('should throw an error for invalid ip', () => {
         expect(() => new ConditionPing({ ipAddress: 'invalid-ip', name: 'Invalid' })).toThrow('Ip address must be a valid IPv4 address');
-    });
+    })
 
     it('should return false if aborted before evaluation', async () => {
-        const condition = new ConditionPing({ ipAddress: '127.0.0.1' });
+        const condition = new ConditionPing({ ipAddress: testingIp });
         const controller = new AbortController();
         controller.abort();
         const result = await condition.evaluate({ abortSignal: controller.signal });

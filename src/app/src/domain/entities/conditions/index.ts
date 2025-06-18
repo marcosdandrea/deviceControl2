@@ -66,8 +66,6 @@ export class Condition extends EventEmitter implements ConditionInterface {
                 this.#dispatchEvent(conditionEvents.aborted);
                 reject();
             }
-
-            this.logger.info(`Abort timeout set for condition "${this.name}" with timeout ${this.timeoutValue}ms`);
         })
     }
 

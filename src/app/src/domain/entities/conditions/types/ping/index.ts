@@ -1,6 +1,6 @@
 import { Condition } from "../..";
 import { ConditionType } from "@common/types/condition.type";
-import { exec } from "child_process";
+import * as ping from "ping";
 
 interface ConditionPingParams extends Partial<ConditionType> {
     ipAddress: string;
@@ -17,7 +17,7 @@ export class ConditionPing extends Condition {
             type: ConditionPing.type,
             name: options.name || "Ping Condition",
             description: options.description || "Condition that pings an IP",
-            timeoutValue: options.timeoutValue
+            timeoutValue: 10000
         } as ConditionType);
 
         const ipMask = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -32,18 +32,22 @@ export class ConditionPing extends Condition {
         }
 
         return new Promise((resolve, reject) => {
-            const command = process.platform === "win32" ? `ping -n 1 ${this.ipAddress}` : `ping -c 1 ${this.ipAddress}`;
-            const child = exec(command, (error) => {
-                if (error) {
-                    return reject(error);
-                }
-                resolve(true);
-            });
+            const pingPromise = ping.promise.probe(this.ipAddress, { timeout: 2 });
+            let aborted = false;
 
             abortSignal.addEventListener("abort", () => {
-                child.kill();
+                aborted = true;
                 reject(new Error("Condition evaluation aborted"));
             });
+
+            pingPromise.then((res: any) => {
+                if (aborted) return;
+                if (res.alive) {
+                    resolve(true);
+                } else {
+                    reject(new Error("Ping failed: destination unreachable"));
+                }
+            }).catch(reject);
         });
     }
 }

@@ -22,6 +22,7 @@ export class Task extends EventEmitter implements TaskInterface {
     aborted: boolean;
 
     log: Log;
+    startTime: number | null = null;
 
     constructor(props: TaskType) {
         super();
@@ -102,6 +103,7 @@ export class Task extends EventEmitter implements TaskInterface {
 
 
     async run({ abortSignal }: { abortSignal: AbortSignal }): Promise<void> {
+        this.startTime = Date.now();
         this.log.info(`Running task "${this.name}" with ID "${this.id}"`);
         this.#dispatchEvent(taskEvents.taskRunning, this.id, this.name);
 
@@ -121,23 +123,25 @@ export class Task extends EventEmitter implements TaskInterface {
 
         const onTaskCompleted = () => {
             this.failed = false;
-            this.log.info(`Task "${this.name}" completed successfully.`);
+            const duration = Date.now() - this.startTime;
+            this.log.info(`Task "${this.name}" completed successfully ${duration}ms`);
             this.#dispatchEvent(taskEvents.taskCompleted, { taskId: this.id, taskName: this.name, failed: false });
         }
 
-        const checkCondition = () => {
+        const checkCondition = async () => {
             if (!this.condition) {
                 this.log.info(`No condition set for task "${this.name}". Exiting task.`);
                 onTaskCompleted();
                 return true
             }
 
-            if (this.condition && this.condition.evaluate({ abortSignal })) {
-                this.log.info(`Condition met for task ${this.name}, proceeding with execution.`);
+            if (await this.condition.evaluate({ abortSignal })) {
+                this.log.info(`Condition met for task ${this.name}, finishing task execution.`);
                 onTaskCompleted();
+                return true
             }
 
-            throw new Error(`Condition not met for task ${this.name}, aborting execution.`);
+            return false
         };
 
         while (this.totalRetries < this.retries) {
@@ -146,13 +150,16 @@ export class Task extends EventEmitter implements TaskInterface {
 
                 checkAbort();
 
-                if (this.checkConditionBeforeExecution)
-                    checkCondition();
+                if (this.checkConditionBeforeExecution) {
+                    this.log.info(`Checking condition before executing task ${this.name}.`);
+                    if (await checkCondition())
+                        return Promise.resolve();
+                }
 
                 await this.job.execute({ abortSignal });
 
-                if (checkCondition())
-                    return
+                if (await checkCondition())
+                    return Promise.resolve();
 
                 this.log.info(`Condition not met, will retry.`);
 
@@ -170,7 +177,7 @@ export class Task extends EventEmitter implements TaskInterface {
                 if (!this.continueOnError) {
                     this.log.error(`Task ${this.name} failed and will not continue due to continueOnError being false.`);
                     this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
-                    throw error;
+                    return Promise.reject(`Task ${this.name} failed and will not continue due to continueOnError being false.`);
                 }
 
             }
@@ -181,7 +188,7 @@ export class Task extends EventEmitter implements TaskInterface {
                 this.log.info(`Max retries reached for task ${this.name}.`);
                 this.#dispatchEvent(taskEvents.taskFailed, this.id, this.name, new Error(`Max retries reached for task ${this.name}`));
                 this.failed = true;
-                break;
+                return Promise.reject(`Max retries reached for task ${this.name}`);
             }
 
             this.log.info(`Retrying task ${this.name} in ${this.waitBeforeRetry}ms.`);

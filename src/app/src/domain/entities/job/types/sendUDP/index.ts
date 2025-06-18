@@ -9,7 +9,7 @@ export interface SendUDPJobType extends JobType {
     params: {
         ipAddress: string;
         portNumber: number;
-        message: string;
+        message: string | Buffer; 
         subnetMask?: string; // Optional, used for broadcast detection
     }
 }
@@ -39,8 +39,8 @@ export class SendUDPJob extends Job {
         if (Number(params.portNumber) < 0 || Number(params.portNumber) > 65535)
             throw new Error("Port number must be a number between 0 and 65535");
 
-        if (params.message && typeof params.message !== 'string')
-            throw new Error("Message must be a string");
+        if (params.message && (typeof params.message !== 'string' && !Buffer.isBuffer(params.message)))
+            throw new Error("Message must be a string or a buffer");
 
         const ipMask = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
         if (!ipMask.test(params.ipAddress))
@@ -87,7 +87,7 @@ export class SendUDPJob extends Job {
             });
         }
 
-        const messageBuffer = Buffer.from(message, 'utf-8');
+        const messageBuffer = Buffer.isBuffer(this.params.message) ? this.params.message : Buffer.from(message, 'utf-8');
 
         return new Promise<void>((resolve, reject) => {
             let finished = false;
