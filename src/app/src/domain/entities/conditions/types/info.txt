@@ -2,6 +2,6 @@
 require:
 
 * Ping: debe realizar unping
-* Time
+* DayTime
 * TCP Answer
 * UDP Answer
