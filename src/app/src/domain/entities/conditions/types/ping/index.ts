@@ -3,12 +3,12 @@ import { ConditionType } from "@common/types/condition.type";
 import { exec } from "child_process";
 
 interface ConditionPingParams extends Partial<ConditionType> {
-    ip: string;
+    ipAddress: string;
     timeoutValue?: number;
 }
 
 export class ConditionPing extends Condition {
-    ip: string;
+    ipAddress: string;
     static type = "ping";
 
     constructor(options: ConditionPingParams) {
@@ -21,9 +21,9 @@ export class ConditionPing extends Condition {
         } as ConditionType);
 
         const ipMask = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        if (!options.ip || typeof options.ip !== "string" || !ipMask.test(options.ip))
+        if (!options.ipAddress || typeof options.ipAddress !== "string" || !ipMask.test(options.ipAddress))
             throw new Error("Ip address must be a valid IPv4 address");
-        this.ip = options.ip;
+        this.ipAddress = options.ipAddress;
     }
 
     protected async doEvaluation({ abortSignal }: { abortSignal: AbortSignal }): Promise<boolean> {
@@ -32,7 +32,7 @@ export class ConditionPing extends Condition {
         }
 
         return new Promise((resolve, reject) => {
-            const command = process.platform === "win32" ? `ping -n 1 ${this.ip}` : `ping -c 1 ${this.ip}`;
+            const command = process.platform === "win32" ? `ping -n 1 ${this.ipAddress}` : `ping -c 1 ${this.ipAddress}`;
             const child = exec(command, (error) => {
                 if (error) {
                     return reject(error);

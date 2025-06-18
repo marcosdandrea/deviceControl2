@@ -12,13 +12,14 @@ import { RoutineInterface, RoutineType } from "@common/types/routine.type";
 import { TaskInterface } from "@common/types/task.type";
 import { TriggerInterface } from "@common/types/trigger.type";
 import { Log } from "@src/utils/log";
+import { EventEmitter } from "events";
 import { EventManager } from "@services/eventManager";
 import crypto from "crypto";
 
 export const RoutineActions = ["enable", "disable", "run", "stop"] as const;
 export type RoutineActions = typeof RoutineActions[number];
 
-export class Routine implements RoutineInterface {
+export class Routine extends EventEmitter implements RoutineInterface {
 
     id: RoutineType["id"];
     name: RoutineType["name"];
@@ -40,6 +41,7 @@ export class Routine implements RoutineInterface {
     timeoutController: AbortController | null;
 
     constructor(props: RoutineType) {
+        super();
         this.id = props.id || crypto.randomUUID();
         this.name = props.name;
         this.description = props.description;
@@ -192,6 +194,7 @@ export class Routine implements RoutineInterface {
             ...args
         }
         this.eventManager.emit(event, ...newArgs);
+        this.emit(event, ...newArgs);
     }
 
     #taskTimeout({ cancelSignal }: { cancelSignal: AbortSignal }): Promise<void> {

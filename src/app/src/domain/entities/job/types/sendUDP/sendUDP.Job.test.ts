@@ -2,8 +2,6 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import dgram from 'dgram';
 import jobs from '../index';
-import { s } from 'node_modules/vite/dist/node/types.d-aGj9QkWt';
-import { subnet } from 'ip';
 
 const { SendUDPJob } = jobs.sendUDPJob;
 
@@ -27,7 +25,7 @@ describe('SendUDPJob (integration + extended)', () => {
 
   beforeEach(() => {
     messages = []
-  });
+  })
 
   it('should send a real UDP message', async () => {
     const job = new SendUDPJob({
@@ -41,8 +39,9 @@ describe('SendUDPJob (integration + extended)', () => {
     });
 
     const abortController = new AbortController();
-    await job.execute({ abortSignal: abortController.signal });
+    await job.execute({ abortSignal: abortController.signal })
     await new Promise((resolve) => setTimeout(resolve, 100));
+    console.log({messages});
     expect(messages).toContain('Hello, this is a test message');
   });
 
@@ -137,36 +136,6 @@ describe('SendUDPJob (integration + extended)', () => {
     await expect(job.execute({ abortSignal: new AbortController().signal })).rejects.toThrow('Message must be a string');
   });
 
-  it('should resolve only after receiving the expected answer', async () => {
-    const job = new SendUDPJob({
-      name: 'Wait for Acknowledged',
-      params: {
-        ipAddress: '127.0.0.1',
-        subnetMask: '255.255.255.0',
-        portNumber: 41234,
-        message: 'Hello',
-        answer: 'Acknowledged'
-      }
-    });
-    const abortController = new AbortController();
-    await expect(job.execute({ abortSignal: abortController.signal })).resolves.toBeUndefined();
-  });
-
-  it('should reject on timeout if answer is not received', async () => {
-    const job = new SendUDPJob({
-      name: 'Wait for Never Coming Answer',
-      params: {
-        ipAddress: '127.0.0.1',
-        subnetMask: '255.255.255.0',
-        portNumber: 41234,
-        message: 'NoReply',
-        answer: 'ThisWillNeverCome'
-      }
-    });
-    const abortController = new AbortController();
-    setTimeout(() => abortController.abort(), 6000);
-    await expect(job.execute({ abortSignal: abortController.signal })).rejects.toThrow(`Job "Wait for Never Coming Answer" timed out after 5000 ms`);
-  });
 
   it('should warn or handle broadcast address', async () => {
     const job = new SendUDPJob({
@@ -182,21 +151,6 @@ describe('SendUDPJob (integration + extended)', () => {
     await expect(job.execute({ abortSignal: abortController.signal })).resolves.toBeUndefined();
   });
 
-  it('should not resolve if wrong answer is received', async () => {
-    const job = new SendUDPJob({
-      name: 'Wrong Answer Check',
-      params: {
-        ipAddress: '127.0.0.1',
-        subnetMask: '255.255.255.0',
-        portNumber: 41234,
-        message: 'TriggerWrongAnswer',
-        answer: 'ExpectedButDifferent'
-      }
-    });
-    const abortController = new AbortController();
-    setTimeout(() => abortController.abort(), 6000);
-    await expect(job.execute({ abortSignal: abortController.signal })).rejects.toThrow(`Job "Wrong Answer Check" timed out after 5000 ms`);
-  })
 
   it('should reject if subnetMask is invalid', async () => {
     const job = new SendUDPJob({

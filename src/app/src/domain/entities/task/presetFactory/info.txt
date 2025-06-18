@@ -1,0 +1,6 @@
+
+Preset tasks
+
+* WakeOnLan (customParams: macAddress, ip )
+    - Job: SendUDP
+    - Condition: Ping

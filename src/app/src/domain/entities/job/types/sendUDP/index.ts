@@ -5,28 +5,26 @@ import dgram from 'dgram';
 import { jobTypes } from "..";
 import ip from "ip";
 
-
-interface SendUDPJobParams extends JobType {
-    answer?: string | null; // Optional answer to check against the response
+export interface SendUDPJobType extends JobType {
+    params: {
+        ipAddress: string;
+        portNumber: number;
+        message: string;
+        subnetMask?: string; // Optional, used for broadcast detection
+    }
 }
 
 
 export class SendUDPJob extends Job {
 
-    answer: string | null = null;
-
-    constructor(options: SendUDPJobParams) {
+    constructor(options: SendUDPJobType) {
         super({
             ...options,
             timeout: 5000, // Default timeout of 5 seconds
-            enableTimoutWatcher: true,
+            enableTimoutWatcher: false,
             type: jobTypes.sendUDPJob
         });
 
-        if (options.params?.answer && typeof options.params.answer !== 'string')
-            throw new Error("Answer must be a string or null");
-
-        this.answer = options.params?.answer || null;
     }
 
     #getParameters(): Record<string, any> {
@@ -117,21 +115,8 @@ export class SendUDPJob extends Job {
                     this.log.error(`Failed to send UDP packet: ${err.message}`);
                     return safeReject(err);
                 }
-
-                this.log.info(`UDP packet sent successfully to ${ipAddress}:${portNumber}`);
-                if (this.answer === null) safeResolve();
+                safeResolve();
             });
-
-            if (this.answer !== null) {
-                client.on("message", (msg, rinfo) => {
-                    const response = msg.toString('utf-8');
-                    this.log.info(`Received response from ${rinfo.address}:${rinfo.port}: ${response}`);
-                    if (response === this.answer) {
-                        this.log.info(`Response matches expected answer: ${this.answer}`);
-                        safeResolve();
-                    }
-                });
-            }
 
             if (abortSignal) {
                 abortSignal.addEventListener("abort", () => {
