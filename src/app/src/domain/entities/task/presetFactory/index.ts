@@ -1,7 +1,7 @@
 import { TaskInterface } from "@common/types/task.type";
 import { Task } from "..";
-import { SendUDPJob } from "../../job/types/sendUDP";
-import ConditionPing from "../../conditions/types/ping";
+import { SendUDPJob } from "@entities/job/types/sendUDP";
+import ConditionPing from "@entities/conditions/types/ping";
 
 export const wakeOnLanPresetTask = ({ macAddress, ipAddress, retries, port }: { macAddress: string, ipAddress: string, retries?: number, port?: number }): TaskInterface => {
 

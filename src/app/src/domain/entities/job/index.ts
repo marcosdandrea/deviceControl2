@@ -46,6 +46,8 @@ export class Job extends EventEmitter implements JobInterface {
 
         if (props.type == "generic")
             throw new Error("Job type must be a defined type, not 'generic'");
+
+        this.log.info(`Job "${this.name}" created with ID ${this.id}`);
     }
 
 
@@ -65,7 +67,7 @@ export class Job extends EventEmitter implements JobInterface {
                 this.removeAllListeners(jobEvents.jobFinished);
                 this.removeAllListeners(jobEvents.jobError);
                 this.removeAllListeners(jobEvents.jobAborted);
-                this.log.debug(`Cleaned up job "${this.name}" listeners and timeout`);
+                this.log.info(`Cleaned up job "${this.name}" listeners and timeout`);
             }
 
             if (!this.enableTimoutWatcher)

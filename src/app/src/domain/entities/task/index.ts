@@ -125,15 +125,10 @@ export class Task extends EventEmitter implements TaskInterface {
             this.failed = false;
             const duration = Date.now() - this.startTime;
             this.log.info(`Task "${this.name}" completed successfully ${duration}ms`);
-            this.#dispatchEvent(taskEvents.taskCompleted, { taskId: this.id, taskName: this.name, failed: false });
+            this.#dispatchEvent(taskEvents.taskCompleted, { taskId: this.id, taskName: this.name, failed: false, duration });
         }
 
         const checkCondition = async () => {
-            if (!this.condition) {
-                this.log.info(`No condition set for task "${this.name}". Exiting task.`);
-                onTaskCompleted();
-                return true
-            }
 
             if (await this.condition.evaluate({ abortSignal })) {
                 this.log.info(`Condition met for task ${this.name}, finishing task execution.`);
@@ -150,13 +145,21 @@ export class Task extends EventEmitter implements TaskInterface {
 
                 checkAbort();
 
-                if (this.checkConditionBeforeExecution) {
-                    this.log.info(`Checking condition before executing task ${this.name}.`);
-                    if (await checkCondition())
-                        return Promise.resolve();
+                if (this.condition) {
+                    if (this.checkConditionBeforeExecution) {
+                        this.log.info(`Checking condition before executing task ${this.name}.`);
+                        if (await checkCondition())
+                            return Promise.resolve();
+                    }
                 }
 
                 await this.job.execute({ abortSignal });
+
+                if (!this.condition){
+                    this.log.info(`No condition set for task ${this.name}, finishing task execution.`);
+                    onTaskCompleted();
+                    return Promise.resolve();
+                }
 
                 if (await checkCondition())
                     return Promise.resolve();

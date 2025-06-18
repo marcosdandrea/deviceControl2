@@ -193,8 +193,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
             routineId: this.id,
             ...args
         }
-        this.eventManager.emit(event, ...newArgs);
-        this.emit(event, ...newArgs);
+        this.eventManager.emit(event, newArgs);
+        this.emit(event, newArgs);
     }
 
     #taskTimeout({ cancelSignal }: { cancelSignal: AbortSignal }): Promise<void> {
@@ -245,6 +245,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
             this.abortController = null;
             this.isRunning = false;
         }
+
+        this.logger.info(`Starting routine "${this.name}" with ID ${this.id}`);
 
         return new Promise(async (resolve, reject) => {
             const { signal: abortSignal } = this.abortController;
