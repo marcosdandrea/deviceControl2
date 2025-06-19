@@ -8,6 +8,7 @@ import { EventEmitter } from "events";
 import { Routine } from "../routine";
 import { Trigger } from "../trigger";
 import { Task } from "../task";
+import App from "../app";
 
 
 interface ProjectConstructor {
@@ -25,6 +26,7 @@ interface ProjectConstructor {
 export class Project extends EventEmitter implements ProjectInterface {
 
     id: string;
+    appVersion: string;
     name: string;
     description: string;
     createdAt: Date;
@@ -34,6 +36,7 @@ export class Project extends EventEmitter implements ProjectInterface {
     tasks: Task[];
     filePath?: string; // Optional file path for the project
 
+    private static readonly appVersion: string = App.getAppVersion()
     private unsavedChanges: boolean = false; // Flag to track unsaved changes
     private static Instance: Project | null = null; // Singleton instance
 
@@ -63,26 +66,27 @@ export class Project extends EventEmitter implements ProjectInterface {
     }
 
     static getInstance(): Project {
-        if (!Project.Instance) {
-            throw new Error("Project instance does not exist. Use Project.createInstance() to create it.");
-        }
+        if (!Project.Instance) 
+            return null
+        
         return Project.Instance;
     }
 
     static createInstance(props?: ProjectConstructor): Project {
-        if (Project.Instance) {
+        if (Project.Instance) 
             throw new Error("Project instance already exists. Use Project.getInstance() to access it.");
-        }
+        
         return new Project(props);
     }
 
-    static closeInstance(): void {
-        if (!Project.Instance) {
-            throw new Error("Project instance does not exist. Cannot destroy.");
-        }
+    close(): void {
+        if (!Project.Instance) 
+            return null
 
+        this.dispatchEvent(projectEvents.closed);
         Project.Instance.removeAllListeners(); // Clean up event listeners
         Project.Instance = null; // Set the instance to null
+        return null
     }
 
     protected dispatchEvent(eventName: string, payload?: any): void {
@@ -91,10 +95,14 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.emit(eventName, payload);
     }
 
-    private setProjectID(projectId: id): void {
-        if (!projectId || typeof projectId !== "string")
-            throw new Error("Project ID must be a valid string");
-        this.id = projectId;
+    setName(name: string): void {
+        if (!name || typeof name !== "string") {
+            throw new Error("Project name must be a valid string");
+        }
+        this.name = name;
+        this.updatedAt = new Date();
+        this.logger.info(`Project name set to "${this.name}"`);
+        this.dispatchEvent(projectEvents.nameChanged, this.name);
     }
 
     getTrigger(triggerId?: id): TriggerInterface[] {
@@ -181,6 +189,7 @@ export class Project extends EventEmitter implements ProjectInterface {
     toJson(): projectType {
         return {
             id: this.id,
+            appVersion: Project.appVersion,
             name: this.name,
             description: this.description,
             createdAt: this.createdAt,

@@ -16,7 +16,6 @@ export default defineConfig({
       }
     }
   ],
-  
   base: './',
   build: {
     outDir: 'dist-react',
@@ -27,7 +26,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@common': path.resolve(__dirname, 'src/common'), 
+      '@common': path.resolve(__dirname, 'src/common'),
       "@components": path.resolve(__dirname, 'src/ui/components'),
       "@hooks": path.resolve(__dirname, 'src/ui/hooks'),
       "@views": path.resolve(__dirname, 'src/ui/views'),
@@ -38,6 +37,7 @@ export default defineConfig({
       "@entities": path.resolve(__dirname, 'src/app/src/domain/entities'),
       "@src": path.resolve(__dirname, 'src/app/src'),
       "@services": path.resolve(__dirname, 'src/app/src/services'),
+      '@root': path.resolve(__dirname, './'),
     },
   },
   test: {

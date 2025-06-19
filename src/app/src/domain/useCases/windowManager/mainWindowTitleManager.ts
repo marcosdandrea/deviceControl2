@@ -5,14 +5,21 @@ import { Log } from "@utils/log.js";
 
 const log = new Log("mainWindowTitleManager", true)
 
-const setMainWindowTitle = (title: string) => {
+export const setMainWindowTitle = (title: string | null) => {
     const mainWindow = getMainWindow()
     if (!mainWindow) return
+
+    if (!title || title.length === 0) {
+        log.warn("Title is empty, setting default title")
+        title = "Device Control 2"
+    } else {
+        title = `Device Control 2 - ${title}`
+    }
     mainWindow.setTitle(title)
     log.info(`Main window title setted to "${title}"`)
 }
 
-const handleOnUpdateTitleAndMenu = () => {
+const handleOnUpdateTitle = () => {
     const app = App.getInstance()
     if (!app) return
     //do some stuff to get the title and set it next 
@@ -23,11 +30,11 @@ const bindEvents = (events: string[]) => {
     const mainWindow = getMainWindow()
     if (!mainWindow) return
     events.forEach((event) =>
-        eventManager.on(event, handleOnUpdateTitleAndMenu.bind(this)))
+        eventManager.on(event, handleOnUpdateTitle.bind(this)))
 }
 
 bindEvents([
     //events that trigger a title update
 ])
 
-handleOnUpdateTitleAndMenu()
+handleOnUpdateTitle()

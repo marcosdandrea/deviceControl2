@@ -1,15 +1,19 @@
 // sendUDP.Job.test.ts
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import dgram from 'dgram';
-import jobs from '../index';
+import { Job } from '../..';
+import { loadJobModules } from '..';
 
-const { SendUDPJob } = jobs.sendUDPJob;
+let SendUDPJob: typeof Job;
 
 describe('SendUDPJob (integration + extended)', () => {
   let messages: string[];
   let server;
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    const jobModules = await loadJobModules();
+    SendUDPJob = jobModules.sendUDPJob.SendUDPJob;
+
     server = dgram.createSocket('udp4');
     server.on('error', (err) => {
       console.error(`Server error:\n${err.stack}`);

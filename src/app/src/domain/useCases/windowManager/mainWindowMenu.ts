@@ -3,10 +3,17 @@ import { Log } from "@utils/log.js";
 import { getMainWindow } from "./index.js";
 import { closeProject, createNewProject, loadProject, saveProject } from "../project/index.js";
 import { Project } from "@src/domain/entities/project/index.js";
+import path from "path";
 
 const log = new Log("mainWindowMenu", true)
 
-export const mainWindowMenu = () => {
+type mainMenuProperties = {
+    saveEnabled?: boolean;
+    saveAsEnabled?: boolean;
+    closeProjectEnabled?: boolean;
+}
+
+export const mainWindowMenu = (properties: mainMenuProperties) => {
 
     const handleCreateNewProject = () => {
         log.info("Creating new project")
@@ -57,7 +64,7 @@ export const mainWindowMenu = () => {
         const project = Project.getInstance()
         if (project.filePath)
             try {
-                await saveProject(project.filePath)
+                await saveProject(project.filePath, project.name)
                 log.info("Project saved successfully")
             } catch (error) {
                 log.error("Error saving project:", error)
@@ -71,7 +78,7 @@ export const mainWindowMenu = () => {
     const handleSaveProjectAs = async () => {
         log.info("Saving project as")
         try {
-            
+
             const response = await dialog.showSaveDialog(getMainWindow(), {
                 title: "Guardar Proyecto Como",
                 defaultPath: "Nuevo Proyecto.dc2",
@@ -92,7 +99,7 @@ export const mainWindowMenu = () => {
             }
 
             log.info("Selected file path for saving project:", response.filePath)
-            await saveProject(response.filePath)
+            await saveProject(response.filePath, path.basename(response.filePath).replace('.dc2', ''))
             log.info("Project saved successfully as:", response.filePath)
 
 
@@ -104,14 +111,15 @@ export const mainWindowMenu = () => {
     }
 
     const handleCloseProject = async () => {
+
         log.info("Closing project")
         const project = Project.getInstance()
 
         if (project) {
 
             if (project.hasUnsavedChanges()) {
+                
                 try {
-
                     const response = await dialog.showMessageBox(getMainWindow(), {
                         type: 'question',
                         buttons: ['Sí', 'No', 'Cancelar'],
@@ -176,9 +184,9 @@ export const mainWindowMenu = () => {
             submenu: [
                 { label: "Nuevo Proyecto", click: handleCreateNewProject },
                 { label: "Abrir Proyecto", click: handleOpenProject },
-                { label: "Guardar", click: handleSaveProject, enabled: true },
-                { label: "Guardar como...", click: handleSaveProjectAs, enabled: false },
-                { label: "Cerrar Proyecto", click: handleCloseProject },
+                { label: "Guardar", click: handleSaveProject, enabled: properties.saveEnabled },
+                { label: "Guardar como...", click: handleSaveProjectAs, enabled: properties.saveAsEnabled },
+                { label: "Cerrar Proyecto", click: handleCloseProject, enabled: properties.closeProjectEnabled },
                 { type: 'separator' },
                 { label: "Configurar...", click: handleOnConfiguration },
                 { type: 'separator' },

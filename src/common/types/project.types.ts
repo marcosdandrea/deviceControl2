@@ -4,6 +4,7 @@ import { TriggerType } from "./trigger.type";
 
 export type projectType = {
     id?: string; // Unique identifier for the project
+    appVersion: string; // Version of the application that created the project
     name?: string; // Name of the project
     description?: string; // Optional description of the project
     createdAt?: Date; // Timestamp when the project was created

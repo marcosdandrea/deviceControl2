@@ -1,12 +1,30 @@
 
-export default {
-    waitJob: await import("./wait/index.js"),
-    sendUDPJob: await import("./sendUDP/index.js"),
-    sendTCPJob: await import("./sendTCP/index.js"),
-    sendSerialJob: await import("./sendSerial/index.js"),
-    sendArtnetJob: await import("./sendArtnet/index.js"),
-    controlRoutineJob: await import("./controlRoutine/index.js"),
-}
+export const loadJobModules = async () => {
+    const [
+        waitJob,
+        sendUDPJob,
+        sendTCPJob,
+        sendSerialJob,
+        sendArtnetJob,
+        controlRoutineJob
+    ] = await Promise.all([
+        import("./wait/index.js"),
+        import("./sendUDP/index.js"),
+        import("./sendTCP/index.js"),
+        import("./sendSerial/index.js"),
+        import("./sendArtnet/index.js"),
+        import("./controlRoutine/index.js"),
+    ]);
+
+    return {
+        waitJob,
+        sendUDPJob,
+        sendTCPJob,
+        sendSerialJob,
+        sendArtnetJob,
+        controlRoutineJob
+    };
+};
 
 export const jobTypes = {
     waitJob: "waitJob",

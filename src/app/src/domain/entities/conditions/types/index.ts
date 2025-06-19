@@ -1,10 +1,19 @@
 
-export default {
-    dayTime: await import("./dayTime/index.js"),
-    ping: await import("./ping/index.js"),
-    tcpAnswer: await import("./tcpAnswer/index.js"),
-    udpAnswer: await import("./udpAnswer/index.js"),
-}
+export const loadConditionModules = async () => {
+    const [dayTime, ping, tcpAnswer, udpAnswer] = await Promise.all([
+        import("./dayTime/index.js"),
+        import("./ping/index.js"),
+        import("./tcpAnswer/index.js"),
+        import("./udpAnswer/index.js"),
+    ]);
+
+    return {
+        dayTime,
+        ping,
+        tcpAnswer,
+        udpAnswer,
+    };
+};
 
 export const conditionTypes = {
     dayTime: "dayTime",

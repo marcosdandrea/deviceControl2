@@ -10,27 +10,37 @@ import { Trigger } from "@src/domain/entities/trigger";
 import { createNewTriggerByType } from "@src/domain/entities/trigger/types";
 import { Log } from "@src/utils/log";
 import { readFile, writeFile } from "@services/fileSystem"
+import { setMainWindowTitle } from "../windowManager/mainWindowTitleManager";
+import { EventManager } from "@src/services/eventManager";
+import projectEvents from "@common/events/project.events";
+
 const log = new Log("ProjectUseCases");
+const eventManager = new EventManager();
 
 export const createNewProject = async (projectData?: projectType): Promise<Project> => {
-   let project = Project.getInstance();
+   let project = Project.getInstance()
+
    if (project) {
       if (project.hasUnsavedChanges())
          throw new Error("There are unsaved changes in the current project. Please save or discard them before creating a new project.");
       else
-         Project.closeInstance();
+         project.close();
    }
+
    project = Project.createInstance({
       ...projectData,
       routines: [],
       triggers: [],
       tasks: []
-   });
+   })
+
    log.info("New project created successfully");
-   return project;
+   eventManager.emit(projectEvents.created, project);
+   return project
+
 }
 
-export const saveProject = async (filePath?: string): Promise<projectType> => {
+export const saveProject = async (filePath: string, projectName: string): Promise<projectType> => {
 
    if (!filePath)
       throw new Error("File path is required to save the project.")
@@ -43,12 +53,14 @@ export const saveProject = async (filePath?: string): Promise<projectType> => {
    }
 
    const project = Project.getInstance();
-   project.updatedAt = new Date();
+   project.setName(projectName)
+   setMainWindowTitle(project.name);
    const projectData = project.toJson();
 
    try {
       await writeFile(filePath, JSON.stringify(projectData, null, 2))
       log.info(`Project saved successfully to ${filePath}`);
+      eventManager.emit(projectEvents.saved, project);
    } catch (error) {
       log.error(`Failed to save project to ${filePath}:`, error);
       throw new Error(`Failed to save project: ${error.message}`);
@@ -94,11 +106,11 @@ export const loadProject = async (filePath: string): Promise<Project> => {
 
    try {
       project = Project.getInstance();
-      log.warn("A project is already loaded. Closing the current project instance.");
-      Project.closeInstance();
+      if (project)
+         throw new Error("Project instance already exists. Please close the current project before loading a new one.");
+      project.close()
    } catch (error) {
       log.error("Project instance not found. Creating a new project instance.");
-      throw new Error("Project instance not found. Creating a new project instance.");
    }
 
    const createTriggers = async () => {
@@ -204,11 +216,18 @@ export const loadProject = async (filePath: string): Promise<Project> => {
       tasks: Object.values(tasks)
    })
 
+   setMainWindowTitle(project.name);
+   eventManager.emit(projectEvents.opened, project);
    return Promise.resolve(project)
 
 }
 
 export const closeProject = (): void => {
-   Project.closeInstance();
+   const project = Project.getInstance();
+   if (!project)
+      return
+   project.close();
+   setMainWindowTitle(null);
    log.info("Project closed successfully");
+   eventManager.emit(projectEvents.closed, project);
 }

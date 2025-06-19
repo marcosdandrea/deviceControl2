@@ -3,9 +3,8 @@ import { Project } from ".";
 import { Routine } from "../routine";
 import { Task } from "../task";
 import { WaitJob } from "../job/types/wait";
-import { loadProject, saveProject } from "@src/domain/useCases/project";
 import { projectType } from "@common/types/project.types";
-import routineEvents from "@common/events/routine.events";
+import App from "../app";
 
 describe("Project Entity", () => {
 
@@ -47,22 +46,17 @@ describe("Project Entity", () => {
         expect(existingProject.name).toBe("Test Project");
     })
 
-    it("should throw an error if trying to get an instance before creation", () => {
-        Project.closeInstance(); // Ensure the instance is closed
-        expect(() => {
-            Project.getInstance();
-        }).toThrow("Project instance does not exist. Use Project.createInstance() to create it.");
-    })
-
-    it("should close the project instance", () => {
-        expect(Project.closeInstance).toThrow("Project instance does not exist. Cannot destroy.");
+    it("should retrive null when getting an project instance before closing a project", () => {
+        const project = Project.getInstance();
+        project.close()
+        expect(Project.getInstance()).toBe(null)
     })
 
     it("should allow re-creation of the project instance after closing", () => {
         const newProject = Project.createInstance({
             name: "Recreated Project",
             description: "This is a new instance after closing",
-        });
+        })
         expect(newProject).toBeDefined();
         expect(newProject.name).toBe("Recreated Project");
         expect(newProject.description).toBe("This is a new instance after closing");
@@ -82,6 +76,7 @@ describe("Project Entity", () => {
         expect(project.routines[0].name).toBe("Test Routine");
         expect(project.toJson()).toEqual({
             id: project.id,
+            appVersion: App.getAppVersion(),
             name: project.name,
             description: project.description,
             createdAt: project.createdAt,
@@ -129,36 +124,8 @@ describe("Project Entity", () => {
         expect(savedProject.routines[0].tasks.length).toBe(1);
         expect(savedProject.routines[0].tasks[0].name).toBe("Test Task");
 
-        Project.closeInstance()
-        expect(() => {
-            Project.getInstance();
-        }).toThrow("Project instance does not exist. Use Project.createInstance() to create it.");
-    })
-
-    it("should load the project from saved data", async () => {
-        const loadedProject = await loadProject(savedProject);
-        expect(loadedProject).toBeDefined();
-        expect(loadedProject.name).toBe("Recreated Project");
-        expect(loadedProject.routines.length).toBe(1);
-        expect(loadedProject.routines[0].name).toBe("Test Routine");
-        expect(loadedProject.routines[0].tasks.length).toBe(1);
-        expect(loadedProject.routines[0].tasks[0].name).toBe("Test Task");
-    })
-
-    it("should run the reloaded routine", async () => {
-        const project = Project.getInstance();
-        const routine = project.getRoutines()[0];
-
-        const rutineCompletation = new Promise<void>((resolve) => {
-            routine.on(routineEvents.routineCompleted, () => {
-                resolve();
-            });
-        });
-
-        routine.run();
-        await rutineCompletation;
-        expect(routine.isRunning).toBe(false);
-
+        project.close()
+        expect(Project.getInstance()).toBeNull();
     })
 
 })

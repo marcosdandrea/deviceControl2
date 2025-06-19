@@ -17,6 +17,7 @@
       "@services/*": ["src/app/src/services/*"],
       "@entities/*": ["src/app/src/domain/entities/*"],
       "@useCases/*": ["src/app/src/domain/useCases/*"],
+      "@root/*": ["./*"],
     }
   },
   "include": ["src/app", "src/common"]
