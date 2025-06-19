@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import { Log } from '@src/utils/log';
+import { projectType } from '@common/types/project.types';
 
 const log = new Log('FileSystemService');
 
@@ -14,12 +15,13 @@ export const writeFile = async (filePath: string, content: string): Promise<void
     }
 }
 
-export const readFile = async (filePath: string): Promise<string> => {
+export const readFile = async (filePath: string): Promise<projectType> => {
     log.info(`Reading file: ${filePath}`);
     try {
         const content = await fs.readFile(filePath, 'utf8');
         log.info(`File read successfully: ${filePath}`);
-        return content;
+        const projectData = JSON.parse(content) as projectType;
+        return projectData;
     } catch (error) {
         log.error(`Error reading file ${filePath}:`, error);
         throw error;

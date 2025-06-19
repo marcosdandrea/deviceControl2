@@ -18,7 +18,6 @@ export class WindowManager {
         WindowManager.instance = this;
     }
 
-
     static getInstance(): WindowManager {
         if (!WindowManager.instance) {
             WindowManager.instance = new WindowManager();

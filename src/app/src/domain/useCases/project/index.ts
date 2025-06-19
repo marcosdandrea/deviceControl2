@@ -9,8 +9,26 @@ import { Task } from "@src/domain/entities/task";
 import { Trigger } from "@src/domain/entities/trigger";
 import { createNewTriggerByType } from "@src/domain/entities/trigger/types";
 import { Log } from "@src/utils/log";
-import { writeFile } from "@services/fileSystem"
+import { readFile, writeFile } from "@services/fileSystem"
 const log = new Log("ProjectUseCases");
+
+export const createNewProject = async (projectData?: projectType): Promise<Project> => {
+   let project = Project.getInstance();
+   if (project) {
+      if (project.hasUnsavedChanges())
+         throw new Error("There are unsaved changes in the current project. Please save or discard them before creating a new project.");
+      else
+         Project.closeInstance();
+   }
+   project = Project.createInstance({
+      ...projectData,
+      routines: [],
+      triggers: [],
+      tasks: []
+   });
+   log.info("New project created successfully");
+   return project;
+}
 
 export const saveProject = async (filePath?: string): Promise<projectType> => {
 
@@ -39,7 +57,29 @@ export const saveProject = async (filePath?: string): Promise<projectType> => {
    return projectData;
 }
 
-export const loadProject = async (projectData: projectType): Promise<Project> => {
+export const loadProject = async (filePath: string): Promise<Project> => {
+
+   let projectData: projectType = null;
+
+   if (!filePath) {
+      log.error("File path is required to load the project.");
+      throw new Error("File path is required to load the project.");
+   }
+
+   const fileSystemRegex = /^(\/|[a-zA-Z]:\\)/;
+   if (!fileSystemRegex.test(filePath)) {
+      log.error("Invalid file path provided. Please provide an absolute file path.");
+      throw new Error("Invalid file path provided. Please provide an absolute file path.");
+   }
+
+   log.info(`Loading project from ${filePath}`);
+
+   try {
+      projectData = await readFile(filePath);
+   } catch (error) {
+      throw new Error(`Failed to load project from ${filePath}: ${error.message}`);
+   }
+
    let project: Project = null;
    const triggers: Record<string, Trigger> = {}
    const routines: Record<string, Routine> = {}
@@ -58,6 +98,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
       Project.closeInstance();
    } catch (error) {
       log.error("Project instance not found. Creating a new project instance.");
+      throw new Error("Project instance not found. Creating a new project instance.");
    }
 
    const createTriggers = async () => {
@@ -165,4 +206,9 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
 
    return Promise.resolve(project)
 
+}
+
+export const closeProject = (): void => {
+   Project.closeInstance();
+   log.info("Project closed successfully");
 }

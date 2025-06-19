@@ -19,6 +19,7 @@ interface ProjectConstructor {
     routines?: Routine[];
     triggers?: Trigger[];
     tasks?: Task[];
+    filePath?: string; // Optional file path for the project
 }
 
 export class Project extends EventEmitter implements ProjectInterface {
@@ -31,7 +32,9 @@ export class Project extends EventEmitter implements ProjectInterface {
     routines: Routine[];
     triggers: Trigger[];
     tasks: Task[];
+    filePath?: string; // Optional file path for the project
 
+    private unsavedChanges: boolean = false; // Flag to track unsaved changes
     private static Instance: Project | null = null; // Singleton instance
 
     logger: Log
@@ -45,6 +48,7 @@ export class Project extends EventEmitter implements ProjectInterface {
         super();
         this.id = props?.id || crypto.randomUUID(); // Generate a unique ID if not provided
         this.name = props?.name || "New Project";
+        this.filePath = props?.filePath || null; // Optional file path for the project
         this.description = props?.description || "";
         this.createdAt = props?.createdAt || new Date();
         this.updatedAt = props?.updatedAt || new Date();
@@ -161,6 +165,17 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.logger.info(`Routine "${removedRoutine.name}" removed from project "${this.name}"`);
         this.updatedAt = new Date();
         this.dispatchEvent(projectEvents.routineRemoved, removedRoutine);
+    }
+
+    setUnsavedChanges(value: boolean): void {
+        if (typeof value !== "boolean") {
+            throw new Error("Unsaved changes flag must be a boolean");
+        }
+        this.unsavedChanges = value;
+    }
+
+    hasUnsavedChanges(): boolean {
+        return this.unsavedChanges;
     }
 
     toJson(): projectType {
