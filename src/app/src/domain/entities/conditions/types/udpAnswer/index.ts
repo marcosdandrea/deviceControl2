@@ -1,6 +1,7 @@
 import { Condition } from "../..";
 import { ConditionType } from "@common/types/condition.type";
 import dgram from 'dgram';
+import { conditionTypes } from "..";
 
 interface ConditionUDPAnswerParams extends Partial<ConditionType> {
     ip: string;
@@ -11,7 +12,7 @@ interface ConditionUDPAnswerParams extends Partial<ConditionType> {
 }
 
 export class ConditionUDPAnswer extends Condition {
-    static type = "udpAnswer";
+    static type: string
     ip: string;
     port: number;
     message: string;
@@ -20,7 +21,7 @@ export class ConditionUDPAnswer extends Condition {
     constructor(options: ConditionUDPAnswerParams) {
         super({
             ...options,
-            type: ConditionUDPAnswer.type,
+            type: conditionTypes.udpAnswer,
             name: options.name || "UDP Answer Condition",
             description: options.description || "Condition that waits for a UDP answer",
             timeoutValue: options.timeoutValue

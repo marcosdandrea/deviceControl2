@@ -1,6 +1,7 @@
 import { Condition } from "../..";
 import { ConditionType } from "@common/types/condition.type";
 import net from 'net';
+import { conditionTypes } from "..";
 
 interface ConditionTCPAnswerParams extends Partial<ConditionType> {
     ip: string;
@@ -11,7 +12,7 @@ interface ConditionTCPAnswerParams extends Partial<ConditionType> {
 }
 
 export class ConditionTCPAnswer extends Condition {
-    static type = "tcpAnswer";
+    static type: string
     ip: string;
     port: number;
     message: string;
@@ -20,7 +21,7 @@ export class ConditionTCPAnswer extends Condition {
     constructor(options: ConditionTCPAnswerParams) {
         super({
             ...options,
-            type: ConditionTCPAnswer.type,
+            type: conditionTypes.tcpAnswer,
             name: options.name || "TCP Answer Condition",
             description: options.description || "Condition that waits for a TCP answer",
             timeoutValue: options.timeoutValue

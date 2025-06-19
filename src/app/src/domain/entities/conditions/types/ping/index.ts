@@ -1,6 +1,7 @@
 import { Condition } from "../..";
 import { ConditionType } from "@common/types/condition.type";
 import * as ping from "ping";
+import { conditionTypes } from "..";
 
 interface ConditionPingParams extends Partial<ConditionType> {
     ipAddress: string;
@@ -9,12 +10,12 @@ interface ConditionPingParams extends Partial<ConditionType> {
 
 export class ConditionPing extends Condition {
     ipAddress: string;
-    static type = "ping";
+    static type: string
 
     constructor(options: ConditionPingParams) {
         super({
             ...options,
-            type: ConditionPing.type,
+            type: conditionTypes.ping,
             name: options.name || "Ping Condition",
             description: options.description || "Condition that pings an IP",
             timeoutValue: 10000

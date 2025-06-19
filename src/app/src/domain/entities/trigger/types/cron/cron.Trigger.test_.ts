@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { CronTrigger } from "./cron.trigger";
+import { CronTrigger } from ".";
 import triggerEvents from "@common/events/trigger.events";
 
 describe("CronTrigger Tests", () => {

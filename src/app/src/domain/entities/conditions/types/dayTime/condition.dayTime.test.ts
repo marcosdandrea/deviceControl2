@@ -22,7 +22,6 @@ describe('ConditionDayTime', () => {
     });
 
     it('should throw an error if no parameters are provided', () => {
-        // @ts-expect-error
         expect(() => new ConditionDayTime({})).toThrow('At least one of day, hour or minute must be specified');
     });
 

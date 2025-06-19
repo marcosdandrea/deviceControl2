@@ -44,8 +44,10 @@ export class Job extends EventEmitter implements JobInterface {
 
         this.enableTimoutWatcher = props.enableTimoutWatcher || false;
 
-        if (props.type == "generic")
-            throw new Error("Job type must be a defined type, not 'generic'");
+        this.type = props.type || "generic"; // Default type, should be overridden in subclasses
+
+        if (this.type == "generic")
+            throw new Error("Job type must be specified");
 
         this.log.info(`Job "${this.name}" created with ID ${this.id}`);
     }

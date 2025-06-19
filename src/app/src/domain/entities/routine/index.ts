@@ -31,8 +31,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
     taskTimeout: number | false;
     hidden?: boolean = false;
     
-    private tasks: TaskInterface[] = [];
-    private triggers: TriggerInterface[] = [];
+    tasks: TaskInterface[] = [];
+    triggers: TriggerInterface[] = [];
     
     private eventManager: EventManager;
 

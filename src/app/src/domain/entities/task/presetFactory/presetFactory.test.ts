@@ -8,7 +8,7 @@ describe("PresetFactory tests", () => {
     it("should create a Wake On Lan preset and test if its working", async () => {
         const { wakeOnLanPresetTask } = await import("./index.js");
 
-        const ipAddress = "192.168.100.63"
+        const ipAddress = "127.0.0.1"
         const macAddress = "D8:9E:F3:0A:8A:D3"; //D3
 
         const WOLTaskPreset = wakeOnLanPresetTask({ macAddress, ipAddress, retries: 5 });
@@ -32,5 +32,5 @@ describe("PresetFactory tests", () => {
             throw error
         }
 
-    });
+    })
 })

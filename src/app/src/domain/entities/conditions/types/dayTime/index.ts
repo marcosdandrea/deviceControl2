@@ -1,3 +1,5 @@
+import { S } from "vitest/dist/chunks/config.Cy0C388Z.js";
+import { conditionTypes } from "..";
 import { Condition } from "../..";
 import { ConditionType } from "@common/types/condition.type";
 
@@ -9,7 +11,7 @@ interface ConditionDayTimeParams extends Partial<ConditionType> {
 }
 
 export class ConditionDayTime extends Condition {
-    static type = "dayTime";
+    static type: String;
     day?: number;
     hour?: number;
     minute?: number;
@@ -17,7 +19,7 @@ export class ConditionDayTime extends Condition {
     constructor(options: ConditionDayTimeParams) {
         super({
             ...options,
-            type: ConditionDayTime.type,
+            type: conditionTypes.dayTime,
             name: options.name || "Day Time Condition",
             description: options.description || "Condition that checks day and time",
             timeoutValue: options.timeoutValue
