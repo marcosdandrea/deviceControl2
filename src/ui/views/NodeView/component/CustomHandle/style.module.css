@@ -1,0 +1,24 @@
+.label {
+    font-size: 8px;
+    line-height: 0;
+    width: max-content;
+}
+
+.node{
+    position: relative;
+}
+
+.handle{
+    display: flex;
+    column-gap: 0.25rem;
+}
+
+.rightHandle{
+    left: 100%;
+    flex-direction: row-reverse;
+}
+
+.leftHandle{
+    right: 100%;
+    flex-direction: row;
+}

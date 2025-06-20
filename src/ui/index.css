@@ -1,9 +1,25 @@
-:root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
+@font-face {
+  font-family: "Open Sans Regular";
+  src: url("./assets/fonts/OpenSans-Regular.ttf");
+}
 
+@font-face {
+  font-family: "Open Sans Semibold";
+  src: url("./assets/fonts/OpenSans-Semibold.ttf");
+}
+
+@font-face {
+  font-family: "Open Sans Light";
+  src: url("./assets/fonts/OpenSans-Light.ttf");
+}
+
+@font-face {
+  font-family: "Open Sans Medium";
+  src: url("./assets/fonts/OpenSans-Medium.ttf");
+}
+
+:root {
+  font-family: "Open Sans Regular";
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
@@ -19,6 +35,9 @@ body {
   margin: 0;
 }
 
-button {
-  all: unset;
+
+
+
+.react-flow__attribution {
+  display: none !important;
 }
