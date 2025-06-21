@@ -1,5 +1,6 @@
 import React from 'react';
-import { SortableContext, useDroppable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import TaskCard from '../TaskCard';
 import style from './style.module.css';
 
