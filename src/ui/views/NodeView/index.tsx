@@ -7,6 +7,8 @@ import {
   Background,
   Controls,
   ReactFlow,
+  ReactFlowProvider,
+  useViewport,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import RoutineNode from './nodeTypes/RoutineNode';
@@ -19,6 +21,7 @@ import {
   closestCenter,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import type { Modifier } from '@dnd-kit/core';
 
 const nodeTypes = {
   routineNode: RoutineNode,
@@ -64,7 +67,18 @@ const initialEdges = [
 
     ];
 
-const NodeView = () => {
+const NodeViewInner = () => {
+
+  const { zoom } = useViewport();
+
+  const adjustForZoom = useCallback<Modifier>(
+    ({ transform }) => ({
+      ...transform,
+      x: transform.x / zoom,
+      y: transform.y / zoom,
+    }),
+    [zoom]
+  );
 
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
@@ -153,6 +167,7 @@ const NodeView = () => {
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        modifiers={[adjustForZoom]}
       >
 
         <ReactFlow
@@ -184,5 +199,11 @@ const NodeView = () => {
     </div>
   );
 }
+
+const NodeView = () => (
+  <ReactFlowProvider>
+    <NodeViewInner />
+  </ReactFlowProvider>
+);
 
 export default NodeView;
