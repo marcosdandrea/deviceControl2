@@ -8,7 +8,15 @@ import { FaTasks } from 'react-icons/fa';
 import GroupHandle from '@views/NodeView/component/GroupHandle';
 import TaskContainer from './components/TaskContainer';
 
-export default memo(({ data, isConnectable }) => {
+interface RoutineNodeProps {
+  id: string;
+  data: {
+    name?: string;
+    tasks?: { id: string; content: string }[];
+  };
+  isConnectable: boolean;
+}
+export default memo(({ id, data, isConnectable }: RoutineNodeProps) => {
   return (
     <div className={style.routineNode}>
       <NodeHeader
@@ -59,7 +67,7 @@ export default memo(({ data, isConnectable }) => {
             isConnectable={isConnectable} />
         </GroupHandle>
       </div>
-      <TaskContainer/>
+      <TaskContainer containerId={id} tasks={data.tasks || []} />
     </div>
   );
 });
