@@ -71,6 +71,7 @@ const NodeView = () => {
   const [tasks, setTasks] = useState<Record<string, { id: string; content: string }[]>>(initialTasks);
   const [activeTask, setActiveTask] = useState<{ id: string; content: string; containerId: string } | null>(null);
 
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
@@ -86,6 +87,7 @@ const NodeView = () => {
     },
     [tasks]
   );
+
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -108,6 +110,7 @@ const NodeView = () => {
   const handleDragEnd = useCallback(
     ({ active, over }) => {
       setActiveTask(null);
+
       if (!over) return;
       const activeContainer = active.data.current?.containerId;
       const overContainer = over.data.current?.containerId;
@@ -151,6 +154,7 @@ const NodeView = () => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
+
         <ReactFlow
           panOnDrag={false}
           nodesDraggable={false}
@@ -175,6 +179,7 @@ const NodeView = () => {
             <div className={style.dragOverlayCard}>{activeTask.content}</div>
           )}
         </DragOverlay>
+
       </DndContext>
     </div>
   );
