@@ -7,17 +7,21 @@ import {
   Background,
   Controls,
   ReactFlow,
+  ReactFlowProvider,
+  useViewport,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import RoutineNode from './nodeTypes/RoutineNode';
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
   closestCenter,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import type { Modifier } from '@dnd-kit/core';
 
 const nodeTypes = {
   routineNode: RoutineNode,
@@ -63,15 +67,41 @@ const initialEdges = [
 
     ];
 
-const NodeView = () => {
+const NodeViewInner = () => {
+
+  const { zoom } = useViewport();
+
+  const adjustForZoom = useCallback<Modifier>(
+    ({ transform }) => ({
+      ...transform,
+      x: transform.x / zoom,
+      y: transform.y / zoom,
+    }),
+    [zoom]
+  );
 
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
   const [tasks, setTasks] = useState<Record<string, { id: string; content: string }[]>>(initialTasks);
+  const [activeTask, setActiveTask] = useState<{ id: string; content: string; containerId: string } | null>(null);
+
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
+
+  const handleDragStart = useCallback(
+    ({ active }) => {
+      const containerId = active.data.current?.containerId;
+      if (!containerId) return;
+      const item = tasks[containerId]?.find((t) => t.id === active.id);
+      if (item) {
+        setActiveTask({ ...item, containerId });
+      }
+    },
+    [tasks]
+  );
+
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -93,6 +123,8 @@ const NodeView = () => {
 
   const handleDragEnd = useCallback(
     ({ active, over }) => {
+      setActiveTask(null);
+
       if (!over) return;
       const activeContainer = active.data.current?.containerId;
       const overContainer = over.data.current?.containerId;
@@ -130,7 +162,14 @@ const NodeView = () => {
 
   return (
     <div className={style.nodeView}>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        modifiers={[adjustForZoom]}
+      >
+
         <ReactFlow
           panOnDrag={false}
           nodesDraggable={false}
@@ -150,9 +189,21 @@ const NodeView = () => {
           <Background />
           <Controls />
         </ReactFlow>
+        <DragOverlay>
+          {activeTask && (
+            <div className={style.dragOverlayCard}>{activeTask.content}</div>
+          )}
+        </DragOverlay>
+
       </DndContext>
     </div>
   );
 }
+
+const NodeView = () => (
+  <ReactFlowProvider>
+    <NodeViewInner />
+  </ReactFlowProvider>
+);
 
 export default NodeView;
