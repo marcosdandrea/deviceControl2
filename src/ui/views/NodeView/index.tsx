@@ -12,6 +12,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import RoutineNode from './nodeTypes/RoutineNode';
+
 import { DndContextProvider, DndStateContext } from '@contexts/dndContextProvider/indext';
 
 const nodeTypes = {
@@ -61,6 +62,7 @@ const NodeViewInner = () => {
     setScale(zoom);
   }, [zoom, setScale]);
 
+  const { tasks, isDragging } = useContext(DndStateContext);
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
 

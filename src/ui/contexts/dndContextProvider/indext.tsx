@@ -8,6 +8,7 @@ import {
   type DragOverEvent,
   closestCorners,
   type Modifier,
+
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import TaskCard from "@views/NodeView/nodeTypes/RoutineNode/components/TaskCard";
@@ -26,6 +27,7 @@ interface DndState {
   isDragging: boolean;
   scale: number;
   setScale: React.Dispatch<React.SetStateAction<number>>;
+
 }
 
 export const DndStateContext = createContext<DndState>({} as DndState);
@@ -124,16 +126,17 @@ export const DndContextProvider = ({
 
   return (
     <DndStateContext.Provider value={{ tasks, setTasks, activeTask, isDragging, scale, setScale }}>
+
       <DndContext
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
         collisionDetection={closestCorners}
-        modifiers={[adjustForScale, ...modifiers]}
-      >
+        modifiers={[adjustForScale, ...modifiers]}>
         {children}
         <DragOverlay adjustScale modifiers={overlayModifiers}>
+
           {activeTask ? (
             <div className={styles.dragOverlayCard}>
               <TaskCard id={activeTask.id} containerId="" content={activeTask.content} color={activeTask.color} />
