@@ -1,43 +1,53 @@
-import React from 'react';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useDroppable } from '@dnd-kit/core';
+import React, { useEffect, useState } from 'react';
 
 import TaskCard from '../TaskCard';
 import style from './style.module.css';
 
 interface Task {
-  id: string;
-  content: string;
+    id: string;
+    content: string;
+    color?: string;
 }
 
 interface TaskContainerProps {
-  containerId: string;
-  tasks: Task[];
+    containerId: string;
+    tasks: Task[];
 }
 
 const TaskContainer: React.FC<TaskContainerProps> = ({ containerId, tasks }) => {
-  const { setNodeRef } = useDroppable({ id: containerId });
+    const [isDraggingOver, setIsDraggingOver] = useState(false);
 
-  return (
-    <div
-      ref={setNodeRef}
-      onPointerDown={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
-      onTouchStart={(e) => e.stopPropagation()}
-      className={style.taskContainer}
-    >
-      {tasks.length === 0 && (
-        <div className={style.noTasks}>
-          <p>No tasks</p>
-        </div>
-      )}
-      <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-        {tasks.map((task) => (
-          <TaskCard key={task.id} id={task.id} containerId={containerId} content={task.content} />
-        ))}
-      </SortableContext>
-    </div>
-  );
+    useEffect(() => {
+
+        console.log(isDraggingOver)
+        // If the container is hovered, set a fixed height
+
+        //setTaskContainerHeight('500px');
+    }, [isDraggingOver]);
+
+
+    return (
+            <div
+                className={style.taskContainer}
+                style={{
+                    backgroundColor: 'blue'
+                }}>
+                {
+                    tasks.length === 0
+                        ? <div className={style.noTasks}>
+                            <p>No tasks</p>
+                        </div>
+                        : tasks.map((task) =>
+                            <TaskCard   
+                                key={task.id} 
+                                id={task.id} 
+                                containerId={containerId} 
+                                content={task.content} 
+                                color={task.color} />)
+                }
+
+            </div>
+    );
 };
 
 export default TaskContainer;

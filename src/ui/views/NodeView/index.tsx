@@ -12,16 +12,8 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import RoutineNode from './nodeTypes/RoutineNode';
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCenter,
-} from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
-import type { Modifier } from '@dnd-kit/core';
+import { DndContext, type Modifier } from '@dnd-kit/core';
+import { DndContextProvider } from '@contexts/dndContextProvider/indext';
 
 const nodeTypes = {
   routineNode: RoutineNode,
@@ -29,23 +21,12 @@ const nodeTypes = {
 
 const initialNodes = [
   {
-    id: '1',
-    data: { label: 'Hello' },
-    position: { x: 0, y: 0 },
-    type: 'input',
-  },
-  {
-    id: '2',
-    data: { label: 'World' },
-    position: { x: 100, y: 100 },
-  },
-  {
     id: '3',
     data: { label: 'Campaing Node', color: '#00ff00', onChange: (e) => console.log('Color changed:', e.target.value) },
     position: { x: 200, y: 200 },
     type: 'routineNode',
   },
-    {
+  {
     id: '4',
     data: { label: 'Campaing Node', color: '#00ff00', onChange: (e) => console.log('Color changed:', e.target.value) },
     position: { x: 400, y: 200 },
@@ -53,19 +34,23 @@ const initialNodes = [
   },
 ];
 
-const initialTasks: Record<string, { id: string; content: string }[]> = {
+const initialTasks: Record<string, { id: string; content: string; color: string }[]> = {
   '3': [
-    { id: 't1', content: 'Task 1' },
-    { id: 't2', content: 'Task 2' },
+    { id: 't1', content: 'Task 1', color: "blue" },
+    { id: 't2', content: 'Task 2', color: "red" },
+    { id: 't3', content: 'Task 3', color: "green" },
+    { id: 't4', content: 'Task 4', color: "yellow" },
   ],
   '4': [
-    { id: 't3', content: 'Task 3' },
+    { id: 't5', content: 'Task 5', color: "purple" },
+    { id: 't6', content: 'Task 6', color: "orange" },
+
   ],
 };
 
 const initialEdges = [
 
-    ];
+];
 
 const NodeViewInner = () => {
 
@@ -80,27 +65,20 @@ const NodeViewInner = () => {
     [zoom]
   );
 
+  const adjustForZoomOverlay = useCallback<Modifier>(
+    ({ transform }) => {
+      return {
+        ...transform,
+        x: transform.x * zoom,
+        y: transform.y * zoom,
+      };
+    }, [zoom]
+  );
+
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
-  const [tasks, setTasks] = useState<Record<string, { id: string; content: string }[]>>(initialTasks);
-  const [activeTask, setActiveTask] = useState<{ id: string; content: string; containerId: string } | null>(null);
+  const [tasks, setTasks] = useState<Record<string, { id: string; content: string, color: string }[]>>(initialTasks);
 
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  );
-
-  const handleDragStart = useCallback(
-    ({ active }) => {
-      const containerId = active.data.current?.containerId;
-      if (!containerId) return;
-      const item = tasks[containerId]?.find((t) => t.id === active.id);
-      if (item) {
-        setActiveTask({ ...item, containerId });
-      }
-    },
-    [tasks]
-  );
 
 
   const onNodesChange = useCallback(
@@ -121,55 +99,10 @@ const NodeViewInner = () => {
     [],
   );
 
-  const handleDragEnd = useCallback(
-    ({ active, over }) => {
-      setActiveTask(null);
-
-      if (!over) return;
-      const activeContainer = active.data.current?.containerId;
-      const overContainer = over.data.current?.containerId;
-      if (!activeContainer || !overContainer) return;
-
-      setTasks((prev) => {
-        const activeIndex = prev[activeContainer].findIndex((t) => t.id === active.id);
-        const item = prev[activeContainer][activeIndex];
-        if (activeContainer === overContainer) {
-          const overIndex = prev[overContainer].findIndex((t) => t.id === over.id);
-          return {
-            ...prev,
-            [activeContainer]: arrayMove(prev[activeContainer], activeIndex, overIndex),
-          };
-        }
-        const newActive = [...prev[activeContainer]];
-        newActive.splice(activeIndex, 1);
-        const overIndex = prev[overContainer].findIndex((t) => t.id === over.id);
-        const newOver = [...prev[overContainer]];
-        if (overIndex === -1) {
-          newOver.push(item);
-        } else {
-          newOver.splice(overIndex, 0, item);
-        }
-        return {
-          ...prev,
-          [activeContainer]: newActive,
-          [overContainer]: newOver,
-        };
-      });
-    },
-    []
-  );
 
 
   return (
     <div className={style.nodeView}>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        modifiers={[adjustForZoom]}
-      >
-
         <ReactFlow
           panOnDrag={false}
           nodesDraggable={false}
@@ -184,18 +117,10 @@ const NodeViewInner = () => {
           edges={edges}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          fitView
-        >
+          fitView>
           <Background />
           <Controls />
         </ReactFlow>
-        <DragOverlay>
-          {activeTask && (
-            <div className={style.dragOverlayCard}>{activeTask.content}</div>
-          )}
-        </DragOverlay>
-
-      </DndContext>
     </div>
   );
 }

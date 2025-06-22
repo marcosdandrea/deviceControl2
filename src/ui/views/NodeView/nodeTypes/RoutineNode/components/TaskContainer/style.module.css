@@ -1,9 +1,10 @@
 .taskContainer{
-  padding: 8px;
   background: #f0f0f0;
   border-radius: 6px;
   max-height: 300px;
   pointer-events: auto;
+  position: relative;
+  height: auto
 }
 
 .noTasks{
@@ -11,7 +12,6 @@
     align-items: center;
     justify-content: center;
     flex: 1;
-    background-color: gray;
     border-radius: 0 0 2px 2px;
 }
 
