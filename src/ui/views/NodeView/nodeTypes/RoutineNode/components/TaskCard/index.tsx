@@ -3,21 +3,24 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { DndStateContext } from '@contexts/dndContextProvider/indext';
 
-import style from './style.module.css';
+  dragOverlay?: boolean;
+const TaskCard: React.FC<TaskCardProps> = ({ id, containerId, content, color, dragOverlay = false }) => {
 
-interface TaskCardProps {
-  id: string;
-  containerId: string;
-  content: string;
-  color?: string;
-}
-
-const TaskCard: React.FC<TaskCardProps> = ({ id, containerId, content, color }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
+  const styleCard: React.CSSProperties = dragOverlay
+    ? { backgroundColor: color }
+    : {
+        transform: transform
+          ? CSS.Transform.toString({
+              ...transform,
+              x: transform.x / scale,
+              y: transform.y / scale,
+            })
+          : undefined,
+        transition,
+        backgroundColor: color,
+      };
+      {...(!dragOverlay && attributes)}
+      {...(!dragOverlay && listeners)}
     transition,
     isDragging,
   } = useSortable({ id, data: { containerId } });

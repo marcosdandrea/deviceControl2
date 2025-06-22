@@ -32,6 +32,15 @@ interface DndState {
 
 export const DndStateContext = createContext<DndState>({} as DndState);
 
+  const adjustOverlayForScale = useCallback<Modifier>(
+    ({ transform }) => ({
+      ...transform,
+      x: transform.x * scale,
+      y: transform.y * scale,
+    }),
+    [scale]
+  );
+
 interface ProviderProps {
   children: ReactNode;
   initialTasks: Record<string, Task[]>;
@@ -108,8 +117,14 @@ export const DndContextProvider = ({
         const newIndex = containerTasks.findIndex((t) => t.id === over.id);
         if (oldIndex !== newIndex) {
           return {
-            ...prev,
-            [containerId]: arrayMove(containerTasks, oldIndex, newIndex),
+        <DragOverlay adjustScale modifiers={[adjustOverlayForScale, ...overlayModifiers]}>
+              <TaskCard
+                id={activeTask.id}
+                containerId=""
+                content={activeTask.content}
+                color={activeTask.color}
+                dragOverlay
+              />
           };
         }
         return prev;
