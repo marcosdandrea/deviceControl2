@@ -104,8 +104,8 @@ const NodeViewInner = () => {
   return (
     <div className={style.nodeView}>
         <ReactFlow
-          panOnDrag={false}
-          nodesDraggable={false}
+          panOnDrag={true}
+          nodesDraggable={true}
           colorMode='dark'
           nodes={nodes.map((n) =>
             n.type === 'routineNode'
