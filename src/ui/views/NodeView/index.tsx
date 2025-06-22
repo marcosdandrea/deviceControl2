@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useContext } from 'react';
 import style from './style.module.css';
 import {
   addEdge,
@@ -12,8 +12,8 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import RoutineNode from './nodeTypes/RoutineNode';
-import { DndContext, type Modifier } from '@dnd-kit/core';
-import { DndContextProvider } from '@contexts/dndContextProvider/indext';
+import { type Modifier } from '@dnd-kit/core';
+import { DndContextProvider, DndStateContext } from '@contexts/dndContextProvider/indext';
 
 const nodeTypes = {
   routineNode: RoutineNode,
@@ -75,9 +75,9 @@ const NodeViewInner = () => {
     }, [zoom]
   );
 
+  const { tasks, isDragging } = useContext(DndStateContext);
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
-  const [tasks, setTasks] = useState<Record<string, { id: string; content: string, color: string }[]>>(initialTasks);
 
 
 
@@ -104,8 +104,8 @@ const NodeViewInner = () => {
   return (
     <div className={style.nodeView}>
         <ReactFlow
-          panOnDrag={true}
-          nodesDraggable={true}
+          panOnDrag={!isDragging}
+          nodesDraggable={!isDragging}
           colorMode='dark'
           nodes={nodes.map((n) =>
             n.type === 'routineNode'
@@ -126,9 +126,11 @@ const NodeViewInner = () => {
 }
 
 const NodeView = () => (
-  <ReactFlowProvider>
-    <NodeViewInner />
-  </ReactFlowProvider>
+  <DndContextProvider initialTasks={initialTasks}>
+    <ReactFlowProvider>
+      <NodeViewInner />
+    </ReactFlowProvider>
+  </DndContextProvider>
 );
 
 export default NodeView;
