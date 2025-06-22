@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { DndStateContext } from '@contexts/dndContextProvider/indext';
+
 import style from './style.module.css';
 
 interface TaskCardProps {
@@ -19,9 +21,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ id, containerId, content, color }) 
     transition,
     isDragging,
   } = useSortable({ id, data: { containerId } });
+  const { scale } = useContext(DndStateContext);
 
   const styleCard: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: transform
+      ? CSS.Transform.toString({
+          ...transform,
+          x: transform.x / scale,
+          y: transform.y / scale,
+        })
+      : undefined,
+
     transition,
     backgroundColor: color,
   };

@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useContext } from 'react';
+import React, { useCallback, useState, useContext, useEffect } from 'react';
 import style from './style.module.css';
 import {
   addEdge,
@@ -12,7 +12,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import RoutineNode from './nodeTypes/RoutineNode';
-import { type Modifier } from '@dnd-kit/core';
+
 import { DndContextProvider, DndStateContext } from '@contexts/dndContextProvider/indext';
 
 const nodeTypes = {
@@ -55,25 +55,12 @@ const initialEdges = [
 const NodeViewInner = () => {
 
   const { zoom } = useViewport();
+  const { tasks, isDragging, setScale } = useContext(DndStateContext);
 
-  const adjustForZoom = useCallback<Modifier>(
-    ({ transform }) => ({
-      ...transform,
-      x: transform.x / zoom,
-      y: transform.y / zoom,
-    }),
-    [zoom]
-  );
 
-  const adjustForZoomOverlay = useCallback<Modifier>(
-    ({ transform }) => {
-      return {
-        ...transform,
-        x: transform.x * zoom,
-        y: transform.y * zoom,
-      };
-    }, [zoom]
-  );
+  useEffect(() => {
+    setScale(zoom);
+  }, [zoom, setScale]);
 
   const { tasks, isDragging } = useContext(DndStateContext);
   const [nodes, setNodes] = useState(initialNodes);

@@ -1,4 +1,4 @@
-import React, { createContext, useState, ReactNode } from "react";
+import React, { createContext, useState, ReactNode, useCallback } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -7,6 +7,8 @@ import {
   type DragCancelEvent,
   type DragOverEvent,
   closestCorners,
+  type Modifier,
+
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import TaskCard from "@views/NodeView/nodeTypes/RoutineNode/components/TaskCard";
@@ -23,6 +25,9 @@ interface DndState {
   setTasks: React.Dispatch<React.SetStateAction<Record<string, Task[]>>>;
   activeTask: Task | null;
   isDragging: boolean;
+  scale: number;
+  setScale: React.Dispatch<React.SetStateAction<number>>;
+
 }
 
 export const DndStateContext = createContext<DndState>({} as DndState);
@@ -30,12 +35,29 @@ export const DndStateContext = createContext<DndState>({} as DndState);
 interface ProviderProps {
   children: ReactNode;
   initialTasks: Record<string, Task[]>;
+  modifiers?: Modifier[];
+  overlayModifiers?: Modifier[];
 }
 
-export const DndContextProvider = ({ children, initialTasks }: ProviderProps) => {
+export const DndContextProvider = ({
+  children,
+  initialTasks,
+  modifiers = [],
+  overlayModifiers = [],
+}: ProviderProps) => {
   const [tasks, setTasks] = useState<Record<string, Task[]>>(initialTasks);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [scale, setScale] = useState(1);
+
+  const adjustForScale = useCallback<Modifier>(
+    ({ transform }) => ({
+      ...transform,
+      x: transform.x / scale,
+      y: transform.y / scale,
+    }),
+    [scale]
+  );
 
   const findContainer = (taskId: string): string | null => {
     for (const [container, items] of Object.entries(tasks)) {
@@ -103,16 +125,18 @@ export const DndContextProvider = ({ children, initialTasks }: ProviderProps) =>
   };
 
   return (
-    <DndStateContext.Provider value={{ tasks, setTasks, activeTask, isDragging }}>
+    <DndStateContext.Provider value={{ tasks, setTasks, activeTask, isDragging, scale, setScale }}>
+
       <DndContext
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
         collisionDetection={closestCorners}
-      >
+        modifiers={[adjustForScale, ...modifiers]}>
         {children}
-        <DragOverlay modifiers={[]}>
+        <DragOverlay adjustScale modifiers={overlayModifiers}>
+
           {activeTask ? (
             <div className={styles.dragOverlayCard}>
               <TaskCard id={activeTask.id} containerId="" content={activeTask.content} color={activeTask.color} />
