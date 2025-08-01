@@ -1,13 +1,15 @@
 import React from 'react';
 import Navigation from '@components/Navigation';
-import SocketIO from '@components/SocketIO';
+import SocketIOProvider from '@components/SocketIOProvider';
 
 function App() {
 
     return (
         <>
-            <SocketIO />
-            <Navigation />
+            <SocketIOProvider 
+                mountComponentsOnlyWhenConnect={true}>
+                <Navigation />
+            </SocketIOProvider>
         </>
     );
 }

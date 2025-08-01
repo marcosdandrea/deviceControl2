@@ -23,10 +23,6 @@ export default defineConfig({
   server: {
     port: 5123,
     strictPort: true,
-     headers: {
-      "Content-Security-Policy":
-        "default-src 'self'; connect-src 'self' ws://localhost:3000 http://localhost:3000 ws://192.168.0.*:3000 http://192.168.0.*:3000;",
-    },
   },
   resolve: {
     alias: {

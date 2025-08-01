@@ -1,6 +1,8 @@
 import net from 'net';
 import express from 'express';
+import { createServer } from "http";
 import { Log } from '@src/utils/log';
+import cors from 'cors';
 import { RoutineActions } from '@src/domain/entities/routine';
 import { id } from '@common/types/commons.type';
 
@@ -11,17 +13,21 @@ interface ServerProps {
   ip?: string;                // IP a bindear (opcional, default '0.0.0.0')
   portRangeStart?: number;    // Rango para buscar puerto libre (default 3000)
   portRangeEnd?: number;      // Rango para buscar puerto libre (default 5000)
+  useSocketIO?: boolean; // Si se usa Socket.IO (default false)
 }
 
 export class Server {
-  private static instance: Server | null = null;
+  private static instance: Server | null;
 
   private app: express.Express;
+  private httpServer: import('http').Server;
   private router: express.Router;
   private serverListener?: import('http').Server;
 
   public port: number;
   public ip: string;
+  public io: import('socket.io').Server | null;
+  public useSocketIO: boolean = false;
   private routes: Set<string> = new Set();
 
   private constructor(props: ServerProps = {}) {
@@ -34,11 +40,21 @@ export class Server {
       throw new Error('Invalid IP address format. It must be a valid IPv4 address.');
     }
 
+    this.useSocketIO = props.useSocketIO || false;
     this.ip = props.ip || '0.0.0.0';
-
     this.app = express();
-    this.router = express.Router();
+    this.httpServer = createServer(this.app);
 
+    if (this.useSocketIO)
+      this.io = require('socket.io')(this.httpServer, {
+        cors: {
+          origin: '*',
+          methods: ['GET', 'POST'],
+        },
+      });
+
+    this.router = express.Router();
+    this.app.use(cors())
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(this.router); // Router dedicado para rutas dinámicas
@@ -92,15 +108,23 @@ export class Server {
   private start(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        this.serverListener = this.app.listen(this.port, this.ip, () => {
+        this.serverListener = this.httpServer.listen(this.port, this.ip, () => {
           log.info(`Server started at http://${this.ip}:${this.port}`);
           resolve();
         });
+        /*this.serverListener = this.app.listen(this.port, this.ip, () => {
+          log.info(`Server started at http://${this.ip}:${this.port}`);
+          resolve();
+        });*/
       } catch (error) {
         log.error('Failed to start server:', error);
         reject(error);
       }
     });
+  }
+
+  getIO(): import('socket.io').Server | null {
+    return this.io;
   }
 
   bindRoute(route: string, callback: Function) {

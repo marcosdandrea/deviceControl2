@@ -3,7 +3,7 @@ import React from 'react';
 
 const Builder = () => {
 
-    const { project } = useProject();
+    const {project} = useProject();
 
     return (
         <div>

@@ -2,7 +2,7 @@ import { WindowManager } from "@src/services/windowManager/index.js"
 import { getUIPath } from "@utils/pathResolver.js"
 import { isDev } from "@utils/index.js"
 import path from "path";
-import { setWebContents } from "@src/services/ipcServices/index.js";
+//import { setWebContents } from "@src/services/ipcServices/index.js";
 import { Log } from "@utils/log.js";
 
 const log = new Log("windowManagerUseCase", true)
@@ -30,13 +30,13 @@ export const createMainWindow = async () => {
     const win = await WM.createWindow({
         name: "main",
         webPreferences: {
-            preload: path.join(__dirname, "preload.js"),
+            //preload: path.join(__dirname, "preload.js"),
             contextIsolation: true,
             nodeIntegration: false,
         }
     })
 
-    setWebContents(win.webContents)
+    //setWebContents(win.webContents)
     
     if (isDev()) {
         win.loadURL('http://localhost:5123/control');

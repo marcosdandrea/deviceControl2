@@ -231,3 +231,11 @@ export const closeProject = (): void => {
    log.info("Project closed successfully");
    eventManager.emit(projectEvents.closed, project);
 }
+
+export const getCurrentProject = (): Project => {
+   const project = Project.getInstance();
+   if (!project) 
+      throw new Error("No project is currently loaded.");
+   
+   return project;
+}
