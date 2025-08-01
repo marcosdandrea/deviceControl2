@@ -12,7 +12,7 @@
     "paths": {
       "@common/*": ["src/common/*"],
       "@components/*": ["src/ui/components/*"],
-      "@hooks/*": ["src/ui/hooks/*"],
+      "@hooks/*": ["src/ui/views/Builder/hooks/*"],
       "@views/*": ["src/ui/views/*"],
       "@stores/*": ["src/ui/stores/*"],
       "@ipc/*": ["src/ui/ipc/*"],

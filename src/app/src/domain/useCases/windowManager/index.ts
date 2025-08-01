@@ -39,20 +39,22 @@ export const createMainWindow = async () => {
     setWebContents(win.webContents)
     
     if (isDev()) {
-        win.loadURL('http://localhost:5123');
+        win.loadURL('http://localhost:5123/control');
         win.webContents.openDevTools({ mode: "detach" })
     } else {
         win.loadURL(getUIPath());
+        win.maximize()
+        win.setFullScreen(true)
     }
 
     setMainWindow(win)
+    win.setMenu(null)
     const appTitle: string = process.env.APP_TITLE || ""
     win.setTitle(appTitle)
 
-    import ("./mainWindowMenuManager.js")
+    //import ("./mainWindowMenuManager.js")
     import ("./mainWindowTitleManager.js")
     log.info("Main window created")
-
 
     win.on("close", async (event) => {
         event.preventDefault()

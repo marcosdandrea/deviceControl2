@@ -9,7 +9,7 @@ export function getPreloadPath() {
 }
 
 export function getUIPath() {
-  const filePath = path.join(app.getAppPath(), 'dist-react', 'index.html');
+  const filePath = path.join(app.getAppPath(), 'dist-react', '/control/index.html');
   return pathToFileURL(filePath).toString();
 }
 

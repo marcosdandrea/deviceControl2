@@ -1,12 +1,14 @@
 import React from 'react';
-import style from './style.module.css';
+import Navigation from '@components/Navigation';
+import SocketIO from '@components/SocketIO';
 
 function App() {
 
     return (
-        <div className={style.app}>
-            OK
-        </div>
+        <>
+            <SocketIO />
+            <Navigation />
+        </>
     );
 }
 
