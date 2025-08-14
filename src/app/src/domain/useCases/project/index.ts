@@ -9,12 +9,14 @@ import { Task } from "@src/domain/entities/task";
 import { Trigger } from "@src/domain/entities/trigger";
 import { createNewTriggerByType } from "@src/domain/entities/trigger/types";
 import { Log } from "@src/utils/log";
-import { readFile, writeFile } from "@services/fileSystem"
+import { writeFile } from "@services/fileSystem"
 import { setMainWindowTitle } from "../windowManager/mainWindowTitleManager";
 import { EventManager } from "@src/services/eventManager";
 import projectEvents from "@common/events/project.events";
+import { createRoutine } from "../routine";
+import { sendToClients } from "@src/services/eventBridge";
 
-const log = new Log("ProjectUseCases");
+const log = new Log("ProjectUseCases", true);
 const eventManager = new EventManager();
 
 export const createNewProject = async (projectData?: projectType): Promise<Project> => {
@@ -24,7 +26,7 @@ export const createNewProject = async (projectData?: projectType): Promise<Proje
       if (project.hasUnsavedChanges())
          throw new Error("There are unsaved changes in the current project. Please save or discard them before creating a new project.");
       else
-         project.close();
+         Project.close();
    }
 
    project = Project.createInstance({
@@ -69,27 +71,11 @@ export const saveProject = async (filePath: string, projectName: string): Promis
    return projectData;
 }
 
-export const loadProject = async (filePath: string): Promise<Project> => {
+export const loadProject = async (projectData: projectType): Promise<Project> => {
 
-   let projectData: projectType = null;
-
-   if (!filePath) {
-      log.error("File path is required to load the project.");
-      throw new Error("File path is required to load the project.");
-   }
-
-   const fileSystemRegex = /^(\/|[a-zA-Z]:\\)/;
-   if (!fileSystemRegex.test(filePath)) {
-      log.error("Invalid file path provided. Please provide an absolute file path.");
-      throw new Error("Invalid file path provided. Please provide an absolute file path.");
-   }
-
-   log.info(`Loading project from ${filePath}`);
-
-   try {
-      projectData = await readFile(filePath);
-   } catch (error) {
-      throw new Error(`Failed to load project from ${filePath}: ${error.message}`);
+   if (!projectData) {
+      log.error("Project data must be provided.");
+      throw new Error("Project data must be provided.");
    }
 
    let project: Project = null;
@@ -105,10 +91,13 @@ export const loadProject = async (filePath: string): Promise<Project> => {
    }
 
    try {
+      log.info("Checking for existing project instance...");
       project = Project.getInstance();
-      if (project)
-         throw new Error("Project instance already exists. Please close the current project before loading a new one.");
-      project.close()
+      if (!project) 
+         throw new Error("No project instance found. Creating a new one.");
+
+      log.warn("Closing the current project before loading a new one.");
+      Project.close();
    } catch (error) {
       log.error("Project instance not found. Creating a new project instance.");
    }
@@ -173,69 +162,55 @@ export const loadProject = async (filePath: string): Promise<Project> => {
 
    const createRoutines = async () => {
       log.info("Loading routines...");
+
       for (const routineData of projectData.routines || []) {
          if (routines[routineData.id])
             continue
 
-         const newRoutine = new Routine(routineData);
-         if (!newRoutine) {
-            log.error(`Failed to create routine with ID ${routineData.id}`);
+         try {
+            const newRoutine = createRoutine(routineData);
+            routines[routineData.id] = newRoutine;
+         } catch (error) {
+            log.error(`Failed to create routine with ID ${routineData.id}:`, error.message);
             continue;
          }
 
-         for (const task of routineData.tasks || []) {
-            const newTask = tasks[task.id];
-            if (task) {
-               newRoutine.addTask(newTask);
-            } else {
-               log.warn(`Task with ID ${newTask.id} not found for routine ${routineData.id}`);
-            }
-         }
 
-         for (const trigger of routineData.triggers || []) {
-            const newTrigger = triggers[trigger.id];
-            if (newTrigger) {
-               newRoutine.addTrigger(newTrigger);
-            } else {
-               log.warn(`Trigger with ID ${newTrigger.id} not found for routine ${routineData.id}`);
-            }
-         }
-
-         routines[routineData.id] = newRoutine;
       }
    }
 
    await createTriggers();
    await createTasks();
-   await createRoutines();
 
    project = Project.createInstance({
       ...projectData,
-      routines: Object.values(routines),
+      routines: [],
       triggers: Object.values(triggers),
       tasks: Object.values(tasks)
    })
 
+   await createRoutines();
+   project.routines = Object.values(routines);
+   project.onAny(sendToClients)
+
    setMainWindowTitle(project.name);
-   eventManager.emit(projectEvents.opened, project);
+   sendToClients(projectEvents.loaded, project.toJson());
+   eventManager.emit(projectEvents.loaded, project);
    return Promise.resolve(project)
 
 }
 
 export const closeProject = (): void => {
-   const project = Project.getInstance();
-   if (!project)
-      return
-   project.close();
+   Project.close();
    setMainWindowTitle(null);
    log.info("Project closed successfully");
-   eventManager.emit(projectEvents.closed, project);
+   eventManager.emit(projectEvents.closed);
 }
 
 export const getCurrentProject = (): Project => {
    const project = Project.getInstance();
-   if (!project) 
+   if (!project)
       throw new Error("No project is currently loaded.");
-   
+
    return project;
 }

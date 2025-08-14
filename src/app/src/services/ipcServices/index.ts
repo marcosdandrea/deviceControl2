@@ -1,5 +1,7 @@
 import SocketChannels from '@common/SocketChannels';
+import projectServices from './projects.services';
 import { Log } from '@src/utils/log';
+import { receivedFromClients } from '../eventBridge/receivedFromClients';
 
 const log = new Log('IPC Services', true);
 
@@ -8,22 +10,11 @@ const init = (io: import('socket.io').Server) => {
     io.on('connection', (socket) => {
         log.info('New client connected:', socket.id);
 
-        socket.on('disconnect', () => {
-            log.info('Client disconnected:', socket.id);
-        });
+        socket.onAny(receivedFromClients)
 
-        socket.on(SocketChannels.getCurrentProject, async () => {
-            log.info('Client requested current project');
-            const { getCurrentProject } = await import('@src/domain/useCases/project/index.js');
-            try {
-                const project = getCurrentProject();
-                socket.emit(SocketChannels.getCurrentProject, project);
-                log.info('Current project sent to client:', project);
-            } catch (error) {
-                log.error('Error getting current project:', error.message);
-                socket.emit(SocketChannels.getCurrentProject, { error: error.message });
-            }
-        });
+        socket.on('disconnect', () => log.info('Client disconnected:', socket.id));
+        socket.on(SocketChannels.getCurrentProject, () => projectServices.getCurrentProject(socket, io));
+        socket.on(SocketChannels.loadProject, (payload) => projectServices.loadProject(payload, socket, io));
     });
 
     log.info('IPC Services initialized with Socket.IO');

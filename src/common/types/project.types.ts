@@ -14,7 +14,10 @@ export type projectType = {
     tasks?: TaskType[];
 }
 
+
 export interface projectInterface extends projectType {
+    triggers?: TriggerType[];
+    tasks?: TaskType[];
     addRoutine: (routine: RoutineInterface) => void; // Method to add a routine to the project
     getRoutines: () => RoutineInterface[]; // Method to get all routines in the project
     removeRoutine: (routineId: string) => void; // Method to remove a routine

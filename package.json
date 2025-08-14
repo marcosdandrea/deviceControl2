@@ -7,7 +7,7 @@
   "description": "A simple device control app",
   "license": "MIT",
   "scripts": {
-    "dev": "npm-run-all --parallel dev:react dev:electron",
+    "dev": "npm-run-all --parallel dev:react dev:electron ",
     "dev:react": "vite",
     "dev:electron": "node build-electron.mjs && cross-env NODE_ENV=development electron .",
     "build:vite": "vite build",

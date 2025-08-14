@@ -18,6 +18,11 @@
   src: url("./assets/fonts/OpenSans-Medium.ttf");
 }
 
+@font-face {
+  font-family: "Open Sans Italic";
+  src: url("./assets/fonts/OpenSans-Italic.ttf");
+}
+
 :root {
   font-family: "Open Sans Regular";
   color-scheme: light dark;

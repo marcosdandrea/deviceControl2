@@ -1,9 +1,15 @@
-import useProject from '@views/Builder/hooks/useProject';
-import React from 'react';
+import { Logger } from '@helpers/logger';
+import React, { useEffect } from 'react';
+import {dummyProjectData} from '../../helpers/dummy-project';
+import useProject from '@hooks/useProject';
 
 const Builder = () => {
 
-    const {project} = useProject();
+    const {project, loadProject} = useProject();
+
+    useEffect(() => {
+        loadProject(dummyProjectData)
+    }, []);
 
     return (
         <div>

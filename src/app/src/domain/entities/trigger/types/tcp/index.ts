@@ -1,8 +1,7 @@
 import net from 'net';
 import { Trigger } from '../..';
 import triggerEvents from '@common/events/trigger.events';
-import { TriggerType } from '@common/types/trigger.type';
-import { TriggerTypes } from '..';
+import { TriggerType, TriggerTypes } from '@common/types/trigger.type';
 
 interface TcpTriggerOptions extends TriggerType {
     port: number;

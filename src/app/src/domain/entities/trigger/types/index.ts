@@ -1,15 +1,12 @@
+import { TriggerTypes } from "@common/types/trigger.type.js";
 import { Trigger } from "../index.js";
-
-export const TriggerTypes = {
-    cron: "cron",
-    tcp: "tcp",
-    udp: "udp",
-    onStart: "onStart",
-    onRoutineEvent: "onRoutineEvent",
-} as const;
 
 export const createNewTriggerByType = async (type: string, params: any): Promise<Trigger> => {
     switch (type) {
+
+        case TriggerTypes.api:
+            const { APITrigger } = await import("./api/index.js");
+            return new APITrigger(params);
         case TriggerTypes.cron:
             const { CronTrigger } = await import("./cron/index.js");
             return new CronTrigger(params);

@@ -12,6 +12,7 @@ export class Trigger extends EventEmitter implements TriggerInterface {
     triggered: boolean = false;
     reArmOnTrigger: boolean = true;
     logger: Log;
+    params?: TriggerInterface["params"];
 
     constructor(props: TriggerType) {
         super();
@@ -33,6 +34,7 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         this.type = props.type;
 
         this.logger = new Log(`Trigger "${this.name}"`, true);
+        this.params = props.params || {};
 
     }
 
@@ -72,6 +74,7 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         else {
             this.logger.info("Arming trigger...");
             this.armed = true;
+            this.triggered = false;
             this.dispatchEvent(triggerEvents.triggerArmed, { triggerId: this.id });
         }
     }
@@ -95,6 +98,7 @@ export class Trigger extends EventEmitter implements TriggerInterface {
             armed: this.armed,
             triggered: this.triggered,
             reArmOnTrigger: this.reArmOnTrigger,
+            params: this.params,
             type: this.type
         };
     }

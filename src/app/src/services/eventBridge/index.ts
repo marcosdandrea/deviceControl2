@@ -1,28 +1,34 @@
-import { getWebContents } from "@src/domain/useCases/windowManager/index.js";
-import { registerAppBridge } from "./appBridge.js";
 import { Log } from "@src/utils/log.js";
-
+import { Server } from "../server";
 const log = new Log("EventBridge", true)
 
-export const sendToRenderer = (eventName: string, payload: any) => {
-    const webContents = getWebContents()
-    if (!webContents)
-        throw new Error("Main window not found")
-    webContents.send(eventName, payload)
-    log.info(`Event sent to renderer: ${eventName}`, payload)
+let io = null;
+
+(async () => {
+    const serverInstance = await Server.getInstance();
+
+    if (!serverInstance) {
+        log.error("Server instance not found. Cannot send event to clients.");
+        return;
+    }
+
+    io = serverInstance.getIO();
+
+    if (!io) {
+        log.error("Socket.IO instance not found. Cannot send event to clients.");
+        return;
+    }
+})();
+
+
+export const sendToClients = async (eventName: string, payload: any) => {
+
+    if (!io) {
+        log.error("Socket.IO instance not initialized. Cannot send event to clients.");
+        return;
+    }
+
+    io.emit(eventName, payload);
+    log.info(`Event "${eventName}" sent to clients with payload:`, payload);
 }
 
-export const registerEventBridge = async () => {
-    try {
-        log.info("Registering event bridge...")
-        registerAppBridge()
-        // Register all bridges i.e. project, multitrack, app
-        // This is where you can add more bridges
-        // bridges are meant to receive events from event manager
-        // and send them to the renderer process
-        // should be separated by domain
-        log.info("Event bridge registered successfully")
-    } catch (error) {
-        console.error("Error registering event bridge:", error);
-    }
-}

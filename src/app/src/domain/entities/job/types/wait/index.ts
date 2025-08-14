@@ -18,6 +18,7 @@ export class WaitJob extends Job {
     }
 
     #getParameters(): Record<string, any> {
+
         const params = this.params || {};
 
         const expectedParams = ["time"];

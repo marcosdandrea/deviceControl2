@@ -1,6 +1,5 @@
 import { Trigger } from '../..';
-import { TriggerType } from '@common/types/trigger.type';
-import { TriggerTypes } from '..';
+import { TriggerType, TriggerTypes } from '@common/types/trigger.type';
 import triggerEvents from '@common/events/trigger.events';
 import routineEvents from '@common/events/routine.events';
 import { EventManager } from '@services/eventManager';
@@ -26,13 +25,13 @@ export class OnRoutineEventTrigger extends Trigger {
             description: options.description || 'Trigger that listens for routine events',
         });
 
-        if (!options.routineId || typeof options.routineId !== 'string')
+        if (!options.params.routineId || typeof options.params.routineId !== 'string')
             throw new Error('routineId must be a string');
-        this.routineId = options.routineId;
+        this.routineId = options.params.routineId;
 
-        if (!RoutineActions.includes(options.routineEvent))
-            throw new Error(`routineEvent must be one of: ${RoutineActions.join(', ')}`);
-        this.routineEvent = options.routineEvent;
+        //if (!RoutineActions.includes(options.params.routineEvent))
+        //    throw new Error(`routineEvent must be one of: ${RoutineActions.join(', ')}`);
+        this.routineEvent = options.params.routineEvent;
 
         this.eventManager = new EventManager();
 
@@ -40,36 +39,21 @@ export class OnRoutineEventTrigger extends Trigger {
         this.on(triggerEvents.triggerDisarmed, this.destroy.bind(this));
     }
 
-    #mapEvent(action: RoutineActions): string {
-        switch (action) {
-            case 'enable':
-                return routineEvents.routineEnabled;
-            case 'disable':
-                return routineEvents.routineDisabled;
-            case 'run':
-                return routineEvents.routineRunning;
-            case 'stop':
-                return routineEvents.routineAborted;
-            default:
-                return '';
-        }
+private init() {
+    const routineEvent = `routine.${this.routineId}.${this.routineEvent}`;
+    if (!this.boundHandler) {
+        this.boundHandler = this.trigger.bind(this); 
     }
+    this.eventManager.addListener(routineEvent, this.boundHandler);
+    this.logger.info(`Listening for routine ${this.routineId} event: ${this.routineEvent}`);
+}
 
-    private init() {
-        if (this.boundHandler) return;
-        const eventName = this.#mapEvent(this.routineEvent);
-        this.boundHandler = (payload: any) => {
-            if (payload?.routineId === this.routineId) {
-                this.trigger();
-            }
-        };
-        this.eventManager.on(eventName, this.boundHandler);
+private destroy() {
+    const routineEvent = `routine.${this.routineId}.${this.routineEvent}`;
+    if (this.boundHandler) {
+        this.eventManager.removeListener(routineEvent, this.boundHandler); // Usar la misma referencia
+        this.logger.info(`Stopped listening for routine ${this.routineId} event: ${this.routineEvent}`);
+        this.boundHandler = null; 
     }
-
-    private destroy() {
-        if (!this.boundHandler) return;
-        const eventName = this.#mapEvent(this.routineEvent);
-        this.eventManager.off(eventName, this.boundHandler);
-        this.boundHandler = null;
-    }
+}
 }

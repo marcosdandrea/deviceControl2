@@ -20,7 +20,7 @@ export class APITrigger extends Trigger {
             description: options.description || "Trigger that listens to API requests",
         })
 
-        this.endpoint = options.endpoint || "";
+        this.endpoint = options.params?.endpoint || "";
 
         this.#initListeners()
     }

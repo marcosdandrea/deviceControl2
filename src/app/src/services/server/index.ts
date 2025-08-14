@@ -3,8 +3,6 @@ import express from 'express';
 import { createServer } from "http";
 import { Log } from '@src/utils/log';
 import cors from 'cors';
-import { RoutineActions } from '@src/domain/entities/routine';
-import { id } from '@common/types/commons.type';
 
 const log = new Log('Server', true);
 
@@ -168,6 +166,11 @@ export class Server {
 
     this.routes.delete(route);
     log.info(`Route ${route} unbound successfully.`);
+  }
+
+  unbindAllRoutes() {
+    this.router.stack = [];
+    this.routes.clear();
   }
 
   close() {

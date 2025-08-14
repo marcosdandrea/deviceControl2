@@ -38,6 +38,7 @@ export default defineConfig({
       "@src": path.resolve(__dirname, 'src/app/src'),
       "@services": path.resolve(__dirname, 'src/app/src/services'),
       '@root': path.resolve(__dirname, './'),
+      '@helpers': path.resolve(__dirname, 'src/ui/helpers'),
     },
   },
   test: {

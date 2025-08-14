@@ -8,12 +8,11 @@
 import routineEvents from "@common/events/routine.events";
 import triggerEvents from "@common/events/trigger.events";
 import { id } from "@common/types/commons.type";
-import { RoutineInterface, RoutineType } from "@common/types/routine.type";
+import { RoutineInterface, RoutineStatus, RoutineType } from "@common/types/routine.type";
 import { TaskInterface } from "@common/types/task.type";
 import { TriggerInterface } from "@common/types/trigger.type";
 import { Log } from "@src/utils/log";
 import { EventEmitter } from "events";
-import { EventManager } from "@services/eventManager";
 import crypto from "crypto";
 
 export const RoutineActions = ["enable", "disable", "run", "stop"] as const;
@@ -30,11 +29,13 @@ export class Routine extends EventEmitter implements RoutineInterface {
     isRunning: RoutineInterface["isRunning"];
     taskTimeout: number | false;
     hidden?: boolean = false;
-    
+    status?: string = "unknown";
+    autoCheckConditionEveryMs?: number | false;
+
     tasks: TaskInterface[] = [];
     triggers: TriggerInterface[] = [];
-    
-    private eventManager: EventManager;
+
+    private _anyListeners: Function[];
 
     logger: Log;
     abortController: AbortController | null;
@@ -42,52 +43,66 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
     constructor(props: RoutineType) {
         super();
+        this._anyListeners = [];
+
         this.id = props.id || crypto.randomUUID();
         this.name = props.name;
         this.description = props.description;
-        this.enabled = props.enabled || true;
+        this.status = "unknown";
+        this.enabled = props.enabled;
         this.runInSync = props.runInSync || false;
         this.continueOnError = props.continueOnError || true;
         this.triggers = [];
         this.isRunning = false;
         this.hidden = props.hidden || false;
         this.taskTimeout = props.taskTimeout || 10000;
+        this.autoCheckConditionEveryMs = props.autoCheckConditionEveryMs || false;
 
-        this.eventManager = new EventManager();
         this.logger = new Log(`Routine "${this.name}"`, true);
         this.abortController = null
 
-        this.#initializeControlThroughEventManager();
+        this.on(routineEvents.routineEnabled, () => {
+            if (this.autoCheckConditionEveryMs != false)
+                this.#autoCheckConditions();
+        });
+
+
     }
 
+    #setStatus(event: string) {
+        this.status = event;
+    }
 
-    #initializeControlThroughEventManager(): void {
+    #updateStatus(newStatus: string) {
+        if (this.status == newStatus) return;
+        this.#eventDispatcher(newStatus);
+    }
 
-        const handleOnTriggerEvent = (action: string, source:string) => {
+    async #autoCheckConditions() {
 
-            this.logger.info(`Event received from EventManager: ${thisRutineEventChannel} - Action: ${action} - Source: ${source}`);
+        if (this.enabled === false) return;
 
-            switch (action) {
-                case "enable":
-                    this.enable();
-                    break;
-                case "disable":
-                    this.disable();
-                    break;
-                case "run":
-                    this.run();
-                    break;
-                case "stop":
-                    this.abort(`by trigger event`);
-                    break;
-                default:
-                    this.logger.warn(`Unknown trigger event: ${action}`);
-            }   
+        if (typeof this.autoCheckConditionEveryMs !== 'number' || this.autoCheckConditionEveryMs < 1000)
+            throw new Error("autoCheckConditionEveryMs must be a number greater than 1000 or false");
+
+        try {
+            if (this.isRunning)
+                throw new Error("Cannot auto check conditions while routine is running");
+            this.#eventDispatcher(routineEvents.routineAutoCheckingConditions);
+            if (!await this.checkAllTaskConditions())
+                throw new Error("Not all task conditions are met");
+            this.#updateStatus(routineEvents.routineCompleted);
+        } catch (err) {
+            this.#updateStatus(routineEvents.routineFailed);
+        } finally {
+            if (typeof this.autoCheckConditionEveryMs !== "number") return;
+            this.logger.info(`Auto checking conditions in ${this.autoCheckConditionEveryMs}ms`);
+            setTimeout(() => {
+                this.#autoCheckConditions();
+            }, this.autoCheckConditionEveryMs);
         }
+    }
 
-        const thisRutineEventChannel = `routineId:${this.id}`
-        this.eventManager.on(thisRutineEventChannel, ({ action, source }) =>  handleOnTriggerEvent(action, source))
-    }  
 
     setExecutionModeInSync(runInSync: boolean): void {
         if (typeof runInSync !== 'boolean')
@@ -95,13 +110,13 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
         this.runInSync = runInSync;
         this.logger.info(`Run in sync mode set to ${runInSync}`);
-        this.#eventDispatcher(routineEvents.routineExecutionModeChanged, {runInSync});
+        this.#eventDispatcher(routineEvents.routineExecutionModeChanged, { runInSync });
     }
 
     addTask(task: TaskInterface): void {
         this.tasks.push(task);
         this.logger.info(`Task ${task.name} added`);
-        this.#eventDispatcher(routineEvents.routineTaskAdded, {taskId: task.id});
+        this.#eventDispatcher(routineEvents.routineTaskAdded, { taskId: task.id });
     }
 
     removeTask(taskId: id): void {
@@ -110,13 +125,13 @@ export class Routine extends EventEmitter implements RoutineInterface {
             throw new Error(`Task with id ${taskId} not found`);
 
         this.tasks = this.tasks.filter(t => t.id !== taskId);
-        this.#eventDispatcher(routineEvents.routineTaskRemoved, {taskId: task.id});
+        this.#eventDispatcher(routineEvents.routineTaskRemoved, { taskId: task.id });
 
     }
 
     removeAllTasks(): void {
         this.tasks.forEach(task => {
-            this.#eventDispatcher(routineEvents.routineTaskRemoved, {taskId: task.id});
+            this.#eventDispatcher(routineEvents.routineTaskRemoved, { taskId: task.id });
         });
         this.tasks = [];
         this.logger.info("All tasks removed from routine");
@@ -145,12 +160,12 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.tasks[taskIndex] = taskToSwap;
 
         this.logger.info(`Task ${taskToMove.name} moved from index ${taskIndex} to ${newIndex}`);
-        this.#eventDispatcher(routineEvents.routineTaskOrderChanged, {taskToMoveId: taskToMove.id, newIndex});
+        this.#eventDispatcher(routineEvents.routineTaskOrderChanged, { taskToMoveId: taskToMove.id, newIndex });
     }
 
     #onTriggerExecute(trigger: TriggerInterface): void {
         this.logger.info(`Trigger ${trigger.name} executed`);
-        this.#eventDispatcher(routineEvents.routineTriggerTriggered, {triggerId: trigger.id});
+        this.#eventDispatcher(routineEvents.routineTriggerTriggered, { triggerId: trigger.id });
         this.run();
     }
 
@@ -171,7 +186,15 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.#bindTriggerEvents(trigger);
         this.triggers.push(trigger);
         this.logger.info(`Trigger "${trigger.name}" added`);
-        this.#eventDispatcher(routineEvents.routineTriggerAdded, {triggerId: trigger.id, triggerName: trigger.name, triggerType: trigger.type});
+        this.#eventDispatcher(routineEvents.routineTriggerAdded, { triggerId: trigger.id, triggerName: trigger.name, triggerType: trigger.type });
+
+        const armTrigger = () => {
+            if (this.enabled && !trigger.armed)
+                trigger.arm();
+        }
+
+        this.on(routineEvents.routineEnabled, armTrigger);
+        armTrigger();
     }
 
     removeTrigger(triggerId: id): void {
@@ -181,7 +204,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
         this.#unbindTriggerEvents(trigger);
         this.triggers = this.triggers.filter(t => t.id !== triggerId);
-        this.#eventDispatcher(routineEvents.routineTriggerRemoved, {triggerId: trigger.id, triggerName: trigger.name, triggerType: trigger.type});
+        this.#eventDispatcher(routineEvents.routineTriggerRemoved, { triggerId: trigger.id, triggerName: trigger.name, triggerType: trigger.type });
     }
 
     getTriggers(): TriggerInterface[] {
@@ -193,8 +216,27 @@ export class Routine extends EventEmitter implements RoutineInterface {
             routineId: this.id,
             ...args
         }
-        this.eventManager.emit(event, newArgs);
+        //this.eventManager.emit(event, newArgs);
         this.emit(event, newArgs);
+        this.#setStatus(event)
+
+        for (const listener of this._anyListeners) {
+            try {
+                listener(event, ...args);
+            } catch (err) {
+                this.emit('error', err);
+            }
+        }
+    }
+
+    onAny(listener) {
+        this._anyListeners.push(listener);
+        return this;
+    }
+
+    offAny(listener) {
+        this._anyListeners = this._anyListeners.filter(l => l !== listener);
+        return this;
     }
 
     #taskTimeout({ cancelSignal }: { cancelSignal: AbortSignal }): Promise<void> {
@@ -203,11 +245,12 @@ export class Routine extends EventEmitter implements RoutineInterface {
                 return resolve();
 
             const timeoutTimer = setTimeout(() => {
-                this.logger.warn(`Task timed out`);
-                reject(new Error("Task timed out"));
+                this.logger.warn(`Task timed out after ${this.taskTimeout}ms`);
+                reject(new Error("Task timed out after " + this.taskTimeout + "ms"));
             }, this.taskTimeout || 10000);
 
             cancelSignal.addEventListener("abort", () => {
+                this.logger.info(`Task timeout cancelled`);
                 clearTimeout(timeoutTimer);
                 resolve();
             });
@@ -217,25 +260,38 @@ export class Routine extends EventEmitter implements RoutineInterface {
     async #abortSignalController(): Promise<void> {
         const { signal: abortSignal } = this.abortController;
 
-        this.#eventDispatcher(routineEvents.routineAborted);
-
         return new Promise((_resolve, reject) => {
             abortSignal.addEventListener("abort", () => {
+                this.#eventDispatcher(routineEvents.routineAborted);
                 this.logger.warn(`Routine aborted with cause: ${this.abortController.signal.reason}`);
                 reject(new Error(`Routine aborted: ${this.abortController.signal.reason}`));
-            })
-        })
+            });
+        });
+    }
+
+    async checkAllTaskConditions(): Promise<boolean> {
+        const tasksWithConditions = this.tasks.filter(t => t.condition);
+        if (tasksWithConditions.length === 0) return true;
+
+        const abortController = new AbortController();
+        const { signal: abortSignal } = abortController;
+        const results = await Promise.all(tasksWithConditions.map(t => t.condition!.evaluate({ abortSignal })));
+        console.log("Condition results:", results);
+        return results.every(res => res === true);
     }
 
     async run(): Promise<void> {
         if (!this.enabled)
-            throw new Error("Routine is not enabled");
+            throw new Error(`Routine ${this.name} is not enabled`);
+
+        if (this.isRunning)
+            throw new Error(`Routine ${this.name} is already running`);
 
         this.abortController = new AbortController();
 
         const handleOnError = (err: Error) => {
             this.logger.error(`Error running task: ${err?.message || err}`);
-            this.#eventDispatcher(routineEvents.routineError, {error: err});
+            this.#eventDispatcher(routineEvents.routineError, { error: err });
         }
 
         this.isRunning = true;
@@ -329,8 +385,10 @@ export class Routine extends EventEmitter implements RoutineInterface {
                 else
                     await runInParallel();
 
-                this.logger.info("Routine completed successfully");
-                this.#eventDispatcher(routineEvents.routineCompleted);
+                if (!this.abortController || !this.abortController.signal.aborted) {
+                    this.logger.info("Routine completed successfully");
+                    this.#eventDispatcher(routineEvents.routineCompleted);
+                }
                 resolve();
             } catch (e) {
                 this.logger.error(`Routine ended with error: ${e?.message || e}`);
@@ -362,14 +420,15 @@ export class Routine extends EventEmitter implements RoutineInterface {
             id: this.id,
             name: this.name,
             description: this.description,
+            status: this.status,
             enabled: this.enabled,
             runInSync: this.runInSync,
             continueOnError: this.continueOnError,
             isRunning: this.isRunning,
             taskTimeout: this.taskTimeout,
             hidden: this.hidden,
-            triggers: this.triggers.map(trigger => trigger.toJson()),
-            tasks: this.tasks.map(task => task.toJson())
+            triggersId: this.triggers.map(trigger => trigger.id),
+            tasksId: this.tasks.map(task => task.id)
         }
     }
 

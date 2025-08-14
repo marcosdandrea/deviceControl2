@@ -1,6 +1,5 @@
 import { Trigger } from '../..';
-import { TriggerType } from '@common/types/trigger.type';
-import { TriggerTypes } from '..';
+import { TriggerType, TriggerTypes } from '@common/types/trigger.type';
 import triggerEvents from '@common/events/trigger.events';
 
 interface OnStartTriggerOptions extends TriggerType {

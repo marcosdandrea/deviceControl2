@@ -1,0 +1,100 @@
+import { projectType } from "@common/types/project.types";
+
+export const dummyProjectData =
+    {
+        id: "dummy-project",
+        appVersion: "1.0.0",
+        name: "Dummy Project",
+        description: "This is a dummy project for testing purposes.",
+        createdAt: new Date("2024-01-01T00:00:00Z"),
+        updatedAt: new Date("2024-01-01T00:00:00Z"),
+        routines: [
+            {
+                id: "routine-1",
+                name: "Routine 1",
+                description: "This is a dummy routine for testing purposes.",
+                tasksId: ["task-1"],
+                triggersId: ["apiTrigger-1"],
+                enabled: true,
+                autoCheckConditionEveryMs: false
+            },
+            {
+                id: "routine-2",
+                name: "Routine 2",
+                description: "This routine will trigger when routine 1 is completed.",
+                tasksId: ["task-1"],
+                triggersId: ["routineEventTrigger-1"],
+                enabled: true,
+            },
+            {
+                id: "routine-3",
+                name: "Routine 3",
+                description: "This routine will trigger when routine 1 is aborted.",
+                tasksId: ["task-1"],
+                triggersId: ["routineEventTrigger-2"],
+                enabled: true,
+            }
+        ],
+        triggers: [
+            {
+                id: "apiTrigger-1",
+                type: "api",
+                name: "API Trigger 1",
+                reArmOnTrigger: true,
+                description: "This is a dummy API trigger for testing purposes.",
+                params: {
+                    endpoint: "/api/dummy-endpoint",
+                }
+            },
+            {
+                id: "routineEventTrigger-1",
+                type: "onRoutineEvent",
+                name: "Routine Event Trigger 1",
+                reArmOnTrigger: true,
+                description: "This is a dummy routine event trigger for testing purposes.",
+                params: {
+                    routineId: "routine-1",
+                    routineEvent: "routine:completed"
+                }
+            },
+            {
+                id: "routineEventTrigger-2",
+                type: "onRoutineEvent",
+                name: "Routine Event Trigger 2",
+                reArmOnTrigger: true,
+                description: "This is a dummy routine event trigger for testing purposes.",
+                params: {
+                    routineId: "routine-1",
+                    routineEvent: "routine:aborted"
+                }
+            }
+        ],
+        tasks: [
+            {
+                id: "task-1",
+                name: "Task 1",
+                description: "Waits 5000 seconds and sends UDP and expects a response",
+                job: {
+                    id: "job-1",
+                    name: "Wait",
+                    type: "waitJob",
+                    params: {
+                        time: 5000
+                    }
+                },
+                condition: {
+                    id: "condition-1",
+                    name: "Wait for UDP Response",
+                    type: "udpAnswer",
+                    timeoutValue: 10000,
+                    description: "Waits for a UDP response",
+                    params: {
+                        ip: "127.0.0.1",
+                        port: 12345,
+                        message: "Hello",
+                        answer: "Hi"
+                    }
+                }
+            }
+        ],
+    } as projectType;

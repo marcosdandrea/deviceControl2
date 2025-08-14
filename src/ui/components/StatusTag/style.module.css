@@ -1,0 +1,14 @@
+.statusTag{
+    height: 100%;
+    width: 0.5rem;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.iconContainer{
+    height: 100%;
+    width: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

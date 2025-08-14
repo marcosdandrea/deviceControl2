@@ -28,19 +28,19 @@ export class ConditionUDPAnswer extends Condition {
         } as ConditionType);
 
         const ipMask = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        if (!options.ip || !ipMask.test(options.ip))
+        if (!options.params.ip || !ipMask.test(options.params.ip))
             throw new Error("Ip address must be a valid IPv4 address");
-        if (typeof options.port !== 'number' || options.port < 0 || options.port > 65535)
+        if (typeof options.params.port !== 'number' || options.params.port < 0 || options.params.port > 65535)
             throw new Error("Port must be a number between 0 and 65535");
-        if (!options.message || typeof options.message !== 'string')
+        if (!options.params.message || typeof options.params.message !== 'string')
             throw new Error("Message must be a string");
-        if (!options.answer || typeof options.answer !== 'string')
+        if (!options.params.answer || typeof options.params.answer !== 'string')
             throw new Error("Answer must be a string");
 
-        this.ip = options.ip;
-        this.port = options.port;
-        this.message = options.message;
-        this.answer = options.answer;
+        this.ip = options.params.ip;
+        this.port = options.params.port;
+        this.message = options.params.message;
+        this.answer = options.params.answer;
     }
 
     protected async doEvaluation({ abortSignal }: { abortSignal: AbortSignal }): Promise<boolean> {
@@ -81,6 +81,7 @@ export class ConditionUDPAnswer extends Condition {
             const buffer = Buffer.from(this.message);
             socket.send(buffer, this.port, this.ip, (err) => {
                 if (err) {
+                    console.log (`Error sending message: ${err.message}`);
                     onAbort();
                     reject(err);
                 }

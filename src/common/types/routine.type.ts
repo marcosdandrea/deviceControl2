@@ -6,17 +6,19 @@ type commonRoutineProps = {
     id?: id;
     name: name;
     description?: description;
-    enabled?: boolean;
+    enabled: boolean;
     runInSync?: boolean;
     continueOnError?: boolean;
     taskTimeout?: number | false;
     isRunning?: boolean;
     hidden?: boolean;
+    status?: string;
+    autoCheckConditionEveryMs?: number | false;
 }
 
 export interface RoutineType extends commonRoutineProps {
-    triggers?: TriggerType[];
-    tasks?: TaskType[];
+    triggersId?: string[];
+    tasksId?: string[];
 }
 
 export interface RoutineInterface extends commonRoutineProps {
@@ -33,3 +35,5 @@ export interface RoutineInterface extends commonRoutineProps {
     abort: (cause: string) => void;
     toJson: () => RoutineType;
 }
+
+export type RoutineStatus = "running" | "completed" | "aborted" | "failed" | "unknown";

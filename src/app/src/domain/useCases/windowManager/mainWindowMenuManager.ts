@@ -30,7 +30,7 @@ const bindEvents = (events: string[]) => {
 
 bindEvents([
     projectEvents.created,
-    projectEvents.opened,
+    projectEvents.loaded,
     projectEvents.closed,
 ])
 

@@ -9,6 +9,7 @@ export type TriggerType = {
     type?: string;
     reArmOnTrigger?: boolean;
     triggered?: boolean;
+    params?: any; // Agregar esta línea
 }
 
 export interface TriggerInterface extends TriggerType, EventEmitter {
@@ -16,3 +17,13 @@ export interface TriggerInterface extends TriggerType, EventEmitter {
     disarm: () => void;
     toJson: () => TriggerType;
 }
+
+export const TriggerTypes = {
+    api: "api",
+    endpoint: "endpoint",
+    cron: "cron",
+    tcp: "tcp",
+    udp: "udp",
+    onStart: "onStart",
+    onRoutineEvent: "onRoutineEvent",
+} as const;

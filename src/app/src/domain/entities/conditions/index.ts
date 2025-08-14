@@ -11,6 +11,7 @@ export class Condition extends EventEmitter implements ConditionInterface {
     type: string;
     timeoutValue: number;
     timeout: NodeJS.Timeout | null = null;
+    params: Record<string, any>;
 
     logger: Log
 
@@ -32,6 +33,10 @@ export class Condition extends EventEmitter implements ConditionInterface {
 
         this.timeoutValue = props?.timeoutValue || 5000; // Default timeout is 5000ms (5 seconds)
 
+        if (props?.params && typeof props.params !== 'object')
+            throw new Error("Condition params must be an object");
+        this.params = props.params || {};
+        
         this.logger = new Log(`Condition "${this.name}"`, true);
         this.logger.info(`Condition created with ID "${this.id}"`);
 
@@ -99,7 +104,8 @@ export class Condition extends EventEmitter implements ConditionInterface {
             name: this.name,
             description: this.description,
             type: this.type,
-            timeoutValue: this.timeoutValue
+            timeoutValue: this.timeoutValue,
+            params: this.params || {}
         };
     }
 

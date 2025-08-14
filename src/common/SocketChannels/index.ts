@@ -1,6 +1,8 @@
 
 const SocketChannels = {
     getCurrentProject: 'getCurrentProject',
+    updateProject: 'updateProject',
+    loadProject: 'loadProject',
 };
 
 export default SocketChannels;

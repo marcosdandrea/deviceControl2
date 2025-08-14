@@ -2,6 +2,7 @@
 import React, { createContext } from 'react';
 import { io } from "socket.io-client";
 import { useEffect, useState } from 'react';
+import { Logger } from '@helpers/logger';
 
 export const SocketIOContext = createContext(null);
 
@@ -14,12 +15,12 @@ const SocketIOProvider = ({ children, mountComponentsOnlyWhenConnect = false }) 
         const newSocket = io(socketURL);
 
         newSocket.on("connect", () => {
-            console.log("Connected to Socket.IO server");
+            Logger.log("Connected to Socket.IO server");
             setSocket(newSocket);
         });
 
         newSocket.on("disconnect", () => {
-            console.log("Disconnected from Socket.IO server");
+            Logger.log("Disconnected from Socket.IO server");
             setSocket(null);
         });
 
@@ -30,12 +31,12 @@ const SocketIOProvider = ({ children, mountComponentsOnlyWhenConnect = false }) 
         };
     }, []);
 
-    const emit = (event: string, data?: any) => {
+    const emit = (event: string, data?: any, cb?: Function) => {
         if (socket) {
-            socket.emit(event, data);
-            console.log(`Emitted event: ${event}`, data);
+            socket.emit(event, data, cb);
+            Logger.log(`Emitted event: ${event}`, data);
         } else {
-            console.error("Socket is not connected");
+            Logger.error("Socket is not connected");
         }
     };
 

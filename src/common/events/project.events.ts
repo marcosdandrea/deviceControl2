@@ -1,6 +1,6 @@
 export default {
     created: "project:created",
-    opened: "project:opened",
+    loaded: "project:loaded",
     saved: "project:saved",
     closed: "project:closed",
     routineAdded: "project:routineAdded",

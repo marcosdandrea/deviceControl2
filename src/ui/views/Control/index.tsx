@@ -1,12 +1,16 @@
 import React from 'react';
+import RoutineList from './components/RoutineList';
+import ProjectContextProvider from '@contexts/projectContextProvider';
+import ProjectLoader from './components/ProjectLoader';
 
 const Control = () => {
+
     return (
-        <div>
-            <h1>Control UI</h1>
-            <p>Esta es la página de Control</p>
-        </div>
+        <ProjectContextProvider>
+            <ProjectLoader/>
+            <RoutineList />
+        </ProjectContextProvider>
     );
 }
- 
+
 export default Control;

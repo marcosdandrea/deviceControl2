@@ -1,6 +1,6 @@
 import { TriggerType } from "@common/types/trigger.type";
 import { Trigger } from "../..";
-import { TriggerTypes } from "..";
+import { TriggerTypes } from "@common/types/trigger.type.js";
 import triggerEvents from "@common/events/trigger.events";
 
 interface cronTriggerType extends TriggerType {

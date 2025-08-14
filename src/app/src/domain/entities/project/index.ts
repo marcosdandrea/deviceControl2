@@ -42,6 +42,9 @@ export class Project extends EventEmitter implements ProjectInterface {
 
     logger: Log
 
+    private _anyListeners: Function[];
+
+
     constructor(props: ProjectConstructor) {
 
         if (Project.Instance) {
@@ -49,6 +52,7 @@ export class Project extends EventEmitter implements ProjectInterface {
         }
 
         super();
+        this._anyListeners = [];
         this.id = props?.id || crypto.randomUUID(); // Generate a unique ID if not provided
         this.name = props?.name || "New Project";
         this.filePath = props?.filePath || null; // Optional file path for the project
@@ -76,23 +80,44 @@ export class Project extends EventEmitter implements ProjectInterface {
         if (Project.Instance) 
             throw new Error("Project instance already exists. Use Project.getInstance() to access it.");
         
-        return new Project(props);
+        const project = new Project(props);
+        project.logger.info("New project instance created");
+        project.dispatchEvent(projectEvents.created, project);
+        return project;
     }
 
-    close(): void {
+    static close(): void {
         if (!Project.Instance) 
             return null
 
-        this.dispatchEvent(projectEvents.closed);
+        Project.Instance.dispatchEvent(projectEvents.closed);
+        Project.Instance.logger.info("Project instance closed");
         Project.Instance.removeAllListeners(); // Clean up event listeners
         Project.Instance = null; // Set the instance to null
         return null
+    }
+
+    onAny(listener) {
+        this._anyListeners.push(listener);
+        return this;
+    }
+
+    offAny(listener) {
+        this._anyListeners = this._anyListeners.filter(l => l !== listener);
+        return this;
     }
 
     protected dispatchEvent(eventName: string, payload?: any): void {
         if (!eventName || typeof eventName !== "string")
             throw new Error("Event name must be a valid string");
         this.emit(eventName, payload);
+        for (const listener of this._anyListeners) {
+            try {
+                listener(eventName, payload);
+            } catch (err) {
+                this.emit('error', err);
+            }
+        }
     }
 
     setName(name: string): void {

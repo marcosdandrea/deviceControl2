@@ -12,11 +12,12 @@
     "paths": {
       "@common/*": ["src/common/*"],
       "@components/*": ["src/ui/components/*"],
-      "@hooks/*": ["src/ui/views/Builder/hooks/*"],
+      "@helpers/*": ["src/ui/helpers/*"],
+      "@hooks/*": ["src/ui/hooks/*"],
       "@views/*": ["src/ui/views/*"],
       "@stores/*": ["src/ui/stores/*"],
       "@ipc/*": ["src/ui/ipc/*"],
-      "@contexts/*": ["src/ui/contexts/*"]
+      "@contexts/*": ["src/ui/contexts/*"],
     },
   },
   "include": ["src/ui", "src/common"],
