@@ -130,12 +130,7 @@ export class Job extends EventEmitter implements JobInterface {
 
         // Usamos esta promesa para abortar desde Promise.race
         const abortPromise = new Promise<void>((_, reject) => {
-            abortSignal.addEventListener("abort", () => {
-                this.abortController?.abort();
-                this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
-                this.log.warn(`Job "${this.name}" execution was aborted`);
-                reject(new Error(`Job "${this.name}" was aborted`));
-            }, { once: true });
+            abortSignal.addEventListener("abort", handleOnAbort, { once: true });
         });
 
         try {

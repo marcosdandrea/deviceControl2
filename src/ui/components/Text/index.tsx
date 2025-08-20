@@ -1,11 +1,11 @@
 import React from 'react';
-import style from './style.module.css';
+import styles from './style.module.css';
 
-const Text = ({text, color, size, fontFamily, uppercase} : {text: string, color?: string, size?: number, fontFamily?: string, uppercase?: boolean}) => {
+const Text = ({text, color, size, fontFamily, uppercase, style} : {text: string, color?: string, size?: number, fontFamily?: string, uppercase?: boolean, style?: React.CSSProperties}) => {
     return (
         <span 
-            className={style.text}
-            style={{ color, fontSize: size, fontFamily}}>
+            className={styles.text}
+            style={{ color, fontSize: size, fontFamily, ...style}}>
             {uppercase ? text.toUpperCase() : text}
         </span>
     );

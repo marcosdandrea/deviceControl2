@@ -9,10 +9,11 @@ type commonRoutineProps = {
     enabled: boolean;
     runInSync?: boolean;
     continueOnError?: boolean;
-    taskTimeout?: number | false;
+    routineTimeout?: number | false;
     isRunning?: boolean;
     hidden?: boolean;
     status?: string;
+    failed?: boolean;
     autoCheckConditionEveryMs?: number | false;
 }
 

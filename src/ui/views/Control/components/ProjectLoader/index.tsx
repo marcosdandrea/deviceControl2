@@ -9,18 +9,23 @@ const ProjectLoader = () => {
     const { setProject } = useContext(ProjectContext);
     const lastEvent = useProjectEvents([
         projectEvents.closed,
-        projectEvents.loaded
+        projectEvents.loaded,
     ]);
 
     useEffect(() => {
+
         if (lastEvent?.event == projectEvents.closed){
             console.log("Project Closed");
             setProject(null);
             return;
         }
 
-        console.log("ProjectLoader project:", project);
-        setProject(project);
+        if (lastEvent?.event == projectEvents.loaded){
+            console.log("Project Loaded");
+            setProject(lastEvent.data);
+            return;
+        }
+
     }, [project, lastEvent])
 
     return ( <></> );

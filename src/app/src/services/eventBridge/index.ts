@@ -29,6 +29,6 @@ export const sendToClients = async (eventName: string, payload: any) => {
     }
 
     io.emit(eventName, payload);
-    log.info(`Event "${eventName}" sent to clients with payload:`, payload);
+    log.info(`Event "${eventName}" sent to clients with payload:`);
 }
 

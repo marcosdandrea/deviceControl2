@@ -3,6 +3,7 @@
     width: 0.5rem;
     transition: all 0.2s ease;
     overflow: hidden;
+    z-index: 2;
 }
 
 .iconContainer{

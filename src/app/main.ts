@@ -24,8 +24,6 @@ app.on('ready', async () => {
   const {createMainWindow} = await import('@domain/useCases/windowManager/index.js')
   await createMainWindow()
   
-  const {registerEventBridge} = await import('@src/services/eventBridge/index.js')
-  await registerEventBridge()
   log.info('App is ready');
 
 });

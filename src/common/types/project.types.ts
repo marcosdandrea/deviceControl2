@@ -12,12 +12,14 @@ export type projectType = {
     routines?: RoutineType[];
     triggers?: TriggerType[];
     tasks?: TaskType[];
+    password?: string | null; // Optional password for the project
 }
 
 
 export interface projectInterface extends projectType {
     triggers?: TriggerType[];
     tasks?: TaskType[];
+    setPassword: (password: string) => void; // Method to set the project password
     addRoutine: (routine: RoutineInterface) => void; // Method to add a routine to the project
     getRoutines: () => RoutineInterface[]; // Method to get all routines in the project
     removeRoutine: (routineId: string) => void; // Method to remove a routine

@@ -93,7 +93,7 @@ const PlayRoutineButton = ({ event, enabled }: { event: { event: string, data: a
         <div
             style={{
                 opacity: showButton ? 1 : 0,
-                pointerEvents: showButton ? "auto" : "none",
+                pointerEvents: showButton ? "inherit" : "none",
             }}>
             <Button
                 enabled={enabled}

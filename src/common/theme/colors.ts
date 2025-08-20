@@ -24,6 +24,7 @@ export class Color {
     static violet = '#8a2be2';
     static yellow = '#ffff00';
     static black = '#000000';
+    static white = '#ffffff';
 
     static textPrimary = '#212529';
     static textSecondary = '#838586ff';

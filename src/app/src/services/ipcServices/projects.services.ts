@@ -13,12 +13,12 @@ export const getCurrentProject = async (socket: Socket, io: SocketIO.Server) => 
     const { getCurrentProject } = await import('@src/domain/useCases/project/index.js');
     try {
         const project = getCurrentProject();
-        const loadedProjectData = JSON.stringify(project.toJson(), null, 2);
-        socket.emit(SocketChannels.updateProject, { projectData: loadedProjectData });
-        log.info('Current project sent to client:');
+        const loadedProjectData = project.toJson();
+        socket.emit(projectEvents.loaded, loadedProjectData );
+        log.info('Current project sent to client');
     } catch (error) {
         log.error('Error getting current project:', error.message);
-        socket.emit(SocketChannels.updateProject, { error: error.message });
+        socket.emit(projectEvents.loaded, { error: error.message });
     }
 }
 

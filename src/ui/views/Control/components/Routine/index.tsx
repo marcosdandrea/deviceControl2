@@ -10,6 +10,7 @@ import { RoutineContextProvider } from "@contexts/routineContextProvider";
 import StatusLabel from "./components/StatusLabel";
 import useRoutineEvents from "@hooks/useRoutineEvents";
 import routineEvents from "@common/events/routine.events";
+import ExpansiveWave from "./components/RoutineStatusTag/component/ExpansiveWave";
 
 
 const Routine = ({ routineData }: { routineData: RoutineType }) => {
@@ -27,23 +28,26 @@ const Routine = ({ routineData }: { routineData: RoutineType }) => {
             <div
                 className={routineData.enabled ? style.routine : style.routineDisabled}>
                 <RoutineStatusTag event={lastEvent} />
-                <div
-                    style={{
-                        display: routineData.hidden ? "none" : "flex",
-                    }}
-                    className={style.routineInfo}>
-                    <Text text={routineData.name} fontFamily={"Open Sans SemiBold"} color={Color.textPrimary} uppercase={true} size={18} />
-                    <Text text={routineData.description} size={14} fontFamily="Open Sans Italic" />
-                    <StatusLabel event={lastEvent} />
+                <div className={style.routineContent}>
+                    <div
+                        style={{
+                            display: routineData.hidden ? "none" : "flex",
+                        }}
+                        className={style.routineInfo}>
+                        <Text text={routineData.name} fontFamily={"Open Sans SemiBold"} color={Color.textPrimary} uppercase={true} size={18} />
+                        <Text text={routineData.description} size={14} fontFamily="Open Sans Italic" />
+                        <StatusLabel event={lastEvent} />
+                    </div>
+                    <div className={style.routineActions}>
+                        {
+                            <PlayRoutineButton
+                                event={lastEvent}
+                                enabled={routineData.enabled} />
+                        }
+                        <ActivityLogButton onClick={() => { }} enabled={true} />
+                    </div>
                 </div>
-                <div className={style.routineActions}>
-                    {
-                        <PlayRoutineButton 
-                            event={lastEvent} 
-                            enabled={routineData.enabled} />
-                    }
-                    <ActivityLogButton onClick={() => { }} enabled={true} />
-                </div>
+                <ExpansiveWave event={lastEvent} />
             </div>
         </RoutineContextProvider>
     );

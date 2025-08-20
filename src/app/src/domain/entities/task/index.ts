@@ -197,13 +197,18 @@ export class Task extends EventEmitter implements TaskInterface {
             this.log.info(`Retrying task ${this.name} in ${this.waitBeforeRetry}ms.`);
 
             await new Promise((resolve, reject) => {
-                const timeout = setTimeout(resolve, this.waitBeforeRetry);
+                const timeout = setTimeout(()=>{
+                    abortSignal.removeEventListener('abort', onAbort);
+                    return resolve(undefined);
+                }, this.waitBeforeRetry);
+
+                const onAbort = () => {
+                    clearTimeout(timeout);
+                    abortSignal.removeEventListener('abort', onAbort);
+                    reject(new Error(`Task ${this.name} aborted during retry wait`));
+                };
+                
                 if (abortSignal) {
-                    const onAbort = () => {
-                        clearTimeout(timeout);
-                        abortSignal.removeEventListener('abort', onAbort);
-                        reject(new Error(`Task ${this.name} aborted during retry wait`));
-                    };
                     abortSignal.addEventListener('abort', onAbort);
                 }
             });

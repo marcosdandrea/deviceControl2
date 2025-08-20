@@ -1,3 +1,6 @@
+import routineEvents from '@common/events/routine.events';
+import { Color } from '@common/theme/colors';
+import { RoutineStatus } from '@common/types/routine.type';
 import React, { createContext, useState } from 'react';
 
 export const RoutineContext = createContext(null);
@@ -5,8 +8,27 @@ export const RoutineContext = createContext(null);
 export const RoutineContextProvider = ({ children, routine }) => {
     //const [routine, setRoutine] = useState(null);
 
+        const getColor = (status: RoutineStatus) => {
+        switch (status) {
+            case routineEvents.routineAutoCheckingConditions:
+                return Color.working;
+            case routineEvents.routineAborted:
+                return Color.aborted;
+            case routineEvents.routineCompleted:
+                return Color.completed;
+            case routineEvents.routineFailed:
+                return Color.failed;
+            case routineEvents.routineRunning:
+                return Color.working;
+            case "unknown":
+                return Color.unknown;
+            default:
+                return Color.unknown;
+        }
+    }
+
     return (
-        <RoutineContext.Provider value={{ routine }}>
+        <RoutineContext.Provider value={{ routine, getColor }}>
             {children}
         </RoutineContext.Provider>
     );

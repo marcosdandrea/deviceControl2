@@ -8,6 +8,7 @@ export const dummyProjectData =
         description: "This is a dummy project for testing purposes.",
         createdAt: new Date("2024-01-01T00:00:00Z"),
         updatedAt: new Date("2024-01-01T00:00:00Z"),
+        password: "1102",
         routines: [
             {
                 id: "routine-1",
@@ -15,6 +16,7 @@ export const dummyProjectData =
                 description: "This is a dummy routine for testing purposes.",
                 tasksId: ["task-1"],
                 triggersId: ["apiTrigger-1"],
+                routineTimeout: 90000,
                 enabled: true,
                 autoCheckConditionEveryMs: false
             },
@@ -30,9 +32,17 @@ export const dummyProjectData =
                 id: "routine-3",
                 name: "Routine 3",
                 description: "This routine will trigger when routine 1 is aborted.",
-                tasksId: ["task-1"],
+                tasksId: ["task-0"],
                 triggersId: ["routineEventTrigger-2"],
                 enabled: true,
+            },
+            {
+                id: "routine-4",
+                name: "Routine 4",
+                description: "This routine will trigger if routine 1 fails.",
+                tasksId: ["task-0"],
+                triggersId: ["routineEventTrigger-3"],
+                enabled: false,
             }
         ],
         triggers: [
@@ -67,13 +77,39 @@ export const dummyProjectData =
                     routineId: "routine-1",
                     routineEvent: "routine:aborted"
                 }
+            },
+            {
+                id: "routineEventTrigger-3",
+                type: "onRoutineEvent",
+                name: "Routine Event Trigger 3",
+                reArmOnTrigger: true,
+                description: "This is a dummy routine event trigger for testing purposes.",
+                params: {
+                    routineId: "routine-1",
+                    routineEvent: "routine:failed"
+                }
             }
         ],
         tasks: [
             {
+                id: "task-0",
+                name: "Task 0",
+                description: "This is a dummy task for testing purposes. It just waits 5 seconds.",
+                job: {
+                    id: "job-0",
+                    name: "Wait",
+                    type: "waitJob",
+                    params: {
+                        time: 5000
+                    }
+                }
+            },
+            {
                 id: "task-1",
                 name: "Task 1",
                 description: "Waits 5000 seconds and sends UDP and expects a response",
+                retries: 3,
+                waitBeforeRetry: 15000,
                 job: {
                     id: "job-1",
                     name: "Wait",

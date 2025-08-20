@@ -6,21 +6,24 @@ import { Logger } from '@helpers/logger';
 
 export const SocketIOContext = createContext(null);
 
-const SocketIOProvider = ({ children, mountComponentsOnlyWhenConnect = false }) => {
+const SocketIOProvider = ({ children, mountComponentsOnlyWhenConnect = false, disconnectionViewComponent }) => {
     const socketURL = `http://${window.location.hostname}:3000`;
 
     const [socket, setSocket] = useState(null);
+    const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
         const newSocket = io(socketURL);
 
         newSocket.on("connect", () => {
             Logger.log("Connected to Socket.IO server");
+            setIsConnected(true);
             setSocket(newSocket);
         });
 
         newSocket.on("disconnect", () => {
             Logger.log("Disconnected from Socket.IO server");
+            setIsConnected(false);
             setSocket(null);
         });
 
@@ -28,6 +31,7 @@ const SocketIOProvider = ({ children, mountComponentsOnlyWhenConnect = false }) 
         return () => {
             newSocket.close();
             setSocket(null);
+            setIsConnected(false);
         };
     }, []);
 
@@ -41,10 +45,10 @@ const SocketIOProvider = ({ children, mountComponentsOnlyWhenConnect = false }) 
     };
 
     return (
-        <SocketIOContext.Provider value={{ socket, emit }}>
+        <SocketIOContext.Provider value={{ socket, emit, isConnected }}>
             {
                 mountComponentsOnlyWhenConnect && !socket
-                    ? <div>Waiting for connection...</div>
+                    ? disconnectionViewComponent
                     : children
             }
         </SocketIOContext.Provider>

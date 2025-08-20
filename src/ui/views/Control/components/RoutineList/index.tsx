@@ -11,11 +11,13 @@ const RoutineList = () => {
         return null
     return (
         <div className={style.routineList}>
-            {
-                project.routines.map((routine) =>
-                    <Routine key={routine.id} routineData={routine} />
-                )
-            }
+            <div className={style.routinesContainer}>
+                {
+                    project.routines.map((routine) =>
+                        <Routine key={routine.id} routineData={routine} />
+                    )
+                }
+            </div>
         </div>
     );
 }

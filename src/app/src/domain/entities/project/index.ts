@@ -21,6 +21,7 @@ interface ProjectConstructor {
     triggers?: Trigger[];
     tasks?: Task[];
     filePath?: string; // Optional file path for the project
+    password?: string | null; // Optional password for the project
 }
 
 export class Project extends EventEmitter implements ProjectInterface {
@@ -35,6 +36,7 @@ export class Project extends EventEmitter implements ProjectInterface {
     triggers: Trigger[];
     tasks: Task[];
     filePath?: string; // Optional file path for the project
+    password?: string | null;
 
     private static readonly appVersion: string = App.getAppVersion()
     private unsavedChanges: boolean = false; // Flag to track unsaved changes
@@ -62,11 +64,16 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.routines = props.routines || [];
         this.triggers = props.triggers || []; // Replace 'any' with actual TriggerType
         this.tasks = props.tasks || []; // Replace 'any' with actual TaskType
+        this.password = props.password || null;
         this.logger = new Log(`Project "${this.name}" (${this.id})`, true);
 
         this.logger.info("Project instance created");
 
         Project.Instance = this; // Set the singleton instance
+    }
+
+    setPassword(password: string) {
+        this.password = password;
     }
 
     static getInstance(): Project {
@@ -219,6 +226,7 @@ export class Project extends EventEmitter implements ProjectInterface {
             description: this.description,
             createdAt: this.createdAt,
             updatedAt: this.updatedAt,
+            password: this.password,
             routines: this.routines.map(routine => routine.toJson()),
             triggers: this.getTrigger().map(trigger => trigger.toJson()),
             tasks: this.getTask().map(task => task.toJson())
