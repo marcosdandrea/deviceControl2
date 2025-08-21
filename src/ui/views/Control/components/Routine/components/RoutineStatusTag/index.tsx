@@ -20,61 +20,52 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
         expand: false
     });
 
-    const updateExpandTag = (routineStatus) => {
+    const getExpandTag = (routineStatus: RoutineStatus) => {
 
         switch (routineStatus) {
             case routineEvents.routineRunning:
-                setExpandTag(true);
-                break;
+                return true;
             case routineEvents.routineCompleted:
-                setExpandTag(false);
-                break;
+                return false;
             case routineEvents.routineAutoCheckingConditions:
-                setExpandTag(true);
-                break;
+                return true;
             case routineEvents.routineAborted:
-                setExpandTag(false);
-                break;
+                return false;
             case routineEvents.routineFailed:
-                setExpandTag(false);
-                break;
-            case "unknown":
-                setExpandTag(false);
-                break;
+                return false;
+            case routineEvents.routineIdle:
+                return false;
             default:
-                setExpandTag(false);
+                return false;
         }
     }
 
-    const updateIcon = async (status: RoutineStatus) => {
+    const getIcon = (status: RoutineStatus): React.ReactNode => {
         switch (status) {
             case routineEvents.routineAutoCheckingConditions:
-                setIcon(<MdAutorenew size={22} className={style.rotatingIcon} />);
-                break;
+                return (<MdAutorenew size={22} className={style.rotatingIcon} />);
             case routineEvents.routineRunning:
-                setIcon(<MdAutorenew size={22} className={style.rotatingIcon} />)
-                break;
+                return (<MdAutorenew size={22} className={style.rotatingIcon} />);
             case routineEvents.routineCompleted:
-                setIcon(<MdDone size={22} />)
-                break;
+                return (<MdDone size={22} />);
             case routineEvents.routineAborted:
-                setIcon(<MdStopCircle size={22} />);
-                break;
+                return (<MdStopCircle size={22} />);
             case routineEvents.routineFailed:
-                setIcon(<MdError size={22} />);
-                break;
+                return (<MdError size={22} />);
             default:
-                setIcon(<MdHelp size={22} />);
+                return (<MdHelp size={22} />);
         }
     }
 
     useEffect(() => {
         if (!routine) return;
         const routineStatus = routine.status as RoutineStatus;
-        setColor(getColor(routineStatus));
-        updateIcon(routineStatus);
-        updateExpandTag(routineStatus);
-        console.log ("HERE!")
+        const newColor = getColor(routineStatus);
+        const newIcon = getIcon(routineStatus);
+        const newExpand = getExpandTag(routineStatus);
+        setColor(newColor);
+        setIcon(newIcon);
+        setExpandTag(newExpand);
     }, [routine]);
 
     useEffect(() => {
@@ -84,23 +75,23 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
         console.log("RoutineStatusTag", eventStatus);
 
         if (eventStatus === routineEvents.routineIdle) {
-            console.log("Reverting to previous status", prevStatus);
             setColor(prevStatus.color);
             setIcon(prevStatus.icon);
-            setExpandTag(prevStatus.expand);
+            setExpandTag(false);
             return;
         }
 
         // For statuses other than idle, update UI
         const newColor = getColor(eventStatus);
+        const newIcon = getIcon(eventStatus);
+        const newExpand = getExpandTag(eventStatus);
         setColor(newColor);
-        updateIcon(eventStatus);
-        updateExpandTag(eventStatus);
+        setIcon(newIcon);
+        setExpandTag(newExpand);
 
         // Only update prevStatus if the event is not Auto Checking Conditions
         if (eventStatus !== routineEvents.routineAutoCheckingConditions) {
-            setPrevStatus({ color: newColor, icon: icon, expand: expandTag });
-            console.log("Updated previous status", { color: newColor, icon, expand: expandTag });
+            setPrevStatus({ color: newColor, icon: newIcon, expand: newExpand });
         }
 
     }, [event]);

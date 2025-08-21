@@ -10,6 +10,8 @@
     "dev": "npm-run-all --parallel dev:react dev:electron ",
     "dev:react": "vite",
     "dev:electron": "node build-electron.mjs && cross-env NODE_ENV=development electron . --trace-warnings",
+    "dev:headless": "npm-run-all --parallel dev:react dev:electron:headless",
+    "dev:electron:headless": "cross-env HEADLESS=true node build-electron.mjs && cross-env NODE_ENV=development HEADLESS=true node . --trace-warnings",
     "build:vite": "vite build",
     "build:electron": "node build-electron.mjs",
     "preview": "vite preview",

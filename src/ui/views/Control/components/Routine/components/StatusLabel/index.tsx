@@ -27,13 +27,10 @@ const StatusLabel = ({event}) => {
             case routineEvents.routineRunning:
                 setStatus("En Ejecución");
                 break;
-            case routineEvents.routineIdle:
-                break;
             case "unknown":
                 setStatus("Desconocido");
                 break;
             default:
-                setStatus("Desconocido");
                 break;
         }
     }
@@ -49,8 +46,10 @@ const StatusLabel = ({event}) => {
             setStatus(prevStatus);
             return;
         }
+        if (event.event !== routineEvents.routineAutoCheckingConditions && event.event !== routineEvents.routineIdle) {
+            setPrevStatus(status);
+        }
         setStatusLabel(event.event);
-        setPrevStatus(status);
     }, [event]);
 
     return (

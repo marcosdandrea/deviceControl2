@@ -125,12 +125,31 @@ export class Server {
     return this.io;
   }
 
+  setStaticFiles(path: string) {
+    log.info(`Serving static files from: ${path}`);
+
+    this.app.use(express.static(path));
+
+    this.app.get('/control', (_: express.Request, res: express.Response) => {
+      res.sendFile('index.html', { root: path });
+    });
+
+    this.app.get('/builder', (_: express.Request, res: express.Response) => {
+      res.sendFile('index.html', { root: path });
+    });
+
+  }
+
   bindRoute(route: string, callback: Function) {
-    const routeRegex = /^\/[a-zA-Z0-9_\/-]*$/;
+    const routeRegex = /^\/[a-zA-Z0-9_\/\-\*]*$/;
     if (!routeRegex.test(route)) {
       throw new Error(
-        'Invalid route format. It must start with a slash and contain only alphanumeric characters, underscores, slashes, or dashes.'
+        'Invalid route format. It must start with a slash and contain only alphanumeric characters, underscores, slashes, dashes, or asterisks.'
       );
+    }
+
+    if (route.startsWith('/builder') || route.startsWith('/control')) {
+      throw new Error('Routes starting with /builder or /control are reserved and cannot be bound.');
     }
 
     if (this.routes.has(route)) {
@@ -141,9 +160,9 @@ export class Server {
       try {
         log.info(`Received request on route: ${route}`);
         callback(_req, res);
-        if (!res.headersSent) 
+        if (!res.headersSent)
           res.status(200).send(`Handled route: ${route}`);
-        
+
       } catch (error) {
         log.error(`Error handling route ${route}:`, error);
         res.status(500).send(`Internal server error handling route ${route}`);
