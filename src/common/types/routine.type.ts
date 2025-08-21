@@ -37,4 +37,4 @@ export interface RoutineInterface extends commonRoutineProps {
     toJson: () => RoutineType;
 }
 
-export type RoutineStatus = "running" | "completed" | "aborted" | "failed" | "unknown";
+export type RoutineStatus = "running" | "checking" | "completed" | "aborted" | "failed" | "unknown";

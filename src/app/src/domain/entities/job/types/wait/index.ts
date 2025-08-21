@@ -77,15 +77,15 @@ export class WaitJob extends Job {
                     resolve();
                 }, time);
             });
-            cleanUpAbortListener();
-            return Promise.resolve();            
+            Promise.resolve();            
         } catch (error) {
             this.log.error(`Error in job "${this.name}": ${error.message}`);
             this.failed = true;
             this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
-            cleanUpAbortListener();
 
-            return Promise.reject(error);
+            Promise.reject(error);
+        } finally {
+            cleanUpAbortListener();
         }
     }
 

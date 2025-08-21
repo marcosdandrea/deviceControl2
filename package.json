@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "npm-run-all --parallel dev:react dev:electron ",
     "dev:react": "vite",
-    "dev:electron": "node build-electron.mjs && cross-env NODE_ENV=development electron .",
+    "dev:electron": "node build-electron.mjs && cross-env NODE_ENV=development electron . --trace-warnings",
     "build:vite": "vite build",
     "build:electron": "node build-electron.mjs",
     "preview": "vite preview",

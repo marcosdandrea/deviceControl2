@@ -7,6 +7,7 @@ import routineEvents from "@common/events/routine.events";
 const StatusLabel = ({event}) => {
     const { routineData } = useContext(RoutineContext);
     const [status, setStatus] = React.useState<string>("Desconocido");
+    const [prevStatus, setPrevStatus] = React.useState<string>("Desconocido");
 
     const setStatusLabel = (status: string) => {
 
@@ -26,6 +27,8 @@ const StatusLabel = ({event}) => {
             case routineEvents.routineRunning:
                 setStatus("En Ejecución");
                 break;
+            case routineEvents.routineIdle:
+                break;
             case "unknown":
                 setStatus("Desconocido");
                 break;
@@ -42,7 +45,12 @@ const StatusLabel = ({event}) => {
 
     useEffect(() => {
         if (!event) return;
+        if (event.event === routineEvents.routineIdle) {
+            setStatus(prevStatus);
+            return;
+        }
         setStatusLabel(event.event);
+        setPrevStatus(status);
     }, [event]);
 
     return (

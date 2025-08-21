@@ -6,6 +6,7 @@
     height: 2.5rem;
     border-radius: 5px;
     transition: all 0.1s ease;
+    user-select: none;
 }
 
 .disabled{

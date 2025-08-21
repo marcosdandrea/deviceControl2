@@ -16,6 +16,7 @@ export class Job extends EventEmitter implements JobInterface {
     abortController: AbortController | null = null;
     type: JobInterface["type"] = "generic"; // Default type, can be overridden in subclasses
     params: Record<string, any> = {};
+    #handleOnAbortTimeout: (() => void) | null = null;
 
     constructor(props: JobType) {
         super();
@@ -69,18 +70,22 @@ export class Job extends EventEmitter implements JobInterface {
                 this.removeAllListeners(jobEvents.jobFinished);
                 this.removeAllListeners(jobEvents.jobError);
                 this.removeAllListeners(jobEvents.jobAborted);
+                if (abortSignal && this.#handleOnAbortTimeout) {
+                    abortSignal.removeEventListener('abort', this.#handleOnAbortTimeout);
+                }
                 this.log.info(`Cleaned up job "${this.name}" listeners and timeout`);
             }
 
-            if (!this.enableTimoutWatcher)
-                this.timeoutTimer = null
-            else
+            if (!this.enableTimoutWatcher) {
+                this.timeoutTimer = null;
+            } else {
                 this.timeoutTimer = setTimeout(() => {
                     this.dispatchEvent(jobEvents.jobTimeout, { jobId: this.id });
                     this.abortController?.abort();
                     reject(new Error(`Job "${this.name}" timed out after ${this.timeout} ms`));
                     cleanUp();
                 }, this.timeout);
+            }
             
 
             // Resolve the promise if the job completes before timeout
@@ -96,14 +101,17 @@ export class Job extends EventEmitter implements JobInterface {
                 this.log.error(`Job "${this.name}" failed: ${error.message}`);
             });
 
+            this.#handleOnAbortTimeout = () => {
+                cleanUp();
+                this.log.warn(`Job "${this.name}" was aborted`);
+                this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
+                reject(new Error(`Job "${this.name}" was aborted`));
+                this.#handleOnAbortTimeout = null;
+            }
+
             // Handle job cancellation
             if (abortSignal) {
-                abortSignal.addEventListener('abort', () => {
-                    cleanUp();
-                    this.log.warn(`Job "${this.name}" was aborted`);
-                    this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
-                    reject(new Error(`Job "${this.name}" was aborted`));
-                });
+                abortSignal.addEventListener('abort', this.#handleOnAbortTimeout);
             }
         });
     }
@@ -128,7 +136,7 @@ export class Job extends EventEmitter implements JobInterface {
             return Promise.reject(new Error(`Job "${this.name}" was aborted before execution`))
         }
 
-        // Usamos esta promesa para abortar desde Promise.race
+        // Promise to handle abortion via abortSignal
         const abortPromise = new Promise<void>((_, reject) => {
             abortSignal.addEventListener("abort", handleOnAbort, { once: true });
         });
@@ -143,6 +151,8 @@ export class Job extends EventEmitter implements JobInterface {
             abortSignal.removeEventListener('abort', handleOnAbort);
             return Promise.resolve();
         } catch (error) {
+            // Clean abort listeners before leaving!
+            abortSignal.removeEventListener('abort', this.#handleOnAbortTimeout as EventListener);
             throw error;
         }
     }

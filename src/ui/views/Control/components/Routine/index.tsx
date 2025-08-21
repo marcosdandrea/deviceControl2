@@ -20,7 +20,8 @@ const Routine = ({ routineData }: { routineData: RoutineType }) => {
         routineEvents.routineAborted,
         routineEvents.routineRunning,
         routineEvents.routineFailed,
-        routineEvents.routineAutoCheckingConditions
+        routineEvents.routineAutoCheckingConditions,
+        routineEvents.routineIdle
     ])
 
     return (

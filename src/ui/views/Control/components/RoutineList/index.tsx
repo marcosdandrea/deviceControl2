@@ -13,6 +13,11 @@ const RoutineList = () => {
         <div className={style.routineList}>
             <div className={style.routinesContainer}>
                 {
+                    !project?.routines ? (
+                        <div className={style.noRoutines}>
+                            <p>No routines available.</p>
+                        </div>
+                    ) :
                     project.routines.map((routine) =>
                         <Routine key={routine.id} routineData={routine} />
                     )

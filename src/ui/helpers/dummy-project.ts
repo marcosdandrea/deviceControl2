@@ -8,7 +8,7 @@ export const dummyProjectData =
         description: "This is a dummy project for testing purposes.",
         createdAt: new Date("2024-01-01T00:00:00Z"),
         updatedAt: new Date("2024-01-01T00:00:00Z"),
-        password: "1102",
+        password: "",
         routines: [
             {
                 id: "routine-1",
@@ -18,7 +18,7 @@ export const dummyProjectData =
                 triggersId: ["apiTrigger-1"],
                 routineTimeout: 90000,
                 enabled: true,
-                autoCheckConditionEveryMs: false
+                autoCheckConditionEveryMs: 15000
             },
             {
                 id: "routine-2",

@@ -71,13 +71,12 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
     }
 
-    #setStatus(event: string) {
-        this.status = event;
-    }
-
-    #updateStatus(newStatus: string) {
-        if (this.status == newStatus) return;
-        this.#eventDispatcher(newStatus);
+    #setStatus(status: RoutineStatus): Boolean {
+        if (this.status === status)
+            return false
+        this.logger.info(`>>>>>>>>>>>>>>>>>> Routine status changed to ${status}`);
+        this.status = status
+        return true
     }
 
     async #autoCheckConditions() {
@@ -93,9 +92,19 @@ export class Routine extends EventEmitter implements RoutineInterface {
             this.#eventDispatcher(routineEvents.routineAutoCheckingConditions);
             if (!await this.checkAllTaskConditions())
                 throw new Error("Not all task conditions are met");
-            this.#updateStatus(routineEvents.routineCompleted);
+
+            if (this.#setStatus("completed"))
+                this.#eventDispatcher(routineEvents.routineCompleted);
+            else
+                this.#eventDispatcher(routineEvents.routineIdle);
+
         } catch (err) {
-            this.#updateStatus(routineEvents.routineFailed);
+            
+            if (this.#setStatus("failed"))
+                this.#eventDispatcher(routineEvents.routineFailed);
+            else
+                this.#eventDispatcher(routineEvents.routineIdle);
+
         } finally {
             if (typeof this.autoCheckConditionEveryMs !== "number") return;
             this.logger.info(`Auto checking conditions in ${this.autoCheckConditionEveryMs}ms`);
@@ -220,7 +229,6 @@ export class Routine extends EventEmitter implements RoutineInterface {
         }
         //this.eventManager.emit(event, newArgs);
         this.emit(event, newArgs);
-        this.#setStatus(event)
 
         for (const listener of this._anyListeners) {
             try {
@@ -278,7 +286,6 @@ export class Routine extends EventEmitter implements RoutineInterface {
         const abortController = new AbortController();
         const { signal: abortSignal } = abortController;
         const results = await Promise.all(tasksWithConditions.map(t => t.condition!.evaluate({ abortSignal })));
-        console.log("Condition results:", results);
         return results.every(res => res === true);
     }
 
@@ -299,7 +306,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
         this.isRunning = true;
         this.failed = false;
-        this.#eventDispatcher(routineEvents.routineRunning);
+        this.#setStatus("running");
+        this.#eventDispatcher(routineEvents.routineRunning, { routineId: this.id });
 
         const cleanOnFinish = () => {
             this.abortController = null;
@@ -341,32 +349,32 @@ export class Routine extends EventEmitter implements RoutineInterface {
             const runInParallel = async () => {
                 this.timeoutController = new AbortController();
                 const { signal: cancelSignal } = this.timeoutController;
-                
+
                 try {
                     if (this.continueOnError) {
                         this.logger.info("Running tasks in parallel with continueOnError...");
-                        
+
                         const result = await Promise.race([
                             Promise.allSettled(this.tasks.map(task => task.run({ abortSignal }))),
                             this.#abortSignalController(),
                             this.#taskTimeout({ cancelSignal })
                         ]) as PromiseSettledResult<void>[];
-                        
+
                         this.timeoutController.abort();
-                        
+
                         if (result.every((res) => res.status === 'fulfilled'))
                             this.logger.info(`Tasks completed: ${this.getTasks().map(task => task.name).join(', ')}`);
                         else
                             for (const res of result) {
-                        if (res.status === 'rejected') {
-                            this.logger.warn(`Task failed: ${res.reason}`);
-                            handleOnError(res.reason);
-                        } else {
-                            this.logger.info(`Task completed: ${res.value}`);
-                        }
-                    }
-                    
-                } else {
+                                if (res.status === 'rejected') {
+                                    this.logger.warn(`Task failed: ${res.reason}`);
+                                    handleOnError(res.reason);
+                                } else {
+                                    this.logger.info(`Task completed: ${res.value}`);
+                                }
+                            }
+
+                    } else {
                         this.logger.info("Running tasks in parallel without continueOnError...");
 
                         const result = await Promise.race([
@@ -392,19 +400,25 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
 
                 if (this.failed) {
-                    this.logger.error("Routine ended with errors");
-                    this.#eventDispatcher(routineEvents.routineFailed);
+                    if (this.#setStatus("failed")) {
+                        this.logger.error("Routine ended with errors");
+                        this.#eventDispatcher(routineEvents.routineFailed);
+                    }
                 } else if (!this.abortController || !this.abortController.signal.aborted) {
-                    this.logger.info("Routine completed successfully");
-                    this.#eventDispatcher(routineEvents.routineCompleted);
+                    if (this.#setStatus("completed")) {
+                        this.logger.info("Routine completed successfully");
+                        this.#eventDispatcher(routineEvents.routineCompleted);
+                    }
                 } else {
                     this.logger.warn("Routine was aborted");
                 }
 
                 resolve();
             } catch (e) {
-                this.logger.error(`Routine ended with error: ${e?.message || e}`);
-                this.#eventDispatcher(routineEvents.routineFailed);
+                if (this.#setStatus("failed")) {
+                    this.logger.error(`Routine ended with error: ${e?.message || e}`);
+                    this.#eventDispatcher(routineEvents.routineFailed);
+                }
                 reject(e);
             } finally {
                 cleanOnFinish();

@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import style from './style.module.css';
 import { RoutineContext } from '@contexts/routineContextProvider';
+import routineEvents from '@common/events/routine.events';
 
 const ExpansiveWave = ({ event }) => {
     const timerRef = useRef<number | null>(null);
@@ -10,6 +11,10 @@ const ExpansiveWave = ({ event }) => {
 
     useEffect(() => {
         if (!event?.event) return;
+        if (event.event === routineEvents.routineIdle) {
+            setShowWave(false);
+            return;
+        }
         const color = getColor(event.event);
         if (color) {
             setWaveColor(color);

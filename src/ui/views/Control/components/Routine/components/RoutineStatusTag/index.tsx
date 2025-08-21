@@ -14,6 +14,11 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
     const [color, setColor] = useState<string>(Color.unknown);
     const [icon, setIcon] = useState<React.ReactNode>(null);
     const [expandTag, setExpandTag] = useState<boolean>(false);
+    const [prevStatus, setPrevStatus] = useState<{ color: string, icon: React.ReactNode, expand: boolean }>({
+        color: Color.unknown,
+        icon: null,
+        expand: false
+    });
 
     const updateExpandTag = (routineStatus) => {
 
@@ -69,21 +74,42 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
         setColor(getColor(routineStatus));
         updateIcon(routineStatus);
         updateExpandTag(routineStatus);
+        console.log ("HERE!")
     }, [routine]);
 
     useEffect(() => {
-        if (!event) return;
+        if (!event) return
+
         const eventStatus = event.event as RoutineStatus;
-        setColor(getColor(eventStatus));
+        console.log("RoutineStatusTag", eventStatus);
+
+        if (eventStatus === routineEvents.routineIdle) {
+            console.log("Reverting to previous status", prevStatus);
+            setColor(prevStatus.color);
+            setIcon(prevStatus.icon);
+            setExpandTag(prevStatus.expand);
+            return;
+        }
+
+        // For statuses other than idle, update UI
+        const newColor = getColor(eventStatus);
+        setColor(newColor);
         updateIcon(eventStatus);
         updateExpandTag(eventStatus);
+
+        // Only update prevStatus if the event is not Auto Checking Conditions
+        if (eventStatus !== routineEvents.routineAutoCheckingConditions) {
+            setPrevStatus({ color: newColor, icon: icon, expand: expandTag });
+            console.log("Updated previous status", { color: newColor, icon, expand: expandTag });
+        }
+
     }, [event]);
 
     return (
-            <StatusTag
-                expand={expandTag}
-                color={color}
-                icon={icon} />
+        <StatusTag
+            expand={expandTag}
+            color={color}
+            icon={icon} />
     );
 }
 

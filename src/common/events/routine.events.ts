@@ -2,6 +2,8 @@ export default {
     routineEnabled: "routine:enabled",
     routineDisabled: "routine:disabled",
 
+    routineIdle: "routine:idle",
+
     routineAutoCheckingConditions: "routine:autoCheckingConditions",
 
     routineTaskAdded: "routine:taskAdded",
