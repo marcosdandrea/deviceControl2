@@ -9,6 +9,8 @@ import { Routine } from "../routine";
 import { Trigger } from "../trigger";
 import { Task } from "../task";
 import App from "../app";
+import { ServerManager } from "@src/services/server/serverManager";
+import {removeRoutine} from "@useCases/routine"
 
 
 interface ProjectConstructor {
@@ -77,16 +79,16 @@ export class Project extends EventEmitter implements ProjectInterface {
     }
 
     static getInstance(): Project {
-        if (!Project.Instance) 
+        if (!Project.Instance)
             return null
-        
+
         return Project.Instance;
     }
 
     static createInstance(props?: ProjectConstructor): Project {
-        if (Project.Instance) 
+        if (Project.Instance)
             throw new Error("Project instance already exists. Use Project.getInstance() to access it.");
-        
+
         const project = new Project(props);
         project.logger.info("New project instance created");
         project.dispatchEvent(projectEvents.created, project);
@@ -94,14 +96,41 @@ export class Project extends EventEmitter implements ProjectInterface {
     }
 
     static close(): void {
-        if (!Project.Instance) 
-            return null
+        if (!Project.Instance)
+            return null;
 
+        const generalServer = ServerManager.getInstance("general")
+        generalServer.unbindAllRoutes();
+
+        // Si los objetos (rutinas, triggers y tasks) tienen listeners internos,
+        // se limpia cada uno para eliminar referencias y ayudar al recolector de basura.
+        Project.Instance.routines.forEach(routine => {
+            routine.stopAutoCheckingConditions();
+            routine.removeAllListeners();
+            removeRoutine(routine.id);
+        });
+        // Eliminar cada rutina explícitamente para ayudar a liberar memoria
+        Project.Instance.routines.length = 0;
+
+        Project.Instance.triggers.forEach(trigger => {
+            trigger.removeAllListeners()
+        });
+        Project.Instance.triggers.length = 0;
+
+        Project.Instance.tasks.forEach(task => {
+            task.removeAllListeners();
+            task.condition = null;
+            task.job = null;
+        });
+        Project.Instance.tasks.length = 0;
+
+        // Disparar evento de cierre para notificar a otros componentes
         Project.Instance.dispatchEvent(projectEvents.closed);
         Project.Instance.logger.info("Project instance closed");
-        Project.Instance.removeAllListeners(); // Clean up event listeners
-        Project.Instance = null; // Set the instance to null
-        return null
+        Project.Instance.removeAllListeners(); // Limpia los listeners del proyecto
+        Project.Instance = null; // Elimina la referencia al singleton
+
+        return null;
     }
 
     onAny(listener) {

@@ -74,18 +74,28 @@ export class Routine extends EventEmitter implements RoutineInterface {
     #setStatus(status: RoutineStatus): Boolean {
         if (this.status === status)
             return false
-        this.logger.info(`>>>>>>>>>>>>>>>>>> Routine status changed to ${status}`);
+        this.logger.info(`Routine status changed to ${status}`);
         this.status = status
         return true
+    }
+
+    stopAutoCheckingConditions() {
+        if (this.autoCheckConditionEveryMs !== false) {
+            clearTimeout(this.autoCheckConditionEveryMs);
+            this.autoCheckConditionEveryMs = false;
+            this.logger.info("Stopped auto checking conditions");
+        }
     }
 
     async #autoCheckConditions() {
 
         if (this.enabled === false) return;
 
-        if (typeof this.autoCheckConditionEveryMs !== 'number' || this.autoCheckConditionEveryMs < 1000)
-            throw new Error("autoCheckConditionEveryMs must be a number greater than 1000 or false");
-
+        if (typeof this.autoCheckConditionEveryMs !== 'number' || this.autoCheckConditionEveryMs < 1000){
+            this.logger.error("autoCheckConditionEveryMs must be a number greater than 1000 or false")
+            return;
+        }
+        
         try {
             if (this.isRunning)
                 throw new Error("Cannot auto check conditions while routine is running");

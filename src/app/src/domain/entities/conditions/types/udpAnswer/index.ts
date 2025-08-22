@@ -45,7 +45,10 @@ export class ConditionUDPAnswer extends Condition {
 
     protected async doEvaluation({ abortSignal }: { abortSignal: AbortSignal }): Promise<boolean> {
         return new Promise((resolve, reject) => {
+
             const socket = dgram.createSocket('udp4');
+            
+
             let finished = false;
             const onAbort = () => {
                 if (!finished) {
@@ -55,7 +58,9 @@ export class ConditionUDPAnswer extends Condition {
                 }
             };
 
-            if (abortSignal.aborted) return onAbort();
+            if (abortSignal.aborted) 
+                return onAbort();
+            
 
             abortSignal.addEventListener("abort", onAbort, { once: true });
 
@@ -81,7 +86,6 @@ export class ConditionUDPAnswer extends Condition {
             const buffer = Buffer.from(this.message);
             socket.send(buffer, this.port, this.ip, (err) => {
                 if (err) {
-                    console.log (`Error sending message: ${err.message}`);
                     onAbort();
                     reject(err);
                 }

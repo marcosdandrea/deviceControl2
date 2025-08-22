@@ -14,7 +14,7 @@ import { setMainWindowTitle } from "../windowManager/mainWindowTitleManager";
 import { EventManager } from "@src/services/eventManager";
 import projectEvents from "@common/events/project.events";
 import { createRoutine } from "../routine";
-import { sendToClients } from "@src/services/eventBridge";
+import { broadcastToClients } from "@src/services/ipcServices";
 
 const log = new Log("ProjectUseCases", true);
 const eventManager = new EventManager();
@@ -93,7 +93,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
    try {
       log.info("Checking for existing project instance...");
       project = Project.getInstance();
-      if (!project) 
+      if (!project)
          throw new Error("No project instance found. Creating a new one.");
 
       log.warn("Closing the current project before loading a new one.");
@@ -191,20 +191,24 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
 
    await createRoutines();
    project.routines = Object.values(routines);
-   project.onAny(sendToClients)
+   project.onAny(broadcastToClients)
 
    setMainWindowTitle(project.name);
-   sendToClients(projectEvents.loaded, project.toJson());
+
+   broadcastToClients(projectEvents.loaded, { projectData: project.toJson() });
    eventManager.emit(projectEvents.loaded, project);
    return Promise.resolve(project)
 
 }
 
 export const closeProject = (): void => {
+
    Project.close();
    setMainWindowTitle(null);
-   log.info("Project closed successfully");
+
+   broadcastToClients(projectEvents.closed, { projectData: {} });
    eventManager.emit(projectEvents.closed);
+   log.info("Project closed successfully");
 }
 
 export const getCurrentProject = (): Project => {

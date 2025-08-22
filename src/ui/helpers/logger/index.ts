@@ -1,5 +1,7 @@
 
-const enableLogging = true
+//Enable logging only if we're working in a development port environment
+const port = window.location.port
+const enableLogging = port != "80"
 
 export class Logger {
     static log(message: string, ...optionalParams: any[]) {

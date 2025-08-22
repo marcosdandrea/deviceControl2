@@ -3,6 +3,7 @@ export default {
     loaded: "project:loaded",
     saved: "project:saved",
     closed: "project:closed",
+    changed: "project:changed",
     routineAdded: "project:routineAdded",
     routineRemoved: "project:routineRemoved",
     nameChanged: "project:nameChanged",

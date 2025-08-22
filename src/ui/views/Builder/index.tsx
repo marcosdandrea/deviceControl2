@@ -1,20 +1,33 @@
-import { Logger } from '@helpers/logger';
 import React, { useEffect } from 'react';
 import {dummyProjectData} from '../../helpers/dummy-project';
 import useProject from '@hooks/useProject';
+import Button from '@components/Button';
 
 const Builder = () => {
 
-    const {project, loadProject} = useProject();
+    const {project, loadProject, unloadProject} = useProject();
 
-    useEffect(() => {
-        loadProject(dummyProjectData)
-    }, []);
+    const handleOnLoad = () => {
+        loadProject(dummyProjectData);
+    }
 
     return (
-        <div>
-            <h1>Builder UI</h1>
-            <p>Esta es la página de Builder</p>
+        <div style={{
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            columnGap: "1rem",
+            justifyContent: "center",
+            alignItems: "center"
+        }}>
+            <Button
+                text='Load Project'
+                onClick={handleOnLoad}/>
+
+            <Button
+                text='Unload Project'
+                onClick={unloadProject}/>
         </div>
     );
 }

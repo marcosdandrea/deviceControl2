@@ -1,8 +1,9 @@
-import SocketChannels from "@common/SocketChannels";
 import { projectType } from "@common/types/project.types";
 import { SocketIOContext } from "@components/SocketIOProvider";
 import { useContext, useEffect, useState } from "react";
 import { Logger } from "@helpers/logger";
+import projectCommands from "@common/commands/project.commands";
+import projectEvents from "@common/events/project.events";
 
 const useProject = () => {
     const { socket, emit } = useContext(SocketIOContext);
@@ -12,34 +13,76 @@ const useProject = () => {
     useEffect(() => {
         if (!socket) return;
 
-        socket.on(SocketChannels.updateProject, ({projectData, error}: {projectData: string, error?: string }) => {
+        const updateProject = ({ projectData, error }: { projectData: projectType, error?: string }) => {
             if (error)
                 Logger.error("Error fetching project:", error);
-            else{
-                const project = JSON.parse(projectData) as projectType;
-                setProject(project);
+            else if (!projectData) {
+                Logger.warn("No project data found");
+                setProject(null);
             }
-        });
+            else {
+                Logger.log("Project data loaded:", projectData);
+                setProject(projectData);
+            }
+        }
 
-        emit(SocketChannels.getCurrentProject);
+        const handleOnProjectChanged = (payload) => {
+            Logger.log("Project changed:", payload);
+            updateProject(payload);
+        }
+
+        const handleOnGetProject = (payload) => {
+            Logger.log("Project fetched:", payload);
+            updateProject(payload);
+        }
+
+        const handleOnProjectLoaded = (payload) => {
+            Logger.log("Project loaded:", payload);
+            updateProject(payload);
+        }
+
+        const handleOnProjectClosed = (payload) => {
+            Logger.log("Project closed:", payload);
+            updateProject({ projectData: null });
+        }
+
+        emit(projectCommands.getCurrent, null, handleOnGetProject);
+
+        socket.on(projectEvents.changed, handleOnProjectChanged);
+        socket.on(projectEvents.loaded, handleOnProjectLoaded);
+        socket.on(projectEvents.closed, handleOnProjectClosed);
 
         return () => {
-            socket.off(SocketChannels.getCurrentProject);
-        };
+            socket.off(projectEvents.changed, handleOnProjectChanged);
+            socket.off(projectEvents.loaded, handleOnProjectLoaded);
+            socket.off(projectEvents.closed, handleOnProjectClosed);
+        }
+
     }, [socket]);
 
     const loadProject = async (projectData: projectType) => {
         if (!socket) return;
 
-        emit(SocketChannels.loadProject, projectData, (response: { success?: boolean; error?: string, project?: projectType }) => {
+        emit(projectCommands.load, projectData, (response: { success?: boolean; error?: string, project?: projectType }) => {
             if (response.error) {
                 Logger.error("Error loading project:", response.error);
-            } 
+            }
         });
         return;
     }
 
-    return ({ project, loadProject });
+    const unloadProject = async () => {
+        if (!socket) return;
+
+        emit(projectCommands.close, (response: { success?: boolean; error?: string }) => {
+            if (response.error) {
+                Logger.error("Error unloading project:", response.error);
+            }
+        });
+        return;
+    }
+
+    return ({ project, loadProject, unloadProject });
 }
 
 export default useProject;

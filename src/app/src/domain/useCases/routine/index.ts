@@ -1,63 +1,118 @@
 import { Project } from '@src/domain/entities/project';
 import { Routine } from '@src/domain/entities/routine';
-import { sendToClients } from '@src/services/eventBridge';
 import { Log } from '@src/utils/log';
 import { EventManager } from '@src/services/eventManager';
 import routineEvents from '@common/events/routine.events';
+import { broadcastToClients } from '@src/services/ipcServices';
 
 const log = new Log("RoutineUseCases", true);
 const eventManager = new EventManager();
 
+// Registro: por cada rutina guardamos sólo WeakRef y disposers (no retenemos fuerte la instancia)
+type RoutineCleanup = {
+  ref: WeakRef<Routine>;
+  disposers: Array<() => void>;
+};
+const routineRegistry = new Map<string, RoutineCleanup>();
+
 export const createRoutine = (routineData): Routine => {
-    const currentProject = Project.getInstance();
+  const currentProject = Project.getInstance();
 
-    const { enabled, ...rest } = routineData;
-    const newRoutine = new Routine(rest);
-    if (!newRoutine)
-        throw new Error(`Failed to create routine with ID ${routineData.id}`);
+  const { enabled, ...rest } = routineData;
+  const routine = new Routine(rest);
+  if (!routine)
+    throw new Error(`Failed to create routine with ID ${routineData.id}`);
 
-    for (const taskId of routineData.tasksId || []) {
-        if (taskId) {
-            const task = currentProject.tasks.find(task => task.id === taskId);
-            if (task)
-                newRoutine.addTask(task);
-            else
-                log.warn(`Task with ID ${taskId} not found for routine ${newRoutine.id}`);
-        } else {
-            log.warn(`Task with ID ${taskId} not found for routine ${newRoutine.id}`);
-        }
+  // ---- Asociar tasks ----
+  for (const taskId of routineData.tasksId || []) {
+    if (taskId) {
+      const task = currentProject.tasks.find(t => t.id === taskId);
+      if (task) routine.addTask(task);
+      else log.warn(`Task with ID ${taskId} not found for routine ${routine.id}`);
+    } else {
+      log.warn(`Task with ID ${taskId} not found for routine ${routine.id}`);
     }
+  }
 
-    for (const triggerId of routineData.triggersId || []) {
-        if (triggerId) {
-            const trigger = currentProject.triggers.find(trigger => trigger.id === triggerId);
-            if (trigger)
-                newRoutine.addTrigger(trigger);
-            else
-                log.warn(`Trigger with ID ${triggerId} not found for routine ${newRoutine.id}`);
-        } else {
-            log.warn(`Trigger with ID ${triggerId} not found for routine ${newRoutine.id}`);
-        }
+  // ---- Asociar triggers ----
+  for (const triggerId of routineData.triggersId || []) {
+    if (triggerId) {
+      const trigger = currentProject.triggers.find(t => t.id === triggerId);
+      if (trigger) routine.addTrigger(trigger);
+      else log.warn(`Trigger with ID ${triggerId} not found for routine ${routine.id}`);
+    } else {
+      log.warn(`Trigger with ID ${triggerId} not found for routine ${routine.id}`);
     }
+  }
 
-    log.info(`Routine ${newRoutine.name} loaded successfully with ID ${newRoutine.id}`);
+  log.info(`Routine ${routine.name} loaded successfully with ID ${routine.id}`);
 
-    newRoutine.onAny((eventName, args) => {
-        sendToClients(`routine.${newRoutine.id}.${eventName}`, { args });
-        eventManager.emit(`routine.${newRoutine.id}.${eventName}`, { args });
-    });
+  // =========================
+  //   LISTENERS + DISPOSERS
+  // =========================
+  const id = routine.id;
+  const routineWeakRef = new WeakRef(routine);
+  const disposers: Array<() => void> = [];
 
+  // 1) Bridge Routine → clientes + bus (no captura 'routine')
+  const onAnyListener = (eventName: string, args: any) => {
+    broadcastToClients(`routine.${id}.${eventName}`, { args });
+    eventManager.emitEvent(`routine.${id}.${eventName}`, { args });
+  };
+  routine.onAny(onAnyListener);
 
-    eventManager.on(`user.routine.${newRoutine.id}.${routineEvents.routineAborted}`, () => {
-        log.info(`User requested to abort routine ${newRoutine.id}`);
-        newRoutine.abort("Routine aborted by user");
-    });
+  disposers.push(() => {
+    const r = routineWeakRef.deref();
+    r?.offAny(onAnyListener);
+  });
 
-    log.info(`Routine event broadcaster set up for routine ID ${newRoutine.id}`);
+  // 2) Listener de abort desde el EventManager (usa WeakRef; no captura 'routine')
+  const abortEvent = `user.routine.${id}.${routineEvents.routineAborted}`;
+  const onAbortByUser = () => {
+    const r = routineWeakRef.deref();
+    if (r) {
+      log.info(`User requested to abort routine ${id}`);
+      r.abort("Routine aborted by user");
+    }
+  };
+  eventManager.on(abortEvent, onAbortByUser);
+  disposers.push(() => eventManager.off(abortEvent, onAbortByUser));
 
-    if (enabled)
-        newRoutine.enable();
+  // Registrar cleanup en el registro global (para uso de removeRoutine)
+  routineRegistry.set(id, { ref: routineWeakRef, disposers });
 
+  log.info(`Routine event broadcaster set up for routine ID ${id}`);
 
-    return newRoutine;
-}
+  if (enabled) routine.enable();
+
+  return routine;
+};
+
+export const removeRoutine = (routineID: string) => {
+  const entry = routineRegistry.get(routineID);
+
+  // Siempre intentamos limpiar el listener de abort por si existe
+  const abortEvent = `user.routine.${routineID}.${routineEvents.routineAborted}`;
+
+  if (!entry) {
+    // Fallback: si no tenemos entry, al menos limpiamos los listeners de ese evento
+    eventManager.removeAllListeners(abortEvent);
+    log.warn(`removeRoutine(${routineID}): no registry entry found. Removed listeners for ${abortEvent}.`);
+    return;
+  }
+
+  // Ejecutar disposers (offAny + off del EventManager)
+  for (const dispose of entry.disposers) {
+    try { dispose?.(); } catch (e) {
+      log.warn(`removeRoutine(${routineID}): disposer threw`, { error: String(e) });
+    }
+  }
+
+  // Borrar del registro
+  routineRegistry.delete(routineID);
+
+  // Limpieza adicional defensiva: quitar cualquier listener restante para este evento
+  eventManager.removeAllListeners(abortEvent);
+
+  log.info(`removeRoutine(${routineID}): cleanup completed.`);
+};

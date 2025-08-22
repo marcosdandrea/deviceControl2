@@ -7,7 +7,7 @@ import { Logger } from '@helpers/logger';
 export const SocketIOContext = createContext(null);
 
 const SocketIOProvider = ({ children, mountComponentsOnlyWhenConnect = false, disconnectionViewComponent }) => {
-    const socketURL = `http://${window.location.hostname}:3000`;
+    const socketURL = `http://${window.location.hostname}:80`;
 
     const [socket, setSocket] = useState(null);
     const [isConnected, setIsConnected] = useState(false);

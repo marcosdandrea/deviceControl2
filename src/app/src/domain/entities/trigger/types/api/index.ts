@@ -1,7 +1,7 @@
-import { Server } from "@services/server"
 import { Trigger } from "../..";
 import { TriggerType } from "@common/types/trigger.type";
 import triggerEvents from "@common/events/trigger.events";
+import { ServerManager } from "@src/services/server/serverManager";
 
 interface ApiInterface extends TriggerType {
     endpoint?: string; // Endpoint to listen for API requests
@@ -56,10 +56,10 @@ export class APITrigger extends Trigger {
             throw new Error("API Trigger requires an endpoint to listen for requests");
         }
 
-        const server = await Server.getInstance();
+        const generalServer = await ServerManager.getInstance("general");
 
         try {
-            server.bindRoute(this.endpoint, this.#handleOnTrigger.bind(this));
+            generalServer.bindRoute(this.endpoint, this.#handleOnTrigger.bind(this));
             this.logger.info(`API Trigger initialized at endpoint: ${this.endpoint}`);
         } catch (error) {
             this.logger.error(`Failed to bind API trigger to endpoint ${this.endpoint}:`, error);
@@ -71,8 +71,8 @@ export class APITrigger extends Trigger {
     async destroy(): Promise<void> {
         this.logger.info(`Destroying API Trigger at endpoint: ${this.endpoint}`);
         try {
-            const server = await Server.getInstance();
-            server.unbindRoute(this.endpoint);
+            const generalServer = await ServerManager.getInstance("general");
+            generalServer.unbindRoute(this.endpoint);
         } catch (e) {
             this.logger.error(`Failed to unbind API trigger from endpoint ${this.endpoint}:`, e);
             throw new Error(`Failed to unbind API trigger: ${e.message}`);

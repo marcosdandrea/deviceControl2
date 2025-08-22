@@ -7,8 +7,6 @@ const RoutineList = () => {
 
     const { project } = useContext(ProjectContext);
 
-    if (!project)
-        return null
     return (
         <div className={style.routineList}>
             <div className={style.routinesContainer}>

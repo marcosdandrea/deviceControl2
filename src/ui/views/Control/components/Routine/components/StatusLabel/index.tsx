@@ -13,7 +13,7 @@ const StatusLabel = ({event}) => {
 
         switch (status) {
             case routineEvents.routineAutoCheckingConditions:
-                setStatus("Comprobando Condiciones");
+                setStatus("Comprobando condiciones automáticamente...");
                 break;
             case routineEvents.routineAborted:
                 setStatus("Abortada");

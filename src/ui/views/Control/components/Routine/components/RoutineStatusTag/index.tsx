@@ -72,7 +72,6 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
         if (!event) return
 
         const eventStatus = event.event as RoutineStatus;
-        console.log("RoutineStatusTag", eventStatus);
 
         if (eventStatus === routineEvents.routineIdle) {
             setColor(prevStatus.color);

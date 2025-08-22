@@ -6,12 +6,13 @@ import cors from 'cors';
 
 const log = new Log('Server', true);
 
-interface ServerProps {
+export interface ServerProps {
   port?: number;               // Puerto fijo (opcional)
   ip?: string;                // IP a bindear (opcional, default '0.0.0.0')
   portRangeStart?: number;    // Rango para buscar puerto libre (default 3000)
   portRangeEnd?: number;      // Rango para buscar puerto libre (default 5000)
   useSocketIO?: boolean; // Si se usa Socket.IO (default false)
+  name: string;               // Nombre del servidor (default 'Server')
 }
 
 export class Server {
@@ -22,13 +23,15 @@ export class Server {
   private router: express.Router;
   private serverListener?: import('http').Server;
 
+  public name: string;
+
   public port: number;
   public ip: string;
   public io: import('socket.io').Server | null;
   public useSocketIO: boolean = false;
   private routes: Set<string> = new Set();
 
-  private constructor(props: ServerProps = {}) {
+  private constructor(props: ServerProps) {
     if (props.port && (typeof props.port !== 'number' || props.port <= 0 || props.port > 65535)) {
       throw new Error('Invalid port number. It must be a number between 1 and 65535.');
     }
@@ -38,6 +41,7 @@ export class Server {
       throw new Error('Invalid IP address format. It must be a valid IPv4 address.');
     }
 
+    this.name = props.name || 'Server';
     this.useSocketIO = props.useSocketIO || false;
     this.ip = props.ip || '0.0.0.0';
     this.app = express();
@@ -60,6 +64,14 @@ export class Server {
     this.port = props.port || 0; // 0 indica que buscará puerto libre
   }
 
+  static async createInstance(props?: ServerProps): Promise<Server> {
+    const server = new Server(props);
+    await server.initPort(props);
+    await server.start();
+    return server;
+  }
+
+  /*
   static async getInstance(props?: ServerProps): Promise<Server> {
     if (!Server.instance) {
       const server = new Server(props);
@@ -69,15 +81,16 @@ export class Server {
     }
     return Server.instance;
   }
+  */
 
-  private async initPort(props: ServerProps = {}) {
+  private async initPort(props: ServerProps) {
     if (this.port && this.port !== 0) {
       // Puerto definido explícitamente, no buscar
       return;
     }
 
     const start = props.portRangeStart ?? 3000;
-    const end = props.portRangeEnd ?? 5000;
+    const end = props.portRangeEnd ?? 9000;
 
     for (let p = start; p <= end; p++) {
       const isFree = await this.checkPortFree(p);
