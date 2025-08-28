@@ -9,7 +9,7 @@ import { Task } from "@src/domain/entities/task";
 import { Trigger } from "@src/domain/entities/trigger";
 import { createNewTriggerByType } from "@src/domain/entities/trigger/types";
 import { Log } from "@src/utils/log";
-import { writeFile } from "@services/fileSystem"
+import { writeFile } from "@src/services/fileSystem"
 import { setMainWindowTitle } from "../windowManager/mainWindowTitleManager";
 import { EventManager } from "@src/services/eventManager";
 import projectEvents from "@common/events/project.events";
@@ -85,13 +85,13 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
 
    log.info("Loading project data...");
 
-   if (!projectData || !projectData.id) {
-      log.error("Invalid project data provided.");
-      throw new Error("Invalid project data provided.");
-   }
-
    try {
+
+      if (!projectData || !projectData.id) 
+         throw new Error("Invalid project data provided.");
+
       log.info("Checking for existing project instance...");
+
       project = Project.getInstance();
       if (!project)
          throw new Error("No project instance found. Creating a new one.");
@@ -179,6 +179,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
       }
    }
 
+   await createRoutines();
    await createTriggers();
    await createTasks();
 
@@ -189,7 +190,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
       tasks: Object.values(tasks)
    })
 
-   await createRoutines();
+   
    project.routines = Object.values(routines);
    project.onAny(broadcastToClients)
 
@@ -198,6 +199,21 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
    broadcastToClients(projectEvents.loaded, { projectData: project.toJson() });
    eventManager.emit(projectEvents.loaded, project);
    return Promise.resolve(project)
+
+}
+
+export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promise<Project | string> => {
+
+   try {
+      const {decryptData} = await import('@src/services/cryptography/index.js');
+      const projectRawData = await decryptData(fileContent) as string;
+      const projectContent = JSON.parse(projectRawData);
+      await loadProject(projectContent);
+      log.info("Project file loaded successfully:", projectContent.name);
+   } catch (error) {
+      log.error("Error loading project file:", error);
+      return null;
+   }
 
 }
 

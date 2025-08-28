@@ -29,8 +29,9 @@ export class Routine extends EventEmitter implements RoutineInterface {
     isRunning: RoutineInterface["isRunning"];
     routineTimeout: number | false;
     hidden?: boolean = false;
-    status?: string = "unknown";
+    status?: RoutineStatus = "unknown";
     autoCheckConditionEveryMs?: number | false;
+    suspendAutoCheckConditions: boolean = false;
     failed?: boolean;
 
     tasks: TaskInterface[] = [];
@@ -58,9 +59,11 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.failed = false;
         this.hidden = props.hidden || false;
         this.routineTimeout = props.routineTimeout || 10000;
-        this.autoCheckConditionEveryMs = props.autoCheckConditionEveryMs || false;
 
-        this.logger = new Log(`Routine "${this.name}"`, true);
+        this.autoCheckConditionEveryMs = props.autoCheckConditionEveryMs || false;
+        this.suspendAutoCheckConditions = false;
+
+        this.logger = new Log(`Routine "${this.name}"`, true, true);
         this.abortController = null
 
         this.on(routineEvents.routineEnabled, () => {
@@ -87,21 +90,39 @@ export class Routine extends EventEmitter implements RoutineInterface {
         }
     }
 
+    async #suspendAutoCheckingConditions() {
+        this.suspendAutoCheckConditions = true;
+        this.logger.info("Suspended auto checking conditions");
+    }
+
+    async #resumeAutoCheckingConditions() {
+        if (this.autoCheckConditionEveryMs) {
+            this.logger.info("Resumed auto checking conditions");
+            setTimeout(() => {
+                this.#autoCheckConditions()
+            }, this.autoCheckConditionEveryMs)
+        }
+    }
+
     async #autoCheckConditions() {
 
         if (this.enabled === false) return;
 
-        if (typeof this.autoCheckConditionEveryMs !== 'number' || this.autoCheckConditionEveryMs < 1000){
+        if (typeof this.autoCheckConditionEveryMs !== 'number' || this.autoCheckConditionEveryMs < 1000) {
             this.logger.error("autoCheckConditionEveryMs must be a number greater than 1000 or false")
             return;
         }
-        
+
+        this.suspendAutoCheckConditions = false;
+
         try {
-            if (this.isRunning)
-                throw new Error("Cannot auto check conditions while routine is running");
+            if (this.suspendAutoCheckConditions) return
+
             this.#eventDispatcher(routineEvents.routineAutoCheckingConditions);
             if (!await this.checkAllTaskConditions())
                 throw new Error("Not all task conditions are met");
+
+            if (this.suspendAutoCheckConditions) return
 
             if (this.#setStatus("completed"))
                 this.#eventDispatcher(routineEvents.routineCompleted);
@@ -109,13 +130,15 @@ export class Routine extends EventEmitter implements RoutineInterface {
                 this.#eventDispatcher(routineEvents.routineIdle);
 
         } catch (err) {
-            
+            if (this.suspendAutoCheckConditions) return
+
             if (this.#setStatus("failed"))
                 this.#eventDispatcher(routineEvents.routineFailed);
             else
                 this.#eventDispatcher(routineEvents.routineIdle);
 
         } finally {
+            if (this.suspendAutoCheckConditions) return
             if (typeof this.autoCheckConditionEveryMs !== "number") return;
             this.logger.info(`Auto checking conditions in ${this.autoCheckConditionEveryMs}ms`);
             setTimeout(() => {
@@ -135,6 +158,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
     }
 
     addTask(task: TaskInterface): void {
+        task.setRootLog(this.logger);
         this.tasks.push(task);
         this.logger.info(`Task ${task.name} added`);
         this.#eventDispatcher(routineEvents.routineTaskAdded, { taskId: task.id });
@@ -184,10 +208,14 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.#eventDispatcher(routineEvents.routineTaskOrderChanged, { taskToMoveId: taskToMove.id, newIndex });
     }
 
-    #onTriggerExecute(trigger: TriggerInterface): void {
+    async #onTriggerExecute(trigger: TriggerInterface): Promise<void> {
         this.logger.info(`Trigger ${trigger.name} executed`);
         this.#eventDispatcher(routineEvents.routineTriggerTriggered, { triggerId: trigger.id });
-        this.run();
+        try {
+            await this.run();
+        } catch (err) {
+            this.logger.error(`Error executing trigger ${trigger.name}: ${err.message}`);
+        }
     }
 
     #bindTriggerEvents(trigger: TriggerInterface): void {
@@ -204,6 +232,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
         if (this.triggers.find(t => t.id === trigger.id))
             throw new Error(`Trigger with id ${trigger.id} already exists`);
 
+        trigger.setRootLog(this.logger);
         this.#bindTriggerEvents(trigger);
         this.triggers.push(trigger);
         this.logger.info(`Trigger "${trigger.name}" added`);
@@ -314,6 +343,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
             this.#eventDispatcher(routineEvents.routineError, { error: err });
         }
 
+        this.#suspendAutoCheckingConditions()
         this.isRunning = true;
         this.failed = false;
         this.#setStatus("running");
@@ -432,6 +462,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
                 reject(e);
             } finally {
                 cleanOnFinish();
+                this.#resumeAutoCheckingConditions()
             }
         })
     }
@@ -462,6 +493,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
             continueOnError: this.continueOnError,
             isRunning: this.isRunning,
             routineTimeout: this.routineTimeout,
+            autoCheckConditionEveryMs: this.autoCheckConditionEveryMs,
             hidden: this.hidden,
             triggersId: this.triggers.map(trigger => trigger.id),
             tasksId: this.tasks.map(task => task.id)

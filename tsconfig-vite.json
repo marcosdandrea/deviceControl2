@@ -18,7 +18,8 @@
       "@stores/*": ["src/ui/stores/*"],
       "@ipc/*": ["src/ui/ipc/*"],
       "@contexts/*": ["src/ui/contexts/*"],
+      "@src/*": ["src/app/src/*"]
     },
   },
-  "include": ["src/ui", "src/common"],
+  "include": ["src/ui", "src/common", "src/app"],
 }

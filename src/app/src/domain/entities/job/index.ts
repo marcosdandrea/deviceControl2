@@ -1,6 +1,6 @@
 import { JobInterface, JobType } from "@common/types/job.type";
 import { EventEmitter } from "events";
-import { Log } from "@utils/log";
+import { Log } from "@src/utils/log";
 import crypto from "crypto";
 import jobEvents from "@common/events/job.events";
 
@@ -58,6 +58,10 @@ export class Job extends EventEmitter implements JobInterface {
         throw new Error("Job method must be implemented in subclasses");
     }
 
+    setRootLog(rootLog: Log): void {
+        this.log.setRootLog(rootLog);
+    }
+
     #timeoutWatcher({ abortSignal }: { abortSignal: AbortSignal }): Promise<void> {
 
         return new Promise<void>((resolve, reject) => {
@@ -86,7 +90,7 @@ export class Job extends EventEmitter implements JobInterface {
                     cleanUp();
                 }, this.timeout);
             }
-            
+
 
             // Resolve the promise if the job completes before timeout
             this.once(jobEvents.jobFinished, () => {
@@ -168,6 +172,7 @@ export class Job extends EventEmitter implements JobInterface {
             name: this.name,
             description: this.description,
             timeout: this.timeout,
+            params: this.params,
             type: this.type,
         };
     }

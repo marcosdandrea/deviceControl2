@@ -13,7 +13,7 @@ const Control = () => {
                 <PasswordProtection>
                     <RoutineList />
                 </PasswordProtection>
-                <StatusBar />
+                <StatusBar/>
             </ProjectContextProvider>
         </div>
     );

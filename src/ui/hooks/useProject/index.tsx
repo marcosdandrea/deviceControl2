@@ -6,8 +6,8 @@ import projectCommands from "@common/commands/project.commands";
 import projectEvents from "@common/events/project.events";
 
 const useProject = () => {
-    const { socket, emit } = useContext(SocketIOContext);
 
+    const { socket, emit } = useContext(SocketIOContext);
     const [project, setProject] = useState<projectType | null>(null);
 
     useEffect(() => {
@@ -60,14 +60,15 @@ const useProject = () => {
 
     }, [socket]);
 
-    const loadProject = async (projectData: projectType) => {
+    const loadProjectFile = async (fileData: ArrayBuffer | String) => {
         if (!socket) return;
 
-        emit(projectCommands.load, projectData, (response: { success?: boolean; error?: string, project?: projectType }) => {
+        emit(projectCommands.loadProjectFile, fileData, (response: { success?: boolean; error?: string, project?: projectType }) => {
             if (response.error) {
-                Logger.error("Error loading project:", response.error);
+                Logger.error("Error loading project file:", response.error);
             }
-        });
+        })
+
         return;
     }
 
@@ -82,7 +83,28 @@ const useProject = () => {
         return;
     }
 
-    return ({ project, loadProject, unloadProject });
+    const getProjectFile = async (): Promise<string | null> => {
+        if (!socket) return;
+
+        return new Promise<string | null>((resolve, reject) => {
+
+            const handleOnGetProject = ({ projectFile, error }: { projectFile: string, error?: string }) => {
+                if (error) {
+                    Logger.error("Error fetching project:", error);
+                    reject(new Error("Error fetching project file"));
+                } else if (!projectFile) {
+                    Logger.warn("No project data found");
+                    reject(new Error("No project data found"));
+                } else {
+                    resolve(projectFile);
+                }
+            }
+
+            emit(projectCommands.getProjectFile, null, handleOnGetProject);
+        })
+    }
+
+    return ({ project, loadProjectFile, unloadProject, getProjectFile });
 }
 
 export default useProject;

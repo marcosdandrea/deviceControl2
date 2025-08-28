@@ -61,6 +61,10 @@ export class Task extends EventEmitter implements TaskInterface {
         this.log.info(`Task "${this.name}" created with ID "${this.id}"`);
     }
 
+    setRootLog(rootLog: Log): void {
+        this.log.setRootLog(rootLog);
+    }
+
     setJob(job: JobInterface): void {
         if (!job || typeof job !== 'object' || !job.execute || typeof job.execute !== 'function') {
             throw new Error("Invalid job provided to Task");

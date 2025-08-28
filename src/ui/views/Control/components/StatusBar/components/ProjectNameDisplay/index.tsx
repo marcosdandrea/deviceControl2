@@ -16,6 +16,7 @@ const ProjectNameDisplay = () => {
             }
             <Text
                 text={project?.name || ""}
+                fontFamily='Open Sans SemiBold'
                 size={15} />
         </div>);
 }

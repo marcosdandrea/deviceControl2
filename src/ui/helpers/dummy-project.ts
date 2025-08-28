@@ -18,7 +18,7 @@ export const dummyProjectData =
                 triggersId: ["apiTrigger-1"],
                 routineTimeout: 90000,
                 enabled: true,
-                autoCheckConditionEveryMs: 15000
+                autoCheckConditionEveryMs: false
             },
             {
                 id: "routine-2",
@@ -42,7 +42,7 @@ export const dummyProjectData =
                 description: "This routine will trigger if routine 1 fails.",
                 tasksId: ["task-0"],
                 triggersId: ["routineEventTrigger-3"],
-                enabled: false,
+                enabled: true,
             }
         ],
         triggers: [

@@ -36,7 +36,7 @@ export class Condition extends EventEmitter implements ConditionInterface {
         if (props?.params && typeof props.params !== 'object')
             throw new Error("Condition params must be an object");
         this.params = props.params || {};
-        
+
         this.logger = new Log(`Condition "${this.name}"`, false);
         this.logger.info(`Condition created with ID "${this.id}"`);
 
@@ -45,6 +45,10 @@ export class Condition extends EventEmitter implements ConditionInterface {
     #dispatchEvent(event: string, ...args: any[]): void {
         this.emit(event, ...args);
         this.logger.info(`Event "${event}" dispatched with args:`, args);
+    }
+
+    setRootLog(rootLog: Log): void {
+        this.logger.setRootLog(rootLog);
     }
 
     setTimeoutValue(timeout: number): void {

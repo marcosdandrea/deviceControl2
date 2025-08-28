@@ -1,4 +1,4 @@
-import systemEvents from "@common/events/system.events";
+import systemCommands from "@common/commands/system.commands";
 import { SocketIOContext } from "@components/SocketIOProvider";
 import { useContext, useEffect, useRef, useState } from "react";
 
@@ -9,7 +9,7 @@ const useSystemTime = ({format}) => {
     const [timeOffset, setTimeOffset] = useState<number | undefined>(undefined);
 
     useEffect(() => {
-        emit(systemEvents.getSystemTime, null, (answer: {time: string, error?: string}) => {
+        emit(systemCommands.getSystemTime, null, (answer: {time: string, error?: string}) => {
             if (answer?.error || !answer?.time) {
                 console.error(answer.error);
                 return;

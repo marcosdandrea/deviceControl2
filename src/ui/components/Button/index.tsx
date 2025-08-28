@@ -9,10 +9,17 @@ const Button = ({ color, icon, text, onClick, enabled = true }: {
     onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
     enabled?: boolean;
 }) => {
+
+    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick?.(e);
+    };
+
     return (
         <div
             className={`${style.button} ${enabled ? style.enabled : style.disabled}`}
-            style={{ backgroundColor: color ?? Color.primary }} onClick={(e) => onClick?.(e)}>
+            style={{ backgroundColor: color ?? Color.primary }} onClick={handleClick}>
             {icon}
             {text}
         </div>

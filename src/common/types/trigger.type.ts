@@ -1,3 +1,4 @@
+import { Log } from "@src/utils/log";
 import { description, id, name } from "./commons.type";
 import { EventEmitter } from "events";
 
@@ -16,6 +17,7 @@ export interface TriggerInterface extends TriggerType, EventEmitter {
     arm: () => void;
     disarm: () => void;
     toJson: () => TriggerType;
+    setRootLog: (rootLog: Log) => void;
 }
 
 export const TriggerTypes = {

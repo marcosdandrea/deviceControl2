@@ -8,11 +8,14 @@ import { ProjectContext } from "@contexts/projectContextProvider";
 import { RoutineContext } from "@contexts/routineContextProvider";
 import { TriggerTypes } from "@common/types/trigger.type";
 import { SocketIOContext } from "@components/SocketIOProvider";
+import useSystemServerPorts from "@hooks/useSystemServerPorts";
+import routineCommands from "@common/commands/routine.commands";
 
 const PlayRoutineButton = ({ event, enabled }: { event: { event: string, data: any }, enabled: boolean }) => {
 
     const { project } = useContext(ProjectContext)
     const { routine } = useContext(RoutineContext);
+    const {generalServerPort} = useSystemServerPorts();
     const {emit} = useContext(SocketIOContext)
     const [icon, setIcon] = useState(<></>);
     const [buttonColor, setButtonColor] = useState(Color.completed);
@@ -79,13 +82,14 @@ const PlayRoutineButton = ({ event, enabled }: { event: { event: string, data: a
     }, [project, routine])
 
     const handleOnPress = () => {
+        if (!generalServerPort)
+            throw new Error("General server port is not defined");
         if (event?.event !== routineEvents.routineRunning) {
             let baseUrl = window.location.origin.split(":").slice(0, 2).join(":");
-            const url = `${baseUrl}:3000${apiTrigger?.params?.endpoint || ""}`;
+            const url = `${baseUrl}:${generalServerPort}${apiTrigger?.params?.endpoint || ""}`;
             fetch(url)
         } if (event?.event === routineEvents.routineRunning) {
-            const channel = `routine.${routine.id}.${routineEvents.routineAborted}`;
-            emit(channel)
+            emit(routineCommands.abort, routine.id);
         }
     }
 

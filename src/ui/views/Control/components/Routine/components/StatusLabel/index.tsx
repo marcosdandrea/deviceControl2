@@ -4,59 +4,59 @@ import { RoutineContext } from "@contexts/routineContextProvider";
 import { Color } from "@common/theme/colors";
 import routineEvents from "@common/events/routine.events";
 
-const StatusLabel = ({event}) => {
+const StatusLabel = ({ event }) => {
     const { routineData } = useContext(RoutineContext);
     const [status, setStatus] = React.useState<string>("Desconocido");
     const [prevStatus, setPrevStatus] = React.useState<string>("Desconocido");
 
-    const setStatusLabel = (status: string) => {
+    const getStatusText = (status: string) => {
 
         switch (status) {
             case routineEvents.routineAutoCheckingConditions:
-                setStatus("Comprobando condiciones automáticamente...");
-                break;
+                return "Comprobando condiciones automáticamente...";
             case routineEvents.routineAborted:
-                setStatus("Abortada");
-                break;
+                return "Abortada";
             case routineEvents.routineCompleted:
-                setStatus("Completada");
-                break;
+                return "Completada";
             case routineEvents.routineFailed:
-                setStatus("Fallida");
-                break;
+                return "Fallida";
             case routineEvents.routineRunning:
-                setStatus("En Ejecución");
-                break;
+                return "En Ejecución";
             case "unknown":
-                setStatus("Desconocido");
-                break;
+                return "Desconocido";
             default:
-                break;
+                return "Desconocido";
         }
     }
 
     useEffect(() => {
         if (!routineData) return;
-        setStatusLabel(routineData.status);
+        const statusText = getStatusText(routineData.status);
+        setStatus(statusText);
     }, [routineData]);
 
     useEffect(() => {
         if (!event) return;
+        const statusText = getStatusText(event.event);
+
         if (event.event === routineEvents.routineIdle) {
             setStatus(prevStatus);
-            return;
+            return
         }
-        if (event.event !== routineEvents.routineAutoCheckingConditions && event.event !== routineEvents.routineIdle) {
-            setPrevStatus(status);
-        }
-        setStatusLabel(event.event);
+
+        if (event.event !== routineEvents.routineAutoCheckingConditions)
+            setPrevStatus(statusText);
+
+        setStatus(statusText);
+
+
     }, [event]);
 
     return (
         <Text
             text={`Estado: ${status}`}
             size={14}
-            color={Color.textSecondary}/>
+            color={Color.textSecondary} />
     );
 }
 

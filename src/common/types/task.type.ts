@@ -1,6 +1,7 @@
 import { description, id, name } from "./commons.type";
 import { ConditionInterface, ConditionType } from "./condition.type";
 import { JobInterface, JobType } from "./job.type";
+import { Log } from "@src/utils/log";
 
 export type TaskType = {
     id?: id;
@@ -19,6 +20,7 @@ export type TaskType = {
 export interface TaskInterface extends TaskType {
     job?: JobInterface;
     condition?: ConditionInterface | null;
+    setRootLog: (root: Log) => void;
     setJob: (job: JobInterface) => void;
     setCondition: (condition: ConditionInterface | null) => void;
     setRetries: (retries: number) => void;

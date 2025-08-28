@@ -2,7 +2,6 @@
 import { Project } from '@src/domain/entities/project';
 import { Log } from '@src/utils/log';
 import { ServerManager } from '../server/serverManager';
-import { projectType } from '@common/types/project.types';
 
 const log = new Log('IPC Project Services', true);
 
@@ -20,23 +19,6 @@ export const getCurrentProject = async (_payload: null, callback: Function) => {
     }
 }
 
-export const loadProject = async (payload: projectType, callback: Function) => {
-    log.info('Client requested to load a project');
-    const { loadProject } = await import('@src/domain/useCases/project/index.js');
-    try {
-        Project.close();
-        const generalServer = ServerManager.getInstance("general");
-        generalServer.unbindAllRoutes();
-        await loadProject(payload);
-        callback({ projectData: payload });
-        log.info('Project loaded successfully');
-    } catch (error) {
-        console.log(error);
-        log.error('Error loading project:', error.message);
-        callback({ error: error.message });
-    }
-}
-
 export const closeProject = async (_payload: null, callback: Function) => {
     log.info('Client requested to close the current project');
     const { closeProject } = await import('@src/domain/useCases/project/index.js');
@@ -50,8 +32,43 @@ export const closeProject = async (_payload: null, callback: Function) => {
     }
 }
 
+export const getProjectFile = async (_payload: null, callback: Function) => {
+    log.info('Client requested project file');
+    const { getCurrentProject } = await import('@src/domain/useCases/project/index.js');
+    try {
+        const currentProject = getCurrentProject();
+        const { encryptData } = await import('@src/services/cryptography/index.js');
+        const projectFile = await encryptData(JSON.stringify(currentProject.toJson()));
+        console.log ({projectFile})
+        callback({ projectFile });
+        log.info('Project file sent to client');
+    } catch (error) {
+        log.error('Error getting project file:', error.message);
+        callback({ error: error.message });
+    }
+}
+
+export const loadProjectFile = async (payload: ArrayBuffer | string, callback: Function) => {
+    log.info('Client requested to load a project');
+    const { loadProjectFile } = await import('@src/domain/useCases/project/index.js');
+    try {
+        Project.close();
+        const generalServer = ServerManager.getInstance("general");
+        generalServer.unbindAllRoutes();
+        await loadProjectFile(payload);
+        callback({ projectData: payload });
+        log.info('Project loaded successfully');
+    } catch (error) {
+        console.log(error);
+        log.error('Error loading project:', error.message);
+        callback({ error: error.message });
+    }
+}
+
+
 export default {
     getCurrentProject,
-    loadProject,
-    closeProject
+    loadProjectFile,
+    closeProject,
+    getProjectFile
 };

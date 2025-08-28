@@ -43,7 +43,7 @@ export class Trigger extends EventEmitter implements TriggerInterface {
     }
 
     protected trigger(): void {
-        
+
         if (!this.armed) {
             this.logger.warn("Trigger is not armed, cannot trigger");
             return;
@@ -66,6 +66,10 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         this.logger.info("Rearming trigger after triggering");
         this.arm();
 
+    }
+
+    setRootLog(rootLog: Log): void {
+        this.logger.setRootLog(rootLog);
     }
 
     arm(): void {

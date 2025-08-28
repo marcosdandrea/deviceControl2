@@ -66,17 +66,6 @@ export const createRoutine = (routineData): Routine => {
     r?.offAny(onAnyListener);
   });
 
-  // 2) Listener de abort desde el EventManager (usa WeakRef; no captura 'routine')
-  const abortEvent = `user.routine.${id}.${routineEvents.routineAborted}`;
-  const onAbortByUser = () => {
-    const r = routineWeakRef.deref();
-    if (r) {
-      log.info(`User requested to abort routine ${id}`);
-      r.abort("Routine aborted by user");
-    }
-  };
-  eventManager.on(abortEvent, onAbortByUser);
-  disposers.push(() => eventManager.off(abortEvent, onAbortByUser));
 
   // Registrar cleanup en el registro global (para uso de removeRoutine)
   routineRegistry.set(id, { ref: routineWeakRef, disposers });
