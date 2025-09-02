@@ -1,8 +1,11 @@
 import React from 'react';
 import useProject from '@hooks/useProject';
 import Button from '@components/Button';
+import { dummyProjectData } from '@helpers/dummy-project';
 
 const Builder = () => {
+
+    console.log (JSON.stringify(dummyProjectData))
 
     const { loadProjectFile, unloadProject, getProjectFile, project } = useProject();
 

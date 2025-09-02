@@ -68,9 +68,6 @@ export class Trigger extends EventEmitter implements TriggerInterface {
 
     }
 
-    setRootLog(rootLog: Log): void {
-        this.logger.setRootLog(rootLog);
-    }
 
     arm(): void {
         if (this.armed)

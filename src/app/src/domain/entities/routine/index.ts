@@ -7,13 +7,14 @@
 
 import routineEvents from "@common/events/routine.events";
 import triggerEvents from "@common/events/trigger.events";
-import { id } from "@common/types/commons.type";
+import { id, RunCtx } from "@common/types/commons.type";
 import { RoutineInterface, RoutineStatus, RoutineType } from "@common/types/routine.type";
 import { TaskInterface } from "@common/types/task.type";
 import { TriggerInterface } from "@common/types/trigger.type";
 import { Log } from "@src/utils/log";
 import { EventEmitter } from "events";
 import crypto from "crypto";
+import { nanoid } from "nanoid";
 
 export const RoutineActions = ["enable", "disable", "run", "stop"] as const;
 export type RoutineActions = typeof RoutineActions[number];
@@ -158,7 +159,6 @@ export class Routine extends EventEmitter implements RoutineInterface {
     }
 
     addTask(task: TaskInterface): void {
-        task.setRootLog(this.logger);
         this.tasks.push(task);
         this.logger.info(`Task ${task.name} added`);
         this.#eventDispatcher(routineEvents.routineTaskAdded, { taskId: task.id });
@@ -212,7 +212,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.logger.info(`Trigger ${trigger.name} executed`);
         this.#eventDispatcher(routineEvents.routineTriggerTriggered, { triggerId: trigger.id });
         try {
-            await this.run();
+            await this.run(trigger);
         } catch (err) {
             this.logger.error(`Error executing trigger ${trigger.name}: ${err.message}`);
         }
@@ -232,7 +232,6 @@ export class Routine extends EventEmitter implements RoutineInterface {
         if (this.triggers.find(t => t.id === trigger.id))
             throw new Error(`Trigger with id ${trigger.id} already exists`);
 
-        trigger.setRootLog(this.logger);
         this.#bindTriggerEvents(trigger);
         this.triggers.push(trigger);
         this.logger.info(`Trigger "${trigger.name}" added`);
@@ -322,15 +321,34 @@ export class Routine extends EventEmitter implements RoutineInterface {
         const tasksWithConditions = this.tasks.filter(t => t.condition);
         if (tasksWithConditions.length === 0) return true;
 
+        const ctx = { 
+            executionId: nanoid(8),
+            hierarchy: [{type: 'routine', name: this.name}],
+            baseLogger: this.logger
+        } as RunCtx;
+
+        this.logger.info(`Autochecking conditions for ${tasksWithConditions.length} tasks`, null, ctx);
+
         const abortController = new AbortController();
         const { signal: abortSignal } = abortController;
-        const results = await Promise.all(tasksWithConditions.map(t => t.condition!.evaluate({ abortSignal })));
+        const results = await Promise.all(tasksWithConditions.map(t => {
+
+            const taskCtx = { 
+                ...ctx, 
+                hierarchy: [...ctx.hierarchy, {type: 'task', name: t.name}] 
+            };
+
+            return t.condition!.evaluate({ abortSignal, runCtx: taskCtx });
+        }));
         return results.every(res => res === true);
     }
 
-    async run(): Promise<void> {
+    async run(triggeredBy: TriggerInterface): Promise<void> {
         if (!this.enabled)
             throw new Error(`Routine ${this.name} is not enabled`);
+
+        if (!triggeredBy?.id)
+            throw new Error(`Routine ${this.name} is not triggered by a valid trigger`);
 
         if (this.isRunning)
             throw new Error(`Routine ${this.name} is already running`);
@@ -351,32 +369,38 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
         const cleanOnFinish = () => {
             this.abortController = null;
-            this.isRunning = false;
+            this.isRunning = false
         }
 
-        this.logger.info(`Starting routine "${this.name}" with ID ${this.id}`);
+        const ctx = { 
+            executionId: nanoid(8),
+            baseLogger: this.logger,
+            hierarchy: [{type: 'routine', name: this.name}] 
+        } as RunCtx;
+
+        this.logger.info(`Starting routine. Triggered by ${triggeredBy.name}`, null, ctx);
 
         return new Promise(async (resolve, reject) => {
             const { signal: abortSignal } = this.abortController;
 
             const runInSync = async () => {
-                this.logger.info("Running tasks in sync...");
+                this.logger.info("Running tasks in sync...", null, ctx);
                 for (const task of this.tasks) {
                     try {
-                        this.logger.info(`Running task ${task.name}...`);
+                        this.logger.info(`Running task ${task.name}...`, null, ctx);
                         this.timeoutController = new AbortController();
                         const { signal: cancelSignal } = this.timeoutController;
 
                         await Promise.race([
-                            task.run({ abortSignal }),
+                            task.run({ abortSignal, runCtx: ctx }),
                             this.#taskTimeout({ cancelSignal })
                         ]);
 
-                        this.logger.info(`Task ${task.name} completed`);
+                        this.logger.info(`Task ${task.name} completed`, null, ctx);
                         this.timeoutController.abort();
                     } catch (e) {
                         if (this.continueOnError) {
-                            this.logger.warn(`Task failed: ${e?.message || e}`);
+                            this.logger.warn(`Task failed: ${e?.message || e}`, null, ctx);
                             handleOnError(e);
                         } else {
                             handleOnError(e);
@@ -392,10 +416,10 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
                 try {
                     if (this.continueOnError) {
-                        this.logger.info("Running tasks in parallel with continueOnError...");
+                        this.logger.info("Running tasks in parallel with continueOnError...", null, ctx);
 
                         const result = await Promise.race([
-                            Promise.allSettled(this.tasks.map(task => task.run({ abortSignal }))),
+                            Promise.allSettled(this.tasks.map(task => task.run({ abortSignal, runCtx: ctx }))),
                             this.#abortSignalController(),
                             this.#taskTimeout({ cancelSignal })
                         ]) as PromiseSettledResult<void>[];
@@ -403,22 +427,22 @@ export class Routine extends EventEmitter implements RoutineInterface {
                         this.timeoutController.abort();
 
                         if (result.every((res) => res.status === 'fulfilled'))
-                            this.logger.info(`Tasks completed: ${this.getTasks().map(task => task.name).join(', ')}`);
+                            this.logger.info(`Tasks completed: ${this.getTasks().map(task => task.name).join(', ')}`, null, ctx);
                         else
                             for (const res of result) {
                                 if (res.status === 'rejected') {
-                                    this.logger.warn(`Task failed: ${res.reason}`);
+                                    this.logger.warn(`Task failed: ${res.reason}`, null, ctx);
                                     handleOnError(res.reason);
                                 } else {
-                                    this.logger.info(`Task completed: ${res.value}`);
+                                    this.logger.info(`Task completed: ${res.value}`, null, ctx);
                                 }
                             }
 
                     } else {
-                        this.logger.info("Running tasks in parallel without continueOnError...");
+                        this.logger.info("Running tasks in parallel without continueOnError...", null, ctx);
 
                         const result = await Promise.race([
-                            Promise.all(this.tasks.map(task => task.run({ abortSignal }))),
+                            Promise.all(this.tasks.map(task => task.run({ abortSignal, runCtx: ctx }))),
                             this.#abortSignalController(),
                             this.#taskTimeout({ cancelSignal })
                         ]);
@@ -441,22 +465,22 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
                 if (this.failed) {
                     if (this.#setStatus("failed")) {
-                        this.logger.error("Routine ended with errors");
+                        this.logger.error("Routine ended with errors", null, ctx);
                         this.#eventDispatcher(routineEvents.routineFailed);
                     }
                 } else if (!this.abortController || !this.abortController.signal.aborted) {
                     if (this.#setStatus("completed")) {
-                        this.logger.info("Routine completed successfully");
+                        this.logger.info("Routine completed successfully", null, ctx);
                         this.#eventDispatcher(routineEvents.routineCompleted);
                     }
                 } else {
-                    this.logger.warn("Routine was aborted");
+                    this.logger.warn("Routine was aborted", null, ctx);
                 }
 
                 resolve();
             } catch (e) {
                 if (this.#setStatus("failed")) {
-                    this.logger.error(`Routine ended with error: ${e?.message || e}`);
+                    this.logger.error(`Routine ended with error: ${e?.message || e}`, null, ctx);
                     this.#eventDispatcher(routineEvents.routineFailed);
                 }
                 reject(e);

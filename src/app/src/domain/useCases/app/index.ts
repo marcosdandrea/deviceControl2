@@ -1,6 +1,6 @@
 import App from "@domain/entities/app/index.js"
 import {Log} from "@utils/log.js"
-const log = new Log("useCases", true)
+const log = new Log("appUseCase", true)
 
 export const createApp = async () => {
     try {

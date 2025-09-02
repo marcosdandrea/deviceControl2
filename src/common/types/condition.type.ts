@@ -1,4 +1,4 @@
-import { description, id, name } from "./commons.type";
+import { description, id, name, RunCtx } from "./commons.type";
 
 export type ConditionType = {
     id: id;
@@ -10,7 +10,7 @@ export type ConditionType = {
 }
 
 export interface ConditionInterface extends ConditionType {
-    evaluate: ({ abortSignal }: { abortSignal: AbortSignal }) => Promise<boolean>;
+    evaluate: ({ abortSignal, runCtx }: { abortSignal: AbortSignal, runCtx: RunCtx }) => Promise<boolean>;
     setTimeoutValue: (timeout: number) => void;
     toJson: () => ConditionType;
 }

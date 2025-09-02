@@ -17,7 +17,6 @@ export interface TriggerInterface extends TriggerType, EventEmitter {
     arm: () => void;
     disarm: () => void;
     toJson: () => TriggerType;
-    setRootLog: (rootLog: Log) => void;
 }
 
 export const TriggerTypes = {

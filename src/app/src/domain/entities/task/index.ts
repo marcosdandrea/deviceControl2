@@ -1,4 +1,4 @@
-import { description, id, name } from "@common/types/commons.type";
+import { description, id, name, RunCtx } from "@common/types/commons.type";
 import { ConditionInterface } from "@common/types/condition.type";
 import { JobInterface, JobType } from "@common/types/job.type";
 import { TaskInterface, TaskType } from "@common/types/task.type";
@@ -42,13 +42,13 @@ export class Task extends EventEmitter implements TaskInterface {
         this.failed = false;
         this.aborted = false;
 
-        this.checkConditionBeforeExecution = props?.checkConditionBeforeExecution || true;
+        this.checkConditionBeforeExecution = props?.checkConditionBeforeExecution ?? true;
 
         if (props?.continueOnError && typeof props.continueOnError !== 'boolean')
             throw new Error("continueOnError must be a boolean");
-        this.continueOnError = props.continueOnError || true;
+        this.continueOnError = props?.continueOnError ?? true;
 
-        this.log = new Log(`Task "${this.name}"`, true);
+        this.log = new Log(`Task "${this.name}"`, false);
 
         if (props?.retries && Number(props.retries) < 1)
             throw new Error("retries must be a positive number greater than one");
@@ -59,10 +59,6 @@ export class Task extends EventEmitter implements TaskInterface {
         this.waitBeforeRetry = props.waitBeforeRetry || 100;
 
         this.log.info(`Task "${this.name}" created with ID "${this.id}"`);
-    }
-
-    setRootLog(rootLog: Log): void {
-        this.log.setRootLog(rootLog);
     }
 
     setJob(job: JobInterface): void {
@@ -103,13 +99,25 @@ export class Task extends EventEmitter implements TaskInterface {
 
         this.continueOnError = continueOnError;
         this.log.info(`Continue on error set to ${this.continueOnError} for task ${this.name}`);
-    }
+    };
 
 
-    async run({ abortSignal }: { abortSignal: AbortSignal }): Promise<void> {
+    /**
+     * 
+     * @param abortSignal // Signal to abort the task execution
+     * @param runCtx // Context of the routine running the task
+     * @returns 
+     */
+    async run({ abortSignal, runCtx }: { abortSignal: AbortSignal, runCtx: RunCtx }): Promise<void> {
         this.startTime = Date.now();
-        this.log.info(`Running task "${this.name}" with ID "${this.id}"`);
-        this.#dispatchEvent(taskEvents.taskRunning, this.id, this.name);
+
+        const ctx = { 
+            ...runCtx,
+            hierarchy: [...(runCtx.hierarchy ?? []), {type: 'task', name: this.name}]
+        };
+
+        ctx.baseLogger.info(`Starting task "${this.name}" (ID: ${this.id})`, ctx);
+        this.#dispatchEvent(taskEvents.taskRunning, { taskId: this.id, taskName: this.name });
 
         this.totalRetries = 0;
         this.failed = false;
@@ -124,18 +132,17 @@ export class Task extends EventEmitter implements TaskInterface {
             throw new Error(`Task "${this.name}" aborted`);
         }
 
-
         const onTaskCompleted = () => {
             this.failed = false;
-            const duration = Date.now() - this.startTime;
-            this.log.info(`Task "${this.name}" completed successfully ${duration}ms`);
+            const duration = Date.now() - (this.startTime ?? Date.now());
+            ctx.baseLogger.info(`Task "${this.name}" completed successfully in ${duration}ms`, null, ctx);
             this.#dispatchEvent(taskEvents.taskCompleted, { taskId: this.id, taskName: this.name, failed: false, duration });
         }
 
         const checkCondition = async () => {
 
-            if (await this.condition.evaluate({ abortSignal })) {
-                this.log.info(`Condition met for task ${this.name}, finishing task execution.`);
+            if (await this.condition!.evaluate({ abortSignal, runCtx: ctx })) {
+                ctx.baseLogger.info(`Condition met for task ${this.name}, finishing task execution.`, null, ctx);
                 onTaskCompleted();
                 return true
             }
@@ -151,16 +158,16 @@ export class Task extends EventEmitter implements TaskInterface {
 
                 if (this.condition) {
                     if (this.checkConditionBeforeExecution) {
-                        this.log.info(`Checking condition before executing task ${this.name}.`);
+                        ctx.baseLogger.info(`Checking condition before executing task ${this.name}.`, null, ctx);
                         if (await checkCondition())
                             return Promise.resolve();
                     }
                 }
 
-                await this.job.execute({ abortSignal });
+                await this.job.execute({ abortSignal, runCtx: ctx });
 
-                if (!this.condition){
-                    this.log.info(`No condition set for task ${this.name}, finishing task execution.`);
+                if (!this.condition) {
+                    ctx.baseLogger.info(`No condition set for task ${this.name}, finishing task execution.`, null, ctx);
                     onTaskCompleted();
                     return Promise.resolve();
                 }
@@ -168,21 +175,21 @@ export class Task extends EventEmitter implements TaskInterface {
                 if (await checkCondition())
                     return Promise.resolve();
 
-                this.log.info(`Condition not met, will retry.`);
+                ctx.baseLogger.info(`Condition not met, will retry.`, null, ctx);
 
             } catch (error) {
 
                 if (this.aborted) {
-                    this.log.warn(`Task ${this.name} aborted, not continuing.`);
+                    ctx.baseLogger.info(`Task ${this.name} aborted, not continuing.`, null, ctx);
                     this.#dispatchEvent(taskEvents.taskAborted, { taskId: this.id, taskName: this.name });
                     throw error
                 }
 
-                this.log.error(`Error in task ${this.name}:`, error);
+                ctx.baseLogger.info(`Error in task ${this.name}: ${error instanceof Error ? error.message : String(error)}`, null, ctx);
                 this.#dispatchEvent(taskEvents.taskError, { taskId: this.id, taskName: this.name, error });
 
                 if (!this.continueOnError) {
-                    this.log.error(`Task ${this.name} failed and will not continue due to continueOnError being false.`);
+                    ctx.baseLogger.info(`Task ${this.name} failed and will not continue due to continueOnError being false.`, null, ctx);
                     this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
                     return Promise.reject(`Task ${this.name} failed and will not continue due to continueOnError being false.`);
                 }
@@ -192,16 +199,16 @@ export class Task extends EventEmitter implements TaskInterface {
             this.totalRetries++;
 
             if (this.totalRetries >= this.retries) {
-                this.log.info(`Max retries reached for task ${this.name}.`);
-                this.#dispatchEvent(taskEvents.taskFailed, this.id, this.name, new Error(`Max retries reached for task ${this.name}`));
+                ctx.baseLogger.info(`Max retries reached for task ${this.name}.`, null, ctx);
+                this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error: new Error(`Max retries reached for task ${this.name}`) });
                 this.failed = true;
                 return Promise.reject(`Max retries reached for task ${this.name}`);
             }
 
-            this.log.info(`Retrying task ${this.name} in ${this.waitBeforeRetry}ms.`);
+            ctx.baseLogger.info(`Retrying task ${this.name} in ${this.waitBeforeRetry}ms.`, null, ctx);
 
             await new Promise((resolve, reject) => {
-                const timeout = setTimeout(()=>{
+                const timeout = setTimeout(() => {
                     abortSignal.removeEventListener('abort', onAbort);
                     return resolve(undefined);
                 }, this.waitBeforeRetry);
@@ -211,13 +218,13 @@ export class Task extends EventEmitter implements TaskInterface {
                     abortSignal.removeEventListener('abort', onAbort);
                     reject(new Error(`Task ${this.name} aborted during retry wait`));
                 };
-                
+
                 if (abortSignal) {
                     abortSignal.addEventListener('abort', onAbort);
                 }
             });
 
-            this.#dispatchEvent(taskEvents.taskRetrying, this.id, this.name, this.totalRetries);
+            this.#dispatchEvent(taskEvents.taskRetrying, { taskId: this.id, taskName: this.name, attempt: this.totalRetries });
         }
     }
 

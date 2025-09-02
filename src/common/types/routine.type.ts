@@ -32,7 +32,7 @@ export interface RoutineInterface extends commonRoutineProps {
     addTrigger: (trigger: TriggerInterface) => void;
     removeTrigger: (triggerId: id) => void;
     getTriggers: () => TriggerInterface[];
-    run: () => void;
+    run: (triggeredBy: TriggerInterface) => void;
     abort: (cause: string) => void;
     toJson: () => RoutineType;
 }

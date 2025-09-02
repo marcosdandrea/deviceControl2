@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import { ConditionInterface, ConditionType } from "@common/types/condition.type";
 import { Log } from "@src/utils/log";
 import conditionEvents from "@common/events/condition.events";
+import { RunCtx } from "@common/types/commons.type";
 
 export class Condition extends EventEmitter implements ConditionInterface {
 
@@ -47,9 +48,6 @@ export class Condition extends EventEmitter implements ConditionInterface {
         this.logger.info(`Event "${event}" dispatched with args:`, args);
     }
 
-    setRootLog(rootLog: Log): void {
-        this.logger.setRootLog(rootLog);
-    }
 
     setTimeoutValue(timeout: number): void {
         if (typeof timeout !== 'number' || timeout < 0) {
@@ -82,7 +80,20 @@ export class Condition extends EventEmitter implements ConditionInterface {
         return Promise.reject("doEvaluation method not implemented");
     }
 
-    async evaluate({ abortSignal }: { abortSignal: AbortSignal }): Promise<boolean> {
+    async evaluate({ abortSignal, runCtx }: { abortSignal: AbortSignal, runCtx: RunCtx }): Promise<boolean> {
+        if (!abortSignal)
+            throw new Error("AbortSignal is required to evaluate the condition");
+
+        if (!runCtx || !runCtx.executionId || !runCtx.hierarchy)
+            throw new Error("RunCtx with executionId and hierarchy is required to trace evaluation for condition");
+
+        const ctx = { 
+            ...runCtx, 
+            hierarchy: [...(runCtx.hierarchy ?? []), {type: 'condition', name: this.name}] 
+        };
+
+        ctx.baseLogger.info(`Evaluating condition "${this.name}"`, null, ctx);
+
         try {
             await Promise.race([
                 this.abortTimeout({ abortSignal }),
@@ -93,10 +104,10 @@ export class Condition extends EventEmitter implements ConditionInterface {
                 this.timeout = null;
             }
             this.#dispatchEvent(conditionEvents.succeded);
-            this.logger.info(`Condition "${this.name}" evaluation succeeded`);
+            ctx.baseLogger.info(`Evaluation succeeded`, null, ctx);
             return true
         } catch (error) {
-            this.logger.error("Error during evaluation:", error);
+            ctx.baseLogger.error(`Error during evaluation: ${error instanceof Error ? error.message : String(error)}`, null, ctx);
             this.#dispatchEvent(conditionEvents.error, error);
             return false;
         }

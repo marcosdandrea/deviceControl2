@@ -1,4 +1,4 @@
-import { description, id, name } from "./commons.type";
+import { description, id, name, RunCtx } from "./commons.type";
 
 export type JobType = {
     id?: id;
@@ -11,6 +11,6 @@ export type JobType = {
 }
 
 export interface JobInterface extends JobType {
-    execute: ({ abortSignal, payload }: { abortSignal: AbortSignal, payload?: object }) => Promise<void>;
+    execute: ({ abortSignal, payload, runCtx }: { abortSignal: AbortSignal, payload?: object, runCtx: RunCtx }) => Promise<void>;
     toJson: () => JobType;
 }

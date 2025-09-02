@@ -1,4 +1,4 @@
-import { description, id, name } from "./commons.type";
+import { description, id, name, RunCtx } from "./commons.type";
 import { ConditionInterface, ConditionType } from "./condition.type";
 import { JobInterface, JobType } from "./job.type";
 import { Log } from "@src/utils/log";
@@ -20,12 +20,11 @@ export type TaskType = {
 export interface TaskInterface extends TaskType {
     job?: JobInterface;
     condition?: ConditionInterface | null;
-    setRootLog: (root: Log) => void;
     setJob: (job: JobInterface) => void;
     setCondition: (condition: ConditionInterface | null) => void;
     setRetries: (retries: number) => void;
     setWaitBeforeRetry: (waitBeforeRetry: number) => void;
     setContinueOnError: (continueOnError: boolean) => void;
-    run: ({ abortSignal }: { abortSignal: AbortSignal }) => Promise<void>;
+    run: ({ abortSignal, runCtx }: { abortSignal: AbortSignal, runCtx: RunCtx }) => Promise<void>;
     toJson: () => TaskType;
 }

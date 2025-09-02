@@ -2,6 +2,8 @@ import { JobType } from "@common/types/job.type";
 import { Job } from "../..";
 import jobEvents from "@common/events/job.events";
 import { jobTypes } from "..";
+import { RunCtx } from "@common/types/commons.type";
+import { run } from "node:test";
 
 
 export class WaitJob extends Job {
@@ -36,11 +38,11 @@ export class WaitJob extends Job {
         return params as Record<string, any>;
     }
 
-    async job(): Promise<void> {
+    async job(runCtx: RunCtx): Promise<void> {
         this.failed = false;
         const { signal: abortSignal } = this.abortController || {};
         this.dispatchEvent(jobEvents.jobRunning, { jobId: this.id });
-        this.log.info(`Starting job "${this.name}" with ID ${this.id}`);
+        runCtx.baseLogger.info(`Starting job "${this.name}"`, null, runCtx.hierarchy);
 
         const clearTimeoutTimer = () => {
             if (this.timeoutTimer) 
@@ -71,7 +73,7 @@ export class WaitJob extends Job {
                     clearTimeout(this.timeoutTimer);
 
                 this.timeoutTimer = setTimeout(() => {
-                    this.log.info(`Job "${this.name}" completed successfully`);
+                    runCtx.baseLogger.info(`Job "${this.name}" completed successfully`, null, runCtx.hierarchy);
                     this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id });
                     
                     resolve();
@@ -79,7 +81,7 @@ export class WaitJob extends Job {
             });
             Promise.resolve();            
         } catch (error) {
-            this.log.error(`Error in job "${this.name}": ${error.message}`);
+            runCtx.baseLogger.error(`Error in job "${this.name}": ${error.message}`, null, runCtx.hierarchy);
             this.failed = true;
             this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
 

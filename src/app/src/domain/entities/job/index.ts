@@ -3,6 +3,8 @@ import { EventEmitter } from "events";
 import { Log } from "@src/utils/log";
 import crypto from "crypto";
 import jobEvents from "@common/events/job.events";
+import { RunCtx } from "@common/types/commons.type";
+import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
 export class Job extends EventEmitter implements JobInterface {
     id: JobInterface["id"];
@@ -41,9 +43,9 @@ export class Job extends EventEmitter implements JobInterface {
             throw new Error("Job params must be an object");
         this.params = props.params || {};
 
-        this.log = new Log(`Job "${this.name}"`, true);
+        this.log = new Log(`Job "${this.name}"`, false);
 
-        this.enableTimoutWatcher = props.enableTimoutWatcher || false;
+        this.enableTimoutWatcher = props?.enableTimoutWatcher ?? false;
 
         this.type = props.type || "generic"; // Default type, should be overridden in subclasses
 
@@ -54,13 +56,10 @@ export class Job extends EventEmitter implements JobInterface {
     }
 
 
-    protected job(): Promise<void> {
+    protected job(runCtx: RunCtx): Promise<void> {
         throw new Error("Job method must be implemented in subclasses");
     }
 
-    setRootLog(rootLog: Log): void {
-        this.log.setRootLog(rootLog);
-    }
 
     #timeoutWatcher({ abortSignal }: { abortSignal: AbortSignal }): Promise<void> {
 
@@ -120,24 +119,34 @@ export class Job extends EventEmitter implements JobInterface {
         });
     }
 
-    async execute({ abortSignal }: { abortSignal: AbortSignal }): Promise<void> {
-        this.log.info(`Executing job "${this.name}" with ID ${this.id}`);
+    async execute({ abortSignal, runCtx }: { abortSignal: AbortSignal, runCtx: RunCtx }): Promise<void> {
+
+        if (!abortSignal)
+            throw new Error("AbortSignal is required to execute the job");
+
+        if (!runCtx || !runCtx.executionId || !runCtx.baseLogger)
+            throw new Error("RunCtx with executionId and baseLogger is required to execute the job");
+
+        const ctx = { 
+            ...runCtx, 
+            hierarchy: [...(runCtx.hierarchy ?? []), {type: 'job', name: this.name}] 
+        };
+
+        runCtx.baseLogger.info(`Executing job`, null, ctx);
         this.dispatchEvent(jobEvents.jobRunning, { jobId: this.id, jobName: this.name });
         this.abortController = new AbortController()
 
         const handleOnAbort = () => {
-            this.log.warn(`Job "${this.name}" execution was aborted`);
+            runCtx.baseLogger.info(`Job execution was aborted`, null, ctx);
             this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
             this.abortController?.abort();
             return Promise.reject(`Job "${this.name}" was aborted`);
         }
 
-        if (!abortSignal)
-            throw new Error("AbortSignal is required to execute the job");
 
         if (abortSignal.aborted) {
             this.abortController?.abort();
-            return Promise.reject(new Error(`Job "${this.name}" was aborted before execution`))
+            return Promise.reject(new Error(`Job aborted before execution`))
         }
 
         // Promise to handle abortion via abortSignal
@@ -148,14 +157,18 @@ export class Job extends EventEmitter implements JobInterface {
         try {
             await Promise.race([
                 this.#timeoutWatcher({ abortSignal }),
-                this.job(),
+                this.job(ctx),
                 abortPromise
             ]);
 
             abortSignal.removeEventListener('abort', handleOnAbort);
+            runCtx.baseLogger.info(`Execution finished successfully`, null, ctx);
             return Promise.resolve();
         } catch (error) {
+            this.failed = true;
+            runCtx.baseLogger.error(`Execution failed: ${error instanceof Error ? error.message : String(error)}`, null, ctx);
             // Clean abort listeners before leaving!
+            abortSignal.removeEventListener('abort', handleOnAbort);
             abortSignal.removeEventListener('abort', this.#handleOnAbortTimeout as EventListener);
             throw error;
         }

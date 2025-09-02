@@ -16,7 +16,7 @@ import projectEvents from "@common/events/project.events";
 import { createRoutine } from "../routine";
 import { broadcastToClients } from "@src/services/ipcServices";
 
-const log = new Log("ProjectUseCases", true);
+const log = new Log("projectUseCases", true);
 const eventManager = new EventManager();
 
 export const createNewProject = async (projectData?: projectType): Promise<Project> => {
@@ -179,18 +179,18 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
       }
    }
 
-   await createRoutines();
    await createTriggers();
    await createTasks();
-
+   
    project = Project.createInstance({
       ...projectData,
       routines: [],
       triggers: Object.values(triggers),
       tasks: Object.values(tasks)
    })
-
    
+   
+   await createRoutines();
    project.routines = Object.values(routines);
    project.onAny(broadcastToClients)
 

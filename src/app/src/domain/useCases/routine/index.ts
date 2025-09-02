@@ -5,7 +5,7 @@ import { EventManager } from '@src/services/eventManager';
 import routineEvents from '@common/events/routine.events';
 import { broadcastToClients } from '@src/services/ipcServices';
 
-const log = new Log("RoutineUseCases", true);
+const log = new Log("routineUseCase", true);
 const eventManager = new EventManager();
 
 // Registro: por cada rutina guardamos sólo WeakRef y disposers (no retenemos fuerte la instancia)
