@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import { TriggerInterface, TriggerType } from "@common/types/trigger.type";
 import { Log } from "@src/utils/log";
 import triggerEvents from "@common/events/trigger.events";
+import { Context } from "../context";
 
 export class Trigger extends EventEmitter implements TriggerInterface {
     id: TriggerInterface["id"];
@@ -55,9 +56,13 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         }
 
         this.logger.info("Triggering...");
+
+        const origin = { type: "trigger", id: this.id }
+        const ctx = Context.createRootContext(origin);
+
         this.triggered = true;
-        this.dispatchEvent(triggerEvents.triggered, { triggerId: this.id });
-        this.logger.info(`${this.type.charAt(0).toUpperCase() + this.type.slice(1).toLowerCase()} trigger (id: ${this.id}) triggered`);
+        this.dispatchEvent(triggerEvents.triggered, { ctx });
+        this.logger.info(`${this.type.charAt(0).toUpperCase() + this.type.slice(1).toLowerCase()} trigger triggered [ctx: ${ctx.id}]`);
         this.disarm();
 
         if (!this.reArmOnTrigger)

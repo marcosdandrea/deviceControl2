@@ -1,4 +1,5 @@
 import { description, id, name } from "./commons.type";
+import { contextType } from "./context.type";
 import { TaskInterface, TaskType } from "./task.type";
 import { TriggerInterface, TriggerType } from "./trigger.type";
 
@@ -32,9 +33,10 @@ export interface RoutineInterface extends commonRoutineProps {
     addTrigger: (trigger: TriggerInterface) => void;
     removeTrigger: (triggerId: id) => void;
     getTriggers: () => TriggerInterface[];
-    run: (triggeredBy: TriggerInterface) => void;
+    run: (triggeredBy: TriggerInterface, ctx: contextType) => void;
     abort: (cause: string) => void;
     toJson: () => RoutineType;
 }
+
 
 export type RoutineStatus = "running" | "checking" | "completed" | "aborted" | "failed" | "unknown";

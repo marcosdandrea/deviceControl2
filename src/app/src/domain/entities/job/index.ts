@@ -5,6 +5,7 @@ import crypto from "crypto";
 import jobEvents from "@common/events/job.events";
 import { RunCtx } from "@common/types/commons.type";
 import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
+import { Context } from "../context";
 
 export class Job extends EventEmitter implements JobInterface {
     id: JobInterface["id"];
@@ -56,7 +57,7 @@ export class Job extends EventEmitter implements JobInterface {
     }
 
 
-    protected job(runCtx: RunCtx): Promise<void> {
+    protected job(ctx: Context): Promise<void> {
         throw new Error("Job method must be implemented in subclasses");
     }
 
@@ -119,25 +120,20 @@ export class Job extends EventEmitter implements JobInterface {
         });
     }
 
-    async execute({ abortSignal, runCtx }: { abortSignal: AbortSignal, runCtx: RunCtx }): Promise<void> {
+    async execute({ abortSignal, ctx }: { abortSignal: AbortSignal, ctx: Context }): Promise<void> {
 
         if (!abortSignal)
             throw new Error("AbortSignal is required to execute the job");
 
-        if (!runCtx || !runCtx.executionId || !runCtx.baseLogger)
-            throw new Error("RunCtx with executionId and baseLogger is required to execute the job");
+        if (!(ctx instanceof Context))
+            throw new Error("ctx must be an instance of Context");
 
-        const ctx = { 
-            ...runCtx, 
-            hierarchy: [...(runCtx.hierarchy ?? []), {type: 'job', name: this.name}] 
-        };
-
-        runCtx.baseLogger.info(`Executing job`, null, ctx);
+        ctx.log.info(`Executing job`);
         this.dispatchEvent(jobEvents.jobRunning, { jobId: this.id, jobName: this.name });
         this.abortController = new AbortController()
 
         const handleOnAbort = () => {
-            runCtx.baseLogger.info(`Job execution was aborted`, null, ctx);
+            ctx.log.info(`Job execution was aborted`);
             this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
             this.abortController?.abort();
             return Promise.reject(`Job "${this.name}" was aborted`);
@@ -162,11 +158,11 @@ export class Job extends EventEmitter implements JobInterface {
             ]);
 
             abortSignal.removeEventListener('abort', handleOnAbort);
-            runCtx.baseLogger.info(`Execution finished successfully`, null, ctx);
+            ctx.log.info(`Execution finished successfully`);
             return Promise.resolve();
         } catch (error) {
             this.failed = true;
-            runCtx.baseLogger.error(`Execution failed: ${error instanceof Error ? error.message : String(error)}`, null, ctx);
+            ctx.log.error(`Execution failed: ${error instanceof Error ? error.message : String(error)}`);
             // Clean abort listeners before leaving!
             abortSignal.removeEventListener('abort', handleOnAbort);
             abortSignal.removeEventListener('abort', this.#handleOnAbortTimeout as EventListener);

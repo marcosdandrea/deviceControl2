@@ -1,9 +1,8 @@
-import { Log } from "@src/utils/log";
 import { description, id, name } from "./commons.type";
 import { EventEmitter } from "events";
 
 export type TriggerType = {
-    id?: id;
+    id: id;
     name: name;
     description?: description;
     armed?: boolean;

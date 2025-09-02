@@ -7,14 +7,15 @@
 
 import routineEvents from "@common/events/routine.events";
 import triggerEvents from "@common/events/trigger.events";
-import { id, RunCtx } from "@common/types/commons.type";
+import { id } from "@common/types/commons.type";
 import { RoutineInterface, RoutineStatus, RoutineType } from "@common/types/routine.type";
 import { TaskInterface } from "@common/types/task.type";
 import { TriggerInterface } from "@common/types/trigger.type";
 import { Log } from "@src/utils/log";
 import { EventEmitter } from "events";
 import crypto from "crypto";
-import { nanoid } from "nanoid";
+import { Trigger } from "../trigger";
+import { Context } from "../context";
 
 export const RoutineActions = ["enable", "disable", "run", "stop"] as const;
 export type RoutineActions = typeof RoutineActions[number];
@@ -208,27 +209,37 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.#eventDispatcher(routineEvents.routineTaskOrderChanged, { taskToMoveId: taskToMove.id, newIndex });
     }
 
-    async #onTriggerExecute(trigger: TriggerInterface): Promise<void> {
+    async #onTriggerExecute(trigger: TriggerInterface, args: any): Promise<void> {
         this.logger.info(`Trigger ${trigger.name} executed`);
         this.#eventDispatcher(routineEvents.routineTriggerTriggered, { triggerId: trigger.id });
+
+        const { ctx } = args;
+
+        if (!(ctx instanceof Context)) 
+            throw new Error(`Invalid context provided on listener`);
+        
         try {
-            await this.run(trigger);
+            await this.run(trigger, ctx);
         } catch (err) {
             this.logger.error(`Error executing trigger ${trigger.name}: ${err.message}`);
         }
     }
 
     #bindTriggerEvents(trigger: TriggerInterface): void {
-        trigger.on(triggerEvents.triggered, this.#onTriggerExecute.bind(this, trigger));
+        trigger.on(triggerEvents.triggered, (ctx) => this.#onTriggerExecute(trigger, ctx));
         this.logger.info(`Trigger "${trigger.name}" bound`);
     }
 
     #unbindTriggerEvents(trigger: TriggerInterface): void {
-        trigger.off(triggerEvents.triggered, this.#onTriggerExecute.bind(this, trigger));
+        trigger.off(triggerEvents.triggered, (ctx) => this.#onTriggerExecute(trigger, ctx));
         this.logger.info(`Trigger "${trigger.name}" unbound`);
     }
 
     addTrigger(trigger: TriggerInterface): void {
+        
+        if (!(trigger instanceof Trigger))
+            throw new Error("Invalid trigger");
+
         if (this.triggers.find(t => t.id === trigger.id))
             throw new Error(`Trigger with id ${trigger.id} already exists`);
 
@@ -321,29 +332,22 @@ export class Routine extends EventEmitter implements RoutineInterface {
         const tasksWithConditions = this.tasks.filter(t => t.condition);
         if (tasksWithConditions.length === 0) return true;
 
-        const ctx = { 
-            executionId: nanoid(8),
-            hierarchy: [{type: 'routine', name: this.name}],
-            baseLogger: this.logger
-        } as RunCtx;
+        const ctx = Context.createRootContext({ type: "routine", id: this.id });
 
-        this.logger.info(`Autochecking conditions for ${tasksWithConditions.length} tasks`, null, ctx);
+        ctx.log.info(`Autochecking conditions for ${tasksWithConditions.length} tasks`);
 
         const abortController = new AbortController();
         const { signal: abortSignal } = abortController;
-        const results = await Promise.all(tasksWithConditions.map(t => {
+        const results = await Promise.all(tasksWithConditions.map(task => {
 
-            const taskCtx = { 
-                ...ctx, 
-                hierarchy: [...ctx.hierarchy, {type: 'task', name: t.name}] 
-            };
+            ctx.log.info(`Checking condition for task ${task.name}`, [this.id]);
 
-            return t.condition!.evaluate({ abortSignal, runCtx: taskCtx });
+            return task.condition!.evaluate({ abortSignal, ctx });
         }));
         return results.every(res => res === true);
     }
 
-    async run(triggeredBy: TriggerInterface): Promise<void> {
+    async run(triggeredBy: TriggerInterface, ctx: Context): Promise<void> {
         if (!this.enabled)
             throw new Error(`Routine ${this.name} is not enabled`);
 
@@ -352,6 +356,10 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
         if (this.isRunning)
             throw new Error(`Routine ${this.name} is already running`);
+
+        if (!(ctx instanceof Context)) {
+            throw new Error(`Invalid context provided`);
+        }
 
         this.abortController = new AbortController();
 
@@ -372,35 +380,32 @@ export class Routine extends EventEmitter implements RoutineInterface {
             this.isRunning = false
         }
 
-        const ctx = { 
-            executionId: nanoid(8),
-            baseLogger: this.logger,
-            hierarchy: [{type: 'routine', name: this.name}] 
-        } as RunCtx;
-
-        this.logger.info(`Starting routine. Triggered by ${triggeredBy.name}`, null, ctx);
+        const ctxNode = { type: 'routine', id: this.id };
+        const childCtx = ctx.createChildContext(ctxNode);
+        childCtx.log.info(`Routine ${this.name} started`);
 
         return new Promise(async (resolve, reject) => {
             const { signal: abortSignal } = this.abortController;
 
             const runInSync = async () => {
-                this.logger.info("Running tasks in sync...", null, ctx);
+                childCtx.log.info("Running tasks in sync...");
+
                 for (const task of this.tasks) {
                     try {
-                        this.logger.info(`Running task ${task.name}...`, null, ctx);
+                        childCtx.log.info(`Running task ${task.name}...`);
                         this.timeoutController = new AbortController();
                         const { signal: cancelSignal } = this.timeoutController;
 
                         await Promise.race([
-                            task.run({ abortSignal, runCtx: ctx }),
+                            task.run({ abortSignal, runCtx: childCtx }),
                             this.#taskTimeout({ cancelSignal })
                         ]);
 
-                        this.logger.info(`Task ${task.name} completed`, null, ctx);
+                        childCtx.log.info(`Task ${task.name} completed`);
                         this.timeoutController.abort();
                     } catch (e) {
                         if (this.continueOnError) {
-                            this.logger.warn(`Task failed: ${e?.message || e}`, null, ctx);
+                            childCtx.log.warn(`Task failed: ${e?.message || e}`);
                             handleOnError(e);
                         } else {
                             handleOnError(e);
@@ -416,10 +421,10 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
                 try {
                     if (this.continueOnError) {
-                        this.logger.info("Running tasks in parallel with continueOnError...", null, ctx);
+                        childCtx.log.info("Running tasks in parallel with continueOnError...");
 
                         const result = await Promise.race([
-                            Promise.allSettled(this.tasks.map(task => task.run({ abortSignal, runCtx: ctx }))),
+                            Promise.allSettled(this.tasks.map(task => task.run({ abortSignal, runCtx: childCtx }))),
                             this.#abortSignalController(),
                             this.#taskTimeout({ cancelSignal })
                         ]) as PromiseSettledResult<void>[];
@@ -427,19 +432,19 @@ export class Routine extends EventEmitter implements RoutineInterface {
                         this.timeoutController.abort();
 
                         if (result.every((res) => res.status === 'fulfilled'))
-                            this.logger.info(`Tasks completed: ${this.getTasks().map(task => task.name).join(', ')}`, null, ctx);
+                            childCtx.log.info(`Tasks completed: ${this.getTasks().map(task => task.name).join(', ')}`);
                         else
                             for (const res of result) {
                                 if (res.status === 'rejected') {
-                                    this.logger.warn(`Task failed: ${res.reason}`, null, ctx);
+                                    childCtx.log.warn(`Task failed: ${res.reason}`);
                                     handleOnError(res.reason);
                                 } else {
-                                    this.logger.info(`Task completed: ${res.value}`, null, ctx);
+                                    childCtx.log.info(`Task completed: ${res.value}`);
                                 }
                             }
 
                     } else {
-                        this.logger.info("Running tasks in parallel without continueOnError...", null, ctx);
+                        childCtx.log.info("Running tasks in parallel without continueOnError...");
 
                         const result = await Promise.race([
                             Promise.all(this.tasks.map(task => task.run({ abortSignal, runCtx: ctx }))),
@@ -448,7 +453,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
                         ]);
 
                         this.timeoutController.abort();
-                        this.logger.info(`Tasks completed: ${result}`);
+                        childCtx.log.info(`Tasks completed: ${result}`);
                     }
                 } catch (err) {
                     if (!this.abortController?.signal.aborted)
@@ -465,28 +470,30 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
                 if (this.failed) {
                     if (this.#setStatus("failed")) {
-                        this.logger.error("Routine ended with errors", null, ctx);
+                        childCtx.log.error("Routine ended with errors");
                         this.#eventDispatcher(routineEvents.routineFailed);
                     }
                 } else if (!this.abortController || !this.abortController.signal.aborted) {
                     if (this.#setStatus("completed")) {
-                        this.logger.info("Routine completed successfully", null, ctx);
+                        childCtx.log.info("Routine completed successfully");
                         this.#eventDispatcher(routineEvents.routineCompleted);
                     }
                 } else {
-                    this.logger.warn("Routine was aborted", null, ctx);
+                    childCtx.log.warn("Routine was aborted");
                 }
 
                 resolve();
             } catch (e) {
                 if (this.#setStatus("failed")) {
-                    this.logger.error(`Routine ended with error: ${e?.message || e}`, null, ctx);
+                    childCtx.log.error(`Routine ended with error: ${e?.message || e}`);
                     this.#eventDispatcher(routineEvents.routineFailed);
                 }
                 reject(e);
             } finally {
                 cleanOnFinish();
                 this.#resumeAutoCheckingConditions()
+                //debug only
+                //console.log (JSON.stringify(childCtx.toJSON(), null, 2))
             }
         })
     }

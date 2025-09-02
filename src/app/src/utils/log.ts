@@ -3,7 +3,6 @@
 // Ahora se escribe un archivo JSON por ejecución, en lugar de NDJSON por día.
 // Se eliminó el campo routineId para simplificar.
 
-import { RunCtx } from '@common/types/commons.type';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -46,21 +45,21 @@ export class Log {
     };
   }
 
-  info(message: string, data?: any, runCtx?: RunCtx)  { return this.#emit('info',  message, data, runCtx); }
-  warn(message: string, data?: any, runCtx?: RunCtx)  { return this.#emit('warn',  message, data, runCtx); }
-  error(message: string, data?: any, runCtx?: RunCtx) { return this.#emit('error', message, data, runCtx); }
-  debug(message: string, data?: any, runCtx?: RunCtx) { return this.#emit('debug', message, data, runCtx); }
+  info(message: string, data?: any, runCtx?: contextInterface)  { return this.#emit('info',  message, data, runCtx); }
+  warn(message: string, data?: any, runCtx?: contextInterface)  { return this.#emit('warn',  message, data, runCtx); }
+  error(message: string, data?: any, runCtx?: contextInterface) { return this.#emit('error', message, data, runCtx); }
+  debug(message: string, data?: any, runCtx?: contextInterface) { return this.#emit('debug', message, data, runCtx); }
 
 
-async #emit(level: LogLevel, message: string, data?: any, runCtx?: RunCtx ): Promise<string> {
+async #emit(level: LogLevel, message: string, data?: any, runCtx?: contextInterface): Promise<string> {
   // ---- Prefijo para consola (opcional) ----
-  const { hierarchy, executionId } = runCtx || {};
+  const { hierarchy, id } = runCtx || {};
   const routineName = (runCtx as any)?.routineName;
 
   let line = '';
   
-  if (executionId) {
-    line += `[exec:${executionId}] `;
+  if (id) {
+    line += `[exec:${id}] `;
   }
 
   line += `[${new Date().toISOString()}] [${level.toUpperCase()}] `;
@@ -145,9 +144,9 @@ async #emit(level: LogLevel, message: string, data?: any, runCtx?: RunCtx ): Pro
   })();
 
   const execDir = path.join(logDir, safeDate);
-  const filePath = path.join(execDir, `${executionId ?? 'no-exec'}.json`);
+  const filePath = path.join(execDir, `${id ?? 'no-exec'}.json`);
 
-  if (!executionId) {
+  if (!id) {
     // fallback: don’t write file without an executionId root
     return message;
   }
@@ -169,25 +168,25 @@ async #emit(level: LogLevel, message: string, data?: any, runCtx?: RunCtx ): Pro
   await this.#enqueue(async () => {
     await fs.mkdir(execDir, { recursive: true });
     // If this is the first time we see this execution, write the opening '['
-    const firstTime = !this.#openedExecutions.has(executionId);
+    const firstTime = !this.#openedExecutions.has(id);
     if (firstTime) {
       await fs.writeFile(filePath, '[\n', { flag: 'wx' }).catch(async (err) => {
         // If file exists already (e.g., concurrent start), ensure it has an opening bracket
         if ((err as any).code !== 'EEXIST') throw err;
       });
-      this.#openedExecutions.add(executionId);
-      this.#needsComma.delete(executionId);
+      this.#openedExecutions.add(id);
+      this.#needsComma.delete(id);
     }
 
     // If a comma is needed before next element, write it
-    if (this.#needsComma.has(executionId)) {
+    if (this.#needsComma.has(id)) {
       await fs.appendFile(filePath, ',\n', 'utf-8');
     }
 
     // Append the event
     await fs.appendFile(filePath, JSON.stringify(entry), 'utf-8');
     // Next append will require a comma
-    this.#needsComma.add(executionId);
+    this.#needsComma.add(id);
   });
 
   return message;

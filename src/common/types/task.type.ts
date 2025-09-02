@@ -1,5 +1,6 @@
 import { description, id, name, RunCtx } from "./commons.type";
 import { ConditionInterface, ConditionType } from "./condition.type";
+import { contextInterface } from "./context.type";
 import { JobInterface, JobType } from "./job.type";
 import { Log } from "@src/utils/log";
 
@@ -25,6 +26,6 @@ export interface TaskInterface extends TaskType {
     setRetries: (retries: number) => void;
     setWaitBeforeRetry: (waitBeforeRetry: number) => void;
     setContinueOnError: (continueOnError: boolean) => void;
-    run: ({ abortSignal, runCtx }: { abortSignal: AbortSignal, runCtx: RunCtx }) => Promise<void>;
+    run: ({ abortSignal, runCtx }: { abortSignal: AbortSignal, runCtx: contextInterface }) => Promise<void>;
     toJson: () => TaskType;
 }

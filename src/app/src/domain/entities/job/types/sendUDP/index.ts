@@ -4,6 +4,7 @@ import jobEvents from "@common/events/job.events";
 import dgram from 'dgram';
 import { jobTypes } from "..";
 import ip from "ip";
+import { Context } from "@src/domain/entities/context";
 
 export interface SendUDPJobType extends JobType {
     params: {
@@ -52,10 +53,10 @@ export class SendUDPJob extends Job {
         return params as Record<string, any>;
     }
 
-    async job(): Promise<void> {
+    async job(ctx: Context): Promise<void> {
         this.failed = false;
         const { signal: abortSignal } = this.abortController || {};
-        this.log.info(`Starting job "${this.name}" with ID ${this.id}`);
+        ctx.log.info(`Starting job "${this.name}" with ID ${this.id}`);
 
         let ipAddress, portNumber, message, subnetMask;
 
@@ -81,7 +82,7 @@ export class SendUDPJob extends Job {
         const client = dgram.createSocket('udp4');
 
         if (isBroadcast(ipAddress, subnetMask)) {
-            this.log.info(`Sending UDP packet to broadcast address ${ipAddress}:${portNumber}`);
+            ctx.log.info(`Sending UDP packet to broadcast address ${ipAddress}:${portNumber}`);
             client.bind(() => {
                 client.setBroadcast(true);
             });
@@ -112,7 +113,7 @@ export class SendUDPJob extends Job {
 
             client.send(messageBuffer, 0, messageBuffer.length, portNumber, ipAddress, (err) => {
                 if (err) {
-                    this.log.error(`Failed to send UDP packet: ${err.message}`);
+                    ctx.log.error(`Failed to send UDP packet: ${err.message}`);
                     return safeReject(err);
                 }
                 safeResolve();
@@ -124,7 +125,7 @@ export class SendUDPJob extends Job {
                 });
             }
         }).finally(() => {
-            this.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
+            ctx.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
             this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id, failed: this.failed });
         });
     }

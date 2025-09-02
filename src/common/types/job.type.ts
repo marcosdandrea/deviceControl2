@@ -11,6 +11,6 @@ export type JobType = {
 }
 
 export interface JobInterface extends JobType {
-    execute: ({ abortSignal, payload, runCtx }: { abortSignal: AbortSignal, payload?: object, runCtx: RunCtx }) => Promise<void>;
+    execute: ({ abortSignal, payload, ctx }: { abortSignal: AbortSignal, payload?: object, ctx: Context }) => Promise<void>;
     toJson: () => JobType;
 }
