@@ -94,7 +94,7 @@ class LoggerContext {
     return current;
   }
 
-  addLog(executionId: string, path: nodeType[], entry: Omit<logContextEntry, "ts"> & { ts?: string }) {
+  addLog(executionId: string, path: nodeType[], entry: Omit<logContextEntry, "ts"> & { ts?: string }): [string, any] {
     const node = this.ensurePath(executionId, path);
     node.logs.push({
       ts: entry.ts ?? new Date().toISOString(),
@@ -102,6 +102,7 @@ class LoggerContext {
       message: entry.message,
       data: entry.data,
     });
+    return [entry.message, entry?.data];
   }
 
   ensureChild(executionId: string, parentPath: nodeType[], child: nodeType): TreeNode {
@@ -200,13 +201,13 @@ export class Context {
 
   /** Facade de logging */
   log = {
-    info: (message: string, data?: unknown) =>
+    info: (message: string, data?: unknown): any =>
       this.logger.addLog(this.id, this.path, { level: "info", message, data }),
-    warn: (message: string, data?: unknown) =>
+    warn: (message: string, data?: unknown): any =>
       this.logger.addLog(this.id, this.path, { level: "warn", message, data }),
-    error: (message: string, data?: unknown) =>
+    error: (message: string, data?: unknown): any =>
       this.logger.addLog(this.id, this.path, { level: "error", message, data }),
-    debug: (message: string, data?: unknown) =>
+    debug: (message: string, data?: unknown): any =>
       this.logger.addLog(this.id, this.path, { level: "debug", message, data }),
   };
 

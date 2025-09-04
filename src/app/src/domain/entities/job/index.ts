@@ -3,8 +3,6 @@ import { EventEmitter } from "events";
 import { Log } from "@src/utils/log";
 import crypto from "crypto";
 import jobEvents from "@common/events/job.events";
-import { RunCtx } from "@common/types/commons.type";
-import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import { Context } from "../context";
 
 export class Job extends EventEmitter implements JobInterface {
@@ -44,7 +42,7 @@ export class Job extends EventEmitter implements JobInterface {
             throw new Error("Job params must be an object");
         this.params = props.params || {};
 
-        this.log = Log.createInstance(`Job "${this.name}"`, false);
+        this.log = Log.createInstance(`Job "${this.name}"`, true);
 
         this.enableTimoutWatcher = props?.enableTimoutWatcher ?? false;
 
@@ -127,12 +125,14 @@ export class Job extends EventEmitter implements JobInterface {
         if (!(ctx instanceof Context))
             throw new Error("ctx must be an instance of Context");
 
+        this.log.info(`Executing job`);
         ctx.log.info(`Executing job`);
         this.dispatchEvent(jobEvents.jobRunning, { jobId: this.id, jobName: this.name });
         this.abortController = new AbortController()
 
         const handleOnAbort = () => {
-            ctx.log.info(`Job execution was aborted`);
+            this.log.warn(`Job execution was aborted`);
+            ctx.log.warn(`Job execution was aborted`);
             this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
             this.abortController?.abort();
             return Promise.reject(`Job "${this.name}" was aborted`);
@@ -157,6 +157,7 @@ export class Job extends EventEmitter implements JobInterface {
             ]);
 
             abortSignal.removeEventListener('abort', handleOnAbort);
+            this.log.info(`Execution finished successfully`);
             ctx.log.info(`Execution finished successfully`);
             return Promise.resolve();
         } catch (error) {

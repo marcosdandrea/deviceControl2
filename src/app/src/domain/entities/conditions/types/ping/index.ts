@@ -5,11 +5,13 @@ import { conditionTypes } from "..";
 
 interface ConditionPingParams extends Partial<ConditionType> {
     ipAddress: string;
+    invertResult?: boolean;
     timeoutValue?: number;
 }
 
 export class ConditionPing extends Condition {
     ipAddress: string;
+    invertResult: boolean;
     static type: string
 
     constructor(options: ConditionPingParams) {
@@ -22,9 +24,11 @@ export class ConditionPing extends Condition {
         } as ConditionType);
 
         const ipMask = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        if (!options.ipAddress || typeof options.ipAddress !== "string" || !ipMask.test(options.ipAddress))
+        if (!options.params.ipAddress || typeof options.params.ipAddress !== "string" || !ipMask.test(options.params.ipAddress))
             throw new Error("Ip address must be a valid IPv4 address");
-        this.ipAddress = options.ipAddress;
+        this.ipAddress = options.params.ipAddress;
+        this.invertResult = options?.params?.invertResult === true;
+        console.log({ invertResult: this.invertResult });
     }
 
     protected async doEvaluation({ abortSignal }: { abortSignal: AbortSignal }): Promise<boolean> {
@@ -43,7 +47,8 @@ export class ConditionPing extends Condition {
 
             pingPromise.then((res: any) => {
                 if (aborted) return;
-                if (res.alive) {
+                const result = this.invertResult ? !res.alive : res.alive;
+                if (result) {
                     resolve(true);
                 } else {
                     reject(new Error("Ping failed: destination unreachable"));

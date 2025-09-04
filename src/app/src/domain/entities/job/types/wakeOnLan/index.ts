@@ -6,19 +6,17 @@ import { jobTypes } from "..";
 import ip from "ip";
 import { Context } from "@src/domain/entities/context";
 
-export interface SendUDPJobType extends JobType {
+export interface WakeOnLanJobType extends JobType {
     params: {
-        ipAddress: string;
+        macAddress: string;
         portNumber: number;
-        message: string | Buffer; 
-        subnetMask?: string; // Optional, used for broadcast detection
     }
 }
 
 
-export class SendUDPJob extends Job {
+export class WakeOnLanJob extends Job {
 
-    constructor(options: SendUDPJobType) {
+    constructor(options: WakeOnLanJobType) {
         super({
             ...options,
             timeout: 5000, // Default timeout of 5 seconds
@@ -31,7 +29,7 @@ export class SendUDPJob extends Job {
     #getParameters(): Record<string, any> {
         const params = this.params || {};
 
-        const expectedParams = ["ipAddress", "portNumber", "message", "subnetMask"];
+        const expectedParams = ["macAddress", "portNumber"];
         const missingParams = expectedParams.filter(param => !(param in params));
 
         if (missingParams.length > 0)
@@ -40,15 +38,9 @@ export class SendUDPJob extends Job {
         if (Number(params.portNumber) < 0 || Number(params.portNumber) > 65535)
             throw new Error("Port number must be a number between 0 and 65535");
 
-        if (params.message && (typeof params.message !== 'string' && !Buffer.isBuffer(params.message)))
-            throw new Error("Message must be a string or a buffer");
-
-        const ipMask = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        if (!ipMask.test(params.ipAddress))
-            throw new Error("Ip address must be a valid IPv4 address");
-
-        if (params.subnetMask && !ipMask.test(params.subnetMask))
-            throw new Error("Subnet mask must be a valid IPv4 address");
+        const macAddressPattern = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+        if (!macAddressPattern.test(params.macAddress))
+            throw new Error("MAC address must be a valid MAC address");
 
         return params as Record<string, any>;
     }
@@ -59,35 +51,31 @@ export class SendUDPJob extends Job {
         ctx.log.info(`Starting job "${this.name}" with ID ${this.id}`);
         this.log.info(`Starting job "${this.name}" with ID ${this.id}`);
 
-        let ipAddress, portNumber, message, subnetMask;
+        let macAddress, portNumber;
 
         try {
-            ({ ipAddress, portNumber, message, subnetMask } = this.#getParameters());
+            ({ macAddress, portNumber } = this.#getParameters());
         } catch (error) {
             this.failed = true;
             this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
             throw error;
         }
 
-        const isBroadcast = (ipAddr: string, subnetMask?: string): boolean => {
-            if (ipAddr === "255.255.255.255") return true;
-            if (!subnetMask) return false;
-            try {
-                const subnetInfo = ip.subnet(ipAddr, subnetMask);
-                return ipAddr === subnetInfo.broadcastAddress;
-            } catch {
-                return false;
-            }
-        };
-
         const client = dgram.createSocket('udp4');
 
-        if (isBroadcast(ipAddress, subnetMask)) {
-            this.log.info(`Sending UDP packet to broadcast address ${ipAddress}:${portNumber}`);
-            ctx.log.info(`Sending UDP packet to broadcast address ${ipAddress}:${portNumber}`);
-            client.bind(() => {
-                client.setBroadcast(true);
-            });
+        client.bind(() => {
+            client.setBroadcast(true);
+        });
+
+        const buildMagicPacket = (mac: string): Buffer => {
+            const macBytes = mac.split(/[:-]/).map(b => parseInt(b, 16));
+            const buffer = Buffer.alloc(6 + 16 * 6, 0xff);
+            for (let i = 0; i < 16; i++) {
+                for (let j = 0; j < 6; j++) {
+                    buffer[6 + i * 6 + j] = macBytes[j];
+                }   
+            }
+            return buffer;
         }
 
         return new Promise<void>((resolve, reject) => {
@@ -111,15 +99,14 @@ export class SendUDPJob extends Job {
                 }
             };
 
-            const messageBuffer = Buffer.from(message, 'utf-8');
-
-            client.send(messageBuffer, 0, messageBuffer.length, portNumber, ipAddress, (err) => {
+            const messageBuffer = buildMagicPacket(macAddress);
+            client.send(messageBuffer, 0, messageBuffer.length, portNumber, "255.255.255.255", (err) => {
                 if (err) {
                     this.log.error(`Failed to send UDP packet: ${err.message}`);
                     ctx.log.error(`Failed to send UDP packet: ${err.message}`);
                     return safeReject(err);
                 }
-                ctx.log.info(`UDP packet "${message}" sent to ${ipAddress}:${portNumber}`);
+                ctx.log.info(`UDP packet to wake device with MAC "${macAddress}" sent to port ${portNumber}`);
                 safeResolve();
             });
 

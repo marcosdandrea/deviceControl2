@@ -30,6 +30,7 @@ export const jobTypes = {
     waitJob: "waitJob",
     sendUDPJob: "sendUDPJob",
     sendTCPJob: "sendTCPJob",
+    wakeOnLanJob: "wakeOnLanJob",
     sendSerialJob: "sendSerialJob",
     sendArtnetJob: "sendArtnetJob",
     controlRoutineJob: "controlRoutineJob",
@@ -52,6 +53,9 @@ export const createNewJobByType = async (type: string, params: any) => {
         case jobTypes.sendArtnetJob:
             const { SendArtnetJob } = await import("./sendArtnet/index.js");
             return new SendArtnetJob(params);
+        case jobTypes.wakeOnLanJob:
+            const { WakeOnLanJob } = await import("./wakeOnLan/index.js");
+            return new WakeOnLanJob(params);
         case jobTypes.controlRoutineJob:
             const { ControlRoutineJob } = await import("./controlRoutine/index.js");
             return new ControlRoutineJob(params);

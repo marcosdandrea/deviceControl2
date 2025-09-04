@@ -38,14 +38,17 @@ export class Condition extends EventEmitter implements ConditionInterface {
             throw new Error("Condition params must be an object");
         this.params = props.params || {};
 
-        this.logger = Log.createInstance(`Condition "${this.name}"`, false);
+        this.logger = Log.createInstance(`Condition "${this.name}"`, true);
         this.logger.info(`Condition created with ID "${this.id}"`);
 
     }
 
     #dispatchEvent(event: string, ...args: any[]): void {
         this.emit(event, ...args);
-        this.logger.info(`Event "${event}" dispatched with args:`, args);
+        if (args && args.length > 0)
+            this.logger.info(`Event "${event}" dispatched with args:`, args);
+        else
+            this.logger.info(`Event "${event}" dispatched`);
     }
 
 
@@ -59,7 +62,6 @@ export class Condition extends EventEmitter implements ConditionInterface {
 
     protected async abortTimeout({ abortSignal }: { abortSignal: AbortSignal }): Promise<void> {
         return new Promise((_resolve, reject) => {
-
             this.timeout = setTimeout(() => {
                 this.#dispatchEvent(conditionEvents.timeout);
                 reject("Condition evaluation timed out");
@@ -103,11 +105,13 @@ export class Condition extends EventEmitter implements ConditionInterface {
             }
             this.#dispatchEvent(conditionEvents.succeded);
             ctx.log.info(`Evaluation succeeded`, null);
-            return true
+            this.logger.info(`Evaluation succeeded`);
+            return Promise.resolve(true);
         } catch (error) {
+            this.logger.error(`Error during evaluation: ${error instanceof Error ? error.message : String(error)}`, error);
             ctx.log.error(`Error during evaluation: ${error instanceof Error ? error.message : String(error)}`, null);
             this.#dispatchEvent(conditionEvents.error, error);
-            return false;
+            return Promise.reject(false);
         }
     }
 
