@@ -1,6 +1,6 @@
 import { Log } from "@src/utils/log";
 import { Server, ServerProps } from ".";
-const log = new Log('ServerManager', true);
+const log = Log.createInstance('ServerManager', true);
 
 
 export class ServerManager {

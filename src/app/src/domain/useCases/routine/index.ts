@@ -4,8 +4,14 @@ import { Log } from '@src/utils/log';
 import { EventManager } from '@src/services/eventManager';
 import routineEvents from '@common/events/routine.events';
 import { broadcastToClients } from '@src/services/ipcServices';
+import { writeFile } from '@src/services/fileSystem';
+import { Task } from '@src/domain/entities/task';
+import { createNewJobByType } from '@src/domain/entities/job/types';
+import { createNewConditionByType } from '@src/domain/entities/conditions/types';
+import { Condition } from '@src/domain/entities/conditions';
+import { Job } from '@src/domain/entities/job';
 
-const log = new Log("routineUseCase", true);
+const log = Log.createInstance("routineUseCase", true);
 const eventManager = new EventManager();
 
 // Registro: por cada rutina guardamos sólo WeakRef y disposers (no retenemos fuerte la instancia)
@@ -15,7 +21,7 @@ type RoutineCleanup = {
 };
 const routineRegistry = new Map<string, RoutineCleanup>();
 
-export const createRoutine = (routineData): Routine => {
+export const createRoutine = async (routineData, projectData): Promise<Routine> => {
   const currentProject = Project.getInstance();
 
   const { enabled, ...rest } = routineData;
@@ -23,14 +29,44 @@ export const createRoutine = (routineData): Routine => {
   if (!routine)
     throw new Error(`Failed to create routine with ID ${routineData.id}`);
 
-  // ---- Asociar tasks ----
+
+  const createRoutineTask = async (taskData): Promise<Task> => {
+    const newTask = new Task(taskData);
+    let jobTask: Job = null;
+    let conditionTask: Condition = null;
+
+    if (!newTask) 
+      throw new Error(`Failed to create task with ID ${taskData.id}`);
+
+
+    if (taskData.job) {
+      jobTask = await createNewJobByType(taskData.job.type, taskData.job);
+      if (!jobTask) 
+        throw new Error(`Failed to create job for task with ID ${taskData.id}`);
+
+      newTask.setJob(jobTask);
+    }
+
+    if (taskData.condition) {
+      conditionTask = await createNewConditionByType(taskData.condition.type, taskData.condition);
+      if (!conditionTask) 
+        throw new Error(`Failed to create condition for task with ID ${taskData.id}`);
+ 
+      newTask.setCondition(conditionTask);
+    }
+    return newTask;
+  }
+
+  // ---- Crear tasks a la rutina ----
   for (const taskId of routineData.tasksId || []) {
     if (taskId) {
-      const task = currentProject.tasks.find(t => t.id === taskId);
-      if (task) routine.addTask(task);
-      else log.warn(`Task with ID ${taskId} not found for routine ${routine.id}`);
-    } else {
-      log.warn(`Task with ID ${taskId} not found for routine ${routine.id}`);
+      const taskData = projectData.tasks.find(t => t.id === taskId);
+      if (!taskData) {
+        log.warn(`Task with ID ${taskId} not found for routine ${routine.id}`);
+        continue;
+      }
+      const task = await createRoutineTask(taskData);
+      routine.addTask(task);
     }
   }
 
@@ -38,7 +74,9 @@ export const createRoutine = (routineData): Routine => {
   for (const triggerId of routineData.triggersId || []) {
     if (triggerId) {
       const trigger = currentProject.triggers.find(t => t.id === triggerId);
-      if (trigger) routine.addTrigger(trigger);
+      if (trigger) {
+        routine.addTrigger(trigger);
+      }
       else log.warn(`Trigger with ID ${triggerId} not found for routine ${routine.id}`);
     } else {
       log.warn(`Trigger with ID ${triggerId} not found for routine ${routine.id}`);
@@ -58,12 +96,40 @@ export const createRoutine = (routineData): Routine => {
   const onAnyListener = (eventName: string, args: any) => {
     broadcastToClients(`routine.${id}.${eventName}`, { args });
     eventManager.emitEvent(`routine.${id}.${eventName}`, { args });
+
   };
+
   routine.onAny(onAnyListener);
+
+  const handleOnFinish = (payload: { [key: string]: any }) => {
+
+    const execution = payload[0];
+    const executionId = execution.executionId;
+
+    const triggeredBy = {
+      id: execution.fullTree[executionId].id,
+      type: execution.fullTree[executionId].type,
+      name: execution.fullTree[executionId].name,
+      ts: execution.fullTree[executionId].ts,
+    }
+
+    const log = execution.log;
+    const data = {
+      executionId,
+      triggeredBy,
+      log,
+    };
+
+    writeFile(`./logs/routines/${id}/${executionId}.json`, JSON.stringify(data));
+
+  };
+
+  routine.on(routineEvents.routineFinished, handleOnFinish);
 
   disposers.push(() => {
     const r = routineWeakRef.deref();
     r?.offAny(onAnyListener);
+    r?.off(routineEvents.routineFinished, handleOnFinish);
   });
 
 

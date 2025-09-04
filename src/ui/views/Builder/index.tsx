@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import useProject from '@hooks/useProject';
 import Button from '@components/Button';
-import { dummyProjectData } from '@helpers/dummy-project';
+import useLogs from '@hooks/useLogs';
 
 const Builder = () => {
 
-    console.log (JSON.stringify(dummyProjectData))
-
     const { loadProjectFile, unloadProject, getProjectFile, project } = useProject();
+
+    const {lastLog} = useLogs()
+
+    useEffect(()=>{
+        console.log (lastLog)
+    },[lastLog])
 
     const openFile = () => {
         return new Promise<ArrayBuffer | String>((resolve, reject) => {

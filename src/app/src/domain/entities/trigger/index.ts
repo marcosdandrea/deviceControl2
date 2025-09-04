@@ -34,7 +34,7 @@ export class Trigger extends EventEmitter implements TriggerInterface {
             throw new Error("Trigger type must be a string");
         this.type = props.type;
 
-        this.logger = new Log(`Trigger "${this.name}"`, true);
+        this.logger = Log.createInstance(`Trigger "${this.name}"`, true);
         this.params = props.params || {};
 
     }
@@ -57,19 +57,25 @@ export class Trigger extends EventEmitter implements TriggerInterface {
 
         this.logger.info("Triggering...");
 
-        const origin = { type: "trigger", id: this.id }
+        const origin = { 
+            type: "trigger", 
+            id: this.id, name: 
+            this.name 
+        }
         const ctx = Context.createRootContext(origin);
 
         this.triggered = true;
         this.dispatchEvent(triggerEvents.triggered, { ctx });
         this.logger.info(`${this.type.charAt(0).toUpperCase() + this.type.slice(1).toLowerCase()} trigger triggered [ctx: ${ctx.id}]`);
+        ctx.log.info("Trigger activated");
         this.disarm();
+        ctx.log.info("Trigger disarmed");
 
         if (!this.reArmOnTrigger)
             return
 
-        this.logger.info("Rearming trigger after triggering");
         this.arm();
+        ctx.log.info("Trigger rearmed automatically");
 
     }
 

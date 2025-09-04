@@ -2,8 +2,6 @@ import { JobType } from "@common/types/job.type";
 import { Job } from "../..";
 import jobEvents from "@common/events/job.events";
 import { jobTypes } from "..";
-import { RunCtx } from "@common/types/commons.type";
-import { run } from "node:test";
 import { Context } from "@src/domain/entities/context";
 
 

@@ -4,7 +4,7 @@ import { createServer } from "http";
 import { Log } from '@src/utils/log';
 import cors from 'cors';
 
-const log = new Log('Server', true);
+const log = Log.createInstance('Server', true);
 
 export interface ServerProps {
   port?: number;               // Puerto fijo (opcional)

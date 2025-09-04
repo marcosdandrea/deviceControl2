@@ -5,7 +5,7 @@ import path from "path";
 //import { setWebContents } from "@src/services/ipcServices/index.js";
 import { Log } from "@utils/log.js";
 
-const log = new Log("windowManagerUseCase", true)
+const log = Log.createInstance("windowManagerUseCase", true)
 
 let mainWindow: import('electron').BrowserWindow | null = null
 

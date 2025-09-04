@@ -1,7 +1,7 @@
 import { Project } from "@src/domain/entities/project";
 import {Log} from "@src/utils/log";
 
-const log = new Log("RoutineService", true);
+const log = Log.createInstance("RoutineService", true);
 
 export const abortRoutine = (routineId: string, callback?: Function) => {
     log.info(`Aborting routine with ID: ${routineId}`);

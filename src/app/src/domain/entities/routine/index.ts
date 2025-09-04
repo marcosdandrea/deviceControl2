@@ -65,7 +65,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.autoCheckConditionEveryMs = props.autoCheckConditionEveryMs || false;
         this.suspendAutoCheckConditions = false;
 
-        this.logger = new Log(`Routine "${this.name}"`, true, true);
+        this.logger = Log.createInstance(`Routine "${this.name}"`, true);
         this.abortController = null
 
         this.on(routineEvents.routineEnabled, () => {
@@ -380,9 +380,17 @@ export class Routine extends EventEmitter implements RoutineInterface {
             this.isRunning = false
         }
 
-        const ctxNode = { type: 'routine', id: this.id };
+        const ctxNode = { 
+            type: 'routine', 
+            id: this.id,
+            name: this.name
+        };
         const childCtx = ctx.createChildContext(ctxNode);
         childCtx.log.info(`Routine ${this.name} started`);
+        
+        childCtx.onFinish((data) => {
+            this.#eventDispatcher(routineEvents.routineFinished, data);
+        });
 
         return new Promise(async (resolve, reject) => {
             const { signal: abortSignal } = this.abortController;
@@ -491,9 +499,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
                 reject(e);
             } finally {
                 cleanOnFinish();
-                this.#resumeAutoCheckingConditions()
-                //debug only
-                //console.log (JSON.stringify(childCtx.toJSON(), null, 2))
+                this.#resumeAutoCheckingConditions();
+                childCtx.finish();
             }
         })
     }

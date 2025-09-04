@@ -67,7 +67,7 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.triggers = props.triggers || []; // Replace 'any' with actual TriggerType
         this.tasks = props.tasks || []; // Replace 'any' with actual TaskType
         this.password = props.password || null;
-        this.logger = new Log(`Project "${this.name}" (${this.id})`, true);
+        this.logger = Log.createInstance(`Project "${this.name}" (${this.id})`, true);
 
         this.logger.info("Project instance created");
 

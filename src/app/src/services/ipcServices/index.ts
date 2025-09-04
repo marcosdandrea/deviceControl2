@@ -8,7 +8,7 @@ import routineServeices from "./routine.services"
 import systemCommands from '@common/commands/system.commands';
 import routineCommands from '@common/commands/routine.commands';
 
-const log = new Log('IPC Services', false);
+const log = Log.createInstance('IPC Services', false);
 
 const init = (io: import('socket.io').Server) => {
 
@@ -41,12 +41,11 @@ export const broadcastToClients = async (eventName: string, payload: any) => {
     const io = mainServer.getIO();
 
     if (!io) {
-        log.error("Socket.IO instance not initialized. Cannot send event to clients.");
+        console.error("Socket.IO instance not initialized. Cannot send event to clients.");
         return;
     }
 
     io.emit(eventName, payload);
-    log.info(`Event "${eventName}" sent to clients with payload:`);
 }
 
 export default {

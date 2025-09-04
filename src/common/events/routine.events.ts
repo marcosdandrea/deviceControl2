@@ -21,4 +21,6 @@ export default {
     routineError: "routine:error",
     routineFailed: "routine:failed",
     routineAborted: "routine:aborted",
+
+    routineFinished: "routine:finished"
 }

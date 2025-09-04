@@ -1,13 +1,14 @@
 import 'dotenv/config'
-import { Log } from '@utils/log.js';
-import ipcServices from '@src/services/ipcServices/index.js';
+import { Log } from '@src/utils/log';
+import ipcServices, { broadcastToClients } from '@src/services/ipcServices/index.js';
 import { ServerManager } from '@src/services/server/serverManager';
+import logEvents from '@common/events/log.events';
 
 const enableHeapSnapshoot = false
 const isHeadless = process.argv.includes('--headless') || process.argv.includes('--h') || process.env.HEADLESS === 'true'
 const isDevelopment = process.env.NODE_ENV === 'development' || process.argv.includes('--dev');
 
-const log = new Log('main', true);
+const log = Log.createInstance('main', true);
 
 if (isDevelopment)
   log.info('Running in development mode');
@@ -36,6 +37,11 @@ const coreProcesses = async () => {
   })
 
   ipcServices.init(mainServer.getIO());
+
+  Log.eventEmitter.on(logEvents.logInfo, (data) => broadcastToClients(logEvents.logInfo, data));
+  Log.eventEmitter.on(logEvents.logWarning, (data) => broadcastToClients(logEvents.logWarning, data));
+  Log.eventEmitter.on(logEvents.logError, (data) => broadcastToClients(logEvents.logError, data));
+  Log.eventEmitter.on(logEvents.logDebug, (data) => broadcastToClients(logEvents.logDebug, data));
 
   if (!isDevelopment)
     mainServer.setStaticFiles(`${process.cwd()}/dist-react`);

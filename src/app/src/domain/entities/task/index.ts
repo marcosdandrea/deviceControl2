@@ -7,6 +7,8 @@ import crypto from "crypto";
 import { EventEmitter } from "events";
 import taskEvents from "@common/events/task.events";
 import { Context } from "../context";
+import { Job } from "../job";
+import { Condition } from "../conditions";
 
 export class Task extends EventEmitter implements TaskInterface {
     id: id;
@@ -49,7 +51,7 @@ export class Task extends EventEmitter implements TaskInterface {
             throw new Error("continueOnError must be a boolean");
         this.continueOnError = props?.continueOnError ?? true;
 
-        this.log = new Log(`Task "${this.name}"`, false);
+        this.log = Log.createInstance(`Task "${this.name}"`, false);
 
         if (props?.retries && Number(props.retries) < 1)
             throw new Error("retries must be a positive number greater than one");
@@ -102,7 +104,6 @@ export class Task extends EventEmitter implements TaskInterface {
         this.log.info(`Continue on error set to ${this.continueOnError} for task ${this.name}`);
     };
 
-
     /**
      * 
      * @param abortSignal // Signal to abort the task execution
@@ -112,7 +113,11 @@ export class Task extends EventEmitter implements TaskInterface {
     async run({ abortSignal, runCtx }: { abortSignal: AbortSignal, runCtx: Context }): Promise<void> {
         this.startTime = Date.now();
 
-        const ctxNode = {type: 'task', id: this.id};
+        const ctxNode = {
+            type: 'task', 
+            id: this.id,
+            name: this.name
+        };
         const childCtx = runCtx.createChildContext(ctxNode);
         childCtx.log.info(`Starting task "${this.name}" (ID: ${this.id})`);
 

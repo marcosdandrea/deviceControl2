@@ -3,7 +3,7 @@ import eventManager from "@src/services/eventManager/index.js";
 import { getMainWindow } from "./index.js"
 import { Log } from "@utils/log.js";
 
-const log = new Log("mainWindowTitleManager", true)
+const log = Log.createInstance("mainWindowTitleManager", true)
 
 export const setMainWindowTitle = (title: string | null) => {
     const mainWindow = getMainWindow()

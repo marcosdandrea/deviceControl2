@@ -44,7 +44,7 @@ export class Job extends EventEmitter implements JobInterface {
             throw new Error("Job params must be an object");
         this.params = props.params || {};
 
-        this.log = new Log(`Job "${this.name}"`, false);
+        this.log = Log.createInstance(`Job "${this.name}"`, false);
 
         this.enableTimoutWatcher = props?.enableTimoutWatcher ?? false;
 
@@ -55,7 +55,6 @@ export class Job extends EventEmitter implements JobInterface {
 
         this.log.info(`Job "${this.name}" created with ID ${this.id}`);
     }
-
 
     protected job(ctx: Context): Promise<void> {
         throw new Error("Job method must be implemented in subclasses");

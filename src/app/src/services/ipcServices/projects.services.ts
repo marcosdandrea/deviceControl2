@@ -3,7 +3,7 @@ import { Project } from '@src/domain/entities/project';
 import { Log } from '@src/utils/log';
 import { ServerManager } from '../server/serverManager';
 
-const log = new Log('IPC Project Services', true);
+const log = Log.createInstance('IPC Project Services', true);
 
 export const getCurrentProject = async (_payload: null, callback: Function) => {
     log.info('Client requested current project');
@@ -14,7 +14,7 @@ export const getCurrentProject = async (_payload: null, callback: Function) => {
         callback({ projectData: loadedProjectData });
         log.info('Current project sent to client');
     } catch (error) {
-        log.error('Error getting current project:', error.message);
+        log.error(`Error getting current project: ${error.message}`);
         callback({ error: error.message });
     }
 }
@@ -27,7 +27,7 @@ export const closeProject = async (_payload: null, callback: Function) => {
         callback?.({ success: true });
         log.info('Project closed successfully');
     } catch (error) {
-        log.error('Error closing project:', error.message);
+        log.error(`Error closing project: ${error.message}`);
         callback?.({ error: error.message });
     }
 }
@@ -41,9 +41,9 @@ export const getProjectFile = async (_payload: null, callback: Function) => {
         const projectFile = await encryptData(JSON.stringify(currentProject.toJson()));
         console.log ({projectFile})
         callback({ projectFile });
-        log.info('Project file sent to client');
+        log.info(`Project file sent to client`);
     } catch (error) {
-        log.error('Error getting project file:', error.message);
+        log.error(`Error getting project file: ${error.message}`);
         callback({ error: error.message });
     }
 }
@@ -57,10 +57,10 @@ export const loadProjectFile = async (payload: ArrayBuffer | string, callback: F
         generalServer.unbindAllRoutes();
         await loadProjectFile(payload);
         callback({ projectData: payload });
-        log.info('Project loaded successfully');
+        log.info(`Project loaded successfully`);
     } catch (error) {
         console.log(error);
-        log.error('Error loading project:', error.message);
+        log.error(`Error loading project: ${error.message}`);
         callback({ error: error.message });
     }
 }

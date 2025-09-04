@@ -5,7 +5,7 @@ import { closeProject, createNewProject, loadProject, saveProject } from "../pro
 import { Project } from "@src/domain/entities/project/index.js";
 import path from "path";
 
-const log = new Log("mainWindowMenu", true)
+const log = Log.createInstance("mainWindowMenu", true)
 
 type mainMenuProperties = {
     saveEnabled?: boolean;

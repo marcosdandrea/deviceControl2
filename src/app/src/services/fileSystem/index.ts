@@ -1,12 +1,14 @@
 import { promises as fs } from 'fs';
 import { Log } from '@src/utils/log';
 import { projectType } from '@common/types/project.types';
-
-const log = new Log('FileSystemService');
+import path from "path"
+const log = Log.createInstance('FileSystemService');
 
 export const writeFile = async (filePath: string, content: string): Promise<void> => {
     log.info(`Writing to file: ${filePath}`);
     try {
+        const dir = path.dirname(filePath);
+        await fs.mkdir(dir, { recursive: true });
         await fs.writeFile(filePath, content, 'utf8');
         log.info(`File written successfully: ${filePath}`);
     } catch (error) {

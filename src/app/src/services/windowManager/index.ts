@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { BrowserWindow } from "electron";
 import { Log } from "@utils/log.js";
 
-const log = new Log("windowManager", true);
+const log = Log.createInstance("windowManager", true);
 
 export class WindowManager {
     private static instance: WindowManager;

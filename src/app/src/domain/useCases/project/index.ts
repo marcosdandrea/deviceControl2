@@ -16,7 +16,7 @@ import projectEvents from "@common/events/project.events";
 import { createRoutine } from "../routine";
 import { broadcastToClients } from "@src/services/ipcServices";
 
-const log = new Log("projectUseCases", true);
+const log = Log.createInstance("projectUseCases", true);
 const eventManager = new EventManager();
 
 export const createNewProject = async (projectData?: projectType): Promise<Project> => {
@@ -98,6 +98,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
 
       log.warn("Closing the current project before loading a new one.");
       Project.close();
+
    } catch (error) {
       log.error("Project instance not found. Creating a new project instance.");
    }
@@ -121,45 +122,6 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
 
    }
 
-   const createTasks = async () => {
-      log.info("Loading tasks...");
-
-      for (const taskData of projectData.tasks || []) {
-
-         if (tasks[taskData.id])
-            continue
-
-         const newTask = new Task(taskData);
-         let jobTask: Job = null;
-         let conditionTask: Condition = null;
-
-         if (!newTask) {
-            log.error(`Failed to create task with ID ${taskData.id}`);
-            continue;
-         }
-
-         if (taskData.job) {
-            jobTask = await createNewJobByType(taskData.job.type, taskData.job);
-            if (!jobTask) {
-               log.error(`Failed to create job for task with ID ${taskData.id}`);
-               continue;
-            }
-            newTask.setJob(jobTask);
-         }
-
-         if (taskData.condition) {
-            conditionTask = await createNewConditionByType(taskData.condition.type, taskData.condition);
-            if (!conditionTask) {
-               log.error(`Failed to create condition for task with ID ${taskData.id}`);
-               continue;
-            }
-            newTask.setCondition(conditionTask);
-         }
-
-         tasks[taskData.id] = newTask;
-      }
-   }
-
    const createRoutines = async () => {
       log.info("Loading routines...");
 
@@ -168,9 +130,10 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
             continue
 
          try {
-            const newRoutine = createRoutine(routineData);
+            const newRoutine = await createRoutine(routineData, projectData);
             routines[routineData.id] = newRoutine;
          } catch (error) {
+            console.error(error)
             log.error(`Failed to create routine with ID ${routineData.id}:`, error.message);
             continue;
          }
@@ -180,7 +143,6 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
    }
 
    await createTriggers();
-   await createTasks();
    
    project = Project.createInstance({
       ...projectData,
@@ -188,7 +150,6 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
       triggers: Object.values(triggers),
       tasks: Object.values(tasks)
    })
-   
    
    await createRoutines();
    project.routines = Object.values(routines);
