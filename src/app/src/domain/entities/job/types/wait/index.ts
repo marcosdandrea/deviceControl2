@@ -1,4 +1,4 @@
-import { JobType } from "@common/types/job.type";
+import { JobType, requiredJobParamType } from "@common/types/job.type";
 import { Job } from "../..";
 import jobEvents from "@common/events/job.events";
 import { jobTypes } from "..";
@@ -6,6 +6,9 @@ import { Context } from "@src/domain/entities/context";
 
 
 export class WaitJob extends Job {
+    static description = "Waits for a specified amount of time before completing.";
+    static name = "Wait Job";
+    static type = jobTypes.waitJob;
 
     constructor(options: JobType) {
         super({
@@ -15,26 +18,17 @@ export class WaitJob extends Job {
             type: jobTypes.waitJob
         });
 
-        
+        this.validateParams();        
     }
 
-    #getParameters(): Record<string, any> {
-
-        const params = this.params || {};
-
-        const expectedParams = ["time"];
-        const missingParams = expectedParams.filter(param => !(param in params));
-
-        if (missingParams.length > 0)
-            throw new Error(`Missing required parameters: ${missingParams.join(", ")}`);
-
-        if (typeof params.time !== 'number')
-            throw new Error("time must be a number");
-
-        if (Number(params.time) < 0 || Number(params.time) > 2147483647)
-            throw new Error("time must be a number between 0 and 2147483647");
-
-        return params as Record<string, any>;
+    requiredParams(): requiredJobParamType[] {
+        return [{
+            name: "time",
+            type: "number",
+            validationMask: "^(\\d+)$",
+            description: "Time to wait in milliseconds (0-2147483647)",
+            required: true
+        }];
     }
 
     async job(ctx: Context): Promise<void> {
@@ -58,7 +52,7 @@ export class WaitJob extends Job {
  
         try {
 
-            let { time } = this.#getParameters();
+            let { time } = this.params
 
             if (abortSignal?.aborted) {
                 this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
@@ -91,3 +85,5 @@ export class WaitJob extends Job {
     }
 
 }
+
+export default WaitJob;

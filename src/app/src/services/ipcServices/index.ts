@@ -5,8 +5,10 @@ import projectCommands from '@common/commands/project.commands';
 import { ServerManager } from '../server/serverManager';
 import projectsServices from './projects.services';
 import routineServeices from "./routine.services"
+import appServices from './app.services';
 import systemCommands from '@common/commands/system.commands';
 import routineCommands from '@common/commands/routine.commands';
+import appCommands from '@common/commands/app.commands';
 
 const log = Log.createInstance('IPC Services', false);
 
@@ -21,7 +23,12 @@ const init = (io: import('socket.io').Server) => {
         socket.on(systemCommands.getSystemTime, getSystemTime)
         socket.on(systemCommands.getAppVersion, getAppVersion)
         socket.on(systemCommands.getServerPorts, getServerPorts);
-        
+
+        //app
+        socket.on(appCommands.getTriggerTypes, appServices.getAvailableTriggers);
+        socket.on(appCommands.getConditionTypes, appServices.getAvailableConditions);
+        socket.on(appCommands.getJobTypes, appServices.getAvailableJobs);
+
         //project
         socket.on(projectCommands.getCurrent, projectServices.getCurrentProject);
         socket.on(projectCommands.loadProjectFile, projectServices.loadProjectFile);

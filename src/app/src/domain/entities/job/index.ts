@@ -1,4 +1,4 @@
-import { JobInterface, JobType } from "@common/types/job.type";
+import { JobInterface, JobType, requiredJobParamType } from "@common/types/job.type";
 import { EventEmitter } from "events";
 import { Log } from "@src/utils/log";
 import crypto from "crypto";
@@ -56,6 +56,35 @@ export class Job extends EventEmitter implements JobInterface {
 
     protected job(ctx: Context): Promise<void> {
         throw new Error("Job method must be implemented in subclasses");
+    }
+
+    validateParams(): void {
+        const requiredParams = this.requiredParams();
+        for (const param of requiredParams) {
+            const value = this.params[param.name];
+            if (param.required && (value === undefined || value === null)) {
+                throw new Error(`Missing required parameter: ${param.name}`);
+            }
+            if (value !== undefined && value !== null) {
+                if (param.type === "number" && typeof value !== "number") {
+                    throw new Error(`Parameter "${param.name}" must be a number`);
+                }
+                if (param.type === "string" && typeof value !== "string") {
+                    throw new Error(`Parameter "${param.name}" must be a string`);
+                }
+                if (param.validationMask) {
+                    const regex = new RegExp(param.validationMask);
+                    if (!regex.test(String(value))) {
+                        throw new Error(`Parameter "${param.name}" does not match validation mask: ${param.validationMask}. Current value: ${value}`);
+                    }
+                }
+            }
+        }
+        this.log.info(`All parameters for job "${this.name}" are valid`);
+    }
+
+    requiredParams(): requiredJobParamType[] {
+        throw new Error("Required parameters must be implemented in subclasses.");
     }
 
 

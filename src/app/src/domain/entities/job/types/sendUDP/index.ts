@@ -1,4 +1,4 @@
-import { JobType } from "@common/types/job.type";
+import { JobType, requiredJobParamType } from "@common/types/job.type";
 import { Job } from "../..";
 import jobEvents from "@common/events/job.events";
 import dgram from 'dgram';
@@ -17,6 +17,9 @@ export interface SendUDPJobType extends JobType {
 
 
 export class SendUDPJob extends Job {
+    static description = "Sends a UDP packet to a specified IP address and port.";
+    static name = "Send UDP Packet Job"
+    static type = jobTypes.sendUDPJob;
 
     constructor(options: SendUDPJobType) {
         super({
@@ -25,32 +28,33 @@ export class SendUDPJob extends Job {
             enableTimoutWatcher: false,
             type: jobTypes.sendUDPJob
         });
-
+        
+        this.validateParams();
     }
 
-    #getParameters(): Record<string, any> {
-        const params = this.params || {};
-
-        const expectedParams = ["ipAddress", "portNumber", "message", "subnetMask"];
-        const missingParams = expectedParams.filter(param => !(param in params));
-
-        if (missingParams.length > 0)
-            throw new Error(`Job has missing required parameters: ${missingParams.join(", ")}`);
-
-        if (Number(params.portNumber) < 0 || Number(params.portNumber) > 65535)
-            throw new Error("Port number must be a number between 0 and 65535");
-
-        if (params.message && (typeof params.message !== 'string' && !Buffer.isBuffer(params.message)))
-            throw new Error("Message must be a string or a buffer");
-
-        const ipMask = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        if (!ipMask.test(params.ipAddress))
-            throw new Error("Ip address must be a valid IPv4 address");
-
-        if (params.subnetMask && !ipMask.test(params.subnetMask))
-            throw new Error("Subnet mask must be a valid IPv4 address");
-
-        return params as Record<string, any>;
+    requiredParams(): requiredJobParamType[] {
+        return [{
+            name: "ipAddress",
+            type: "string",
+            validationMask: "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
+            description: "Target IPv4 address",
+            required: true
+        },
+        {
+            name: "portNumber",
+            type: "number",
+            validationMask: "^(\\d{1,5})$",
+            description: "Target port number (0-65535)",
+            required: true
+        },
+        {
+            name: "message",
+            type: "string",
+            validationMask: "^[\\s\\S]+$",
+            description: "Message to send",
+            required: true
+        }
+    ];
     }
 
     async job(ctx: Context): Promise<void> {
@@ -62,7 +66,7 @@ export class SendUDPJob extends Job {
         let ipAddress, portNumber, message, subnetMask;
 
         try {
-            ({ ipAddress, portNumber, message, subnetMask } = this.#getParameters());
+            ({ ipAddress, portNumber, message, subnetMask } = this.params);
         } catch (error) {
             this.failed = true;
             this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
@@ -137,3 +141,5 @@ export class SendUDPJob extends Job {
 
 
 }
+
+export default SendUDPJob;

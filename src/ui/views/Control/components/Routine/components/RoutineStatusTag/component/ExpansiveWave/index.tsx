@@ -4,14 +4,14 @@ import { RoutineContext } from '@contexts/routineContextProvider';
 import routineEvents from '@common/events/routine.events';
 
 const ExpansiveWave = ({ event }) => {
-    const timerRef = useRef<number | null>(null);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
     const { getColor } = useContext(RoutineContext);
     const [showWave, setShowWave] = useState(false)
     const [waveColor, setWaveColor] = useState("transparent");
 
     useEffect(() => {
         if (!event?.event) return;
-        if (event.event === routineEvents.routineIdle) {
+        if (event.event === routineEvents.routineIdle || event.event === routineEvents.routineAutoCheckingConditions) {
             setShowWave(false);
             return;
         }

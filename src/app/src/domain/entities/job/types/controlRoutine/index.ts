@@ -1,4 +1,4 @@
-import { JobType } from "@common/types/job.type";
+import { JobType, requiredJobParamType } from "@common/types/job.type";
 import { jobTypes } from "..";
 import { Job } from "../..";
 import jobEvents from "@common/events/job.events";
@@ -13,6 +13,9 @@ interface controlRoutineInterface extends JobType {
 }
 
 export class ControlRoutineJob extends Job {
+    static name = "Control Routine Job"
+    static description = "Controls a routine by enabling, disabling, running, or stopping it."
+    static type = jobTypes.controlRoutineJob;
 
     private eventManager: EventManager;
 
@@ -25,6 +28,7 @@ export class ControlRoutineJob extends Job {
         });
 
         this.eventManager = new EventManager();
+        this.validateParams();
     }
 
     #controlRoutinesThrowEventManager(rutineId: string, action: string): void {
@@ -32,21 +36,21 @@ export class ControlRoutineJob extends Job {
         this.eventManager.emitEvent(eventName, { action, source: `ControlRoutineJob id:${this.id}` });	
     }
 
-    #getParameters(): Required<controlRoutineInterface>["params"] {
-        const params = this.params || {};
-        const expectedParams = ["routineId", "action"];
-        const missing = expectedParams.filter(p => !(p in params))
-
-        if (missing.length > 0) 
-            throw new Error(`Missing required parameters: ${missing.join(", ")}`);
-        
-        if (typeof params.routineId !== "string") 
-            throw new Error("routineId must be a string");
-        
-        if (!["enable", "disable", "run", "stop"].includes(params.action)) 
-            throw new Error("action must be one of: enable, disable, run, stop");
-        
-        return params as Required<controlRoutineInterface>["params"];
+    requiredParams(): requiredJobParamType[] {
+        return [{
+            name: "routineId",
+            type: "string",
+            validationMask: "^.+$",
+            description: "ID of the routine to control",
+            required: true
+        },
+        {
+            name: "action",
+            type: "string",
+            validationMask: "^(enable|disable|run|stop)$",
+            description: "Action to perform on the routine",
+            required: true
+        }];
     }
 
     async job(): Promise<void> {
@@ -55,7 +59,7 @@ export class ControlRoutineJob extends Job {
         this.log.info(`Starting job \"${this.name}\" with ID ${this.id}`);
 
         try {
-            let { routineId, action } = this.#getParameters();
+            let { routineId, action } = this.params;
             this.log.info(`Control routine "${routineId}" action: ${action}`);
             this.#controlRoutinesThrowEventManager(routineId, action);
             this.log.info(`Control routine "${routineId}" action "${action}" completed successfully`);
@@ -68,3 +72,5 @@ export class ControlRoutineJob extends Job {
     }
 
 }
+
+export default ControlRoutineJob;

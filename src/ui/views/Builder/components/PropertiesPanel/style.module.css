@@ -1,0 +1,5 @@
+.propertiesPanel{
+    z-index: 1;
+    border-left: solid 1px var(--component-border);
+    background-color: var(--component-background);
+}

@@ -12,6 +12,8 @@ export class CronTrigger extends Trigger {
 
     day: number;
     dayTime: number;
+    static name = 'Cron Trigger';
+    static description = 'Trigger that fires at specific times';
 
     timeoutTimer: NodeJS.Timeout | null = null;
 
@@ -21,17 +23,32 @@ export class CronTrigger extends Trigger {
             type: TriggerTypes.cron
         });
 
-        if (typeof params.day !== 'number' || params.day < 0 || params.day > 6)
-            throw new Error("Invalid day: must be a number between 0 (Sunday) and 6 (Saturday)")
-
-        if (typeof params.dayTime !== 'number' || params.dayTime < 0 || params.dayTime >= 86400000)
-            throw new Error("Invalid dayTime: must be a number between 0 and 86399999 (milliseconds in a day)")
+        this.validateParams();
 
         this.day = params.day;
         this.dayTime = params.dayTime || 0;
 
         this.on(triggerEvents.triggerArmed, this.#handleOnArm.bind(this));
         this.on(triggerEvents.triggerDisarmed, this.#handleOnDisarm.bind(this));
+    }
+
+    requiredParams() {
+        return [
+            {
+                name: "day",
+                type: "number",
+                validationMask: "^(0|1|2|3|4|5|6)$",
+                description: "Day of the week to trigger (0=Sunday, 6=Saturday)",
+                required: true
+            },
+            {
+                name: "dayTime",
+                type: "number",
+                validationMask: "^(0|[1-9][0-9]{0,4}|[1-8][0-9]{5}|86[0-3][0-9]{3}|864[0-7][0-9]{2}|8648[0-2][0-9]|86483[0-5])$",
+                description: "Time of day in milliseconds since midnight (0-86399999)",
+                required: true
+            }
+        ];
     }
 
     #millisToTime(millis: number): string {
@@ -71,7 +88,7 @@ export class CronTrigger extends Trigger {
 
     #handleOnDisarm() {
         if (this.timeoutTimer) {
-           this.#cleanUpOnDisarm();
+            this.#cleanUpOnDisarm();
             this.logger.info("Cron trigger disarmed, timeout cleared");
         } else {
             this.logger.warn("Cron trigger was not armed, no timeout to clear");
@@ -103,3 +120,5 @@ export class CronTrigger extends Trigger {
     }
 
 }
+
+export default CronTrigger;

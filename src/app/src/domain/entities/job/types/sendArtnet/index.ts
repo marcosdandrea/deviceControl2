@@ -1,6 +1,6 @@
-import { JobType } from "@common/types/job.type";
+import { JobType, requiredJobParamType } from "@common/types/job.type";
 import { Job } from "../..";
-import Artnet from "@services/artnet/index";
+import Artnet from "@src/services/artnet";
 import jobEvents from "@common/events/job.events";
 import { jobTypes } from "..";
 
@@ -18,6 +18,10 @@ interface SendArtnetJobParams extends JobType {
 }
 
 export class SendArtnetJob extends Job {
+    static name = "Send Art-Net Job";
+    static description = "Sends an Art-Net DMX value to a specified channel and universe.";
+    static type = jobTypes.sendArtnetJob;
+
     constructor(options: SendArtnetJobParams) {
         super({
             ...options,
@@ -25,38 +29,33 @@ export class SendArtnetJob extends Job {
             enableTimoutWatcher: true,
             type: jobTypes.sendArtnetJob,
         });
+
+        this.validateParams();
     }
 
-    #getParameters(): Record<string, any> {
-        const params = this.params || {};
-        const expectedParams = ["channel", "universe", "value"];
-        const missingParams = expectedParams.filter(p => !(p in params));
-        if (missingParams.length > 0)
-            throw new Error(`Missing required parameters: ${missingParams.join(", ")}`);
-
-        if (typeof params.channel !== "number" || params.channel < 1 || params.channel > 512)
-            throw new Error("channel must be a number between 1 and 512");
-
-        if (typeof params.universe !== "number" || params.universe < 0 || params.universe > 65535)
-            throw new Error("universe must be a number between 0 and 65535");
-
-        if (typeof params.value !== "number" || params.value < 0 || params.value > 255)
-            throw new Error("value must be a number between 0 and 255");
-
-        if (params.host && typeof params.host !== "string")
-            throw new Error("host must be a string");
-
-
-        if (params.port && (typeof params.port !== "number" || params.port < 0 || params.port > 65535))
-            throw new Error("port must be a number between 0 and 65535");
-
-        if (params.interpolate !== undefined && typeof params.interpolate !== "boolean")
-            throw new Error("interpolate must be a boolean");
-
-        if (params.interpolationTime !== undefined && (typeof params.interpolationTime !== "number" || params.interpolationTime <= 0))
-            throw new Error("interpolationTime must be a number greater than 0");
-
-        return params as Record<string, any>;
+    requiredParams(): requiredJobParamType[] {
+        return [{
+            name: "channel",
+            type: "number",
+            validationMask: "^(\\d{1,3})$",
+            description: "DMX channel to set (1-512)",
+            required: true
+        },
+        {
+            name: "universe",
+            type: "number",
+            validationMask: "^(\\d{1,5})$",
+            description: "DMX universe (0-65535)",
+            required: true
+        },
+        {
+            name: "value",
+            type: "number",
+            validationMask: "^(\\d{1,3})$",
+            description: "DMX value to set (0-255)",
+            required: true
+        }
+        ];
     }
 
     async job(): Promise<void> {
@@ -67,7 +66,7 @@ export class SendArtnetJob extends Job {
         let channel: number, universe: number, value: number, host: string | undefined, port: number | undefined;
 
         try {
-            ({ channel, universe, value, host, port } = this.#getParameters());
+            ({ channel, universe, value, host, port } = this.params);
         } catch (error) {
             this.failed = true;
             this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
@@ -136,3 +135,4 @@ export class SendArtnetJob extends Job {
     }
 }
 
+export default SendArtnetJob;

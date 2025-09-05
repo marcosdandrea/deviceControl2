@@ -1,7 +1,8 @@
-import { JobType } from "@common/types/job.type";
+import { JobType, requiredJobParamType } from "@common/types/job.type";
 import { Job } from "../..";
 import jobEvents from "@common/events/job.events";
 import { jobTypes } from "..";
+import e from "cors";
 
 interface SendSerialJobParams extends JobType {
     params: {
@@ -13,6 +14,10 @@ interface SendSerialJobParams extends JobType {
 }
 
 export class SendSerialJob extends Job {
+    static name = "Send Serial Job"
+    static description = "Sends a message over a specified serial port.";
+    static type = jobTypes.sendSerialJob;
+
     constructor(options: SendSerialJobParams) {
         super({
             ...options,
@@ -20,25 +25,42 @@ export class SendSerialJob extends Job {
             enableTimoutWatcher: true,
             type: jobTypes.sendSerialJob,
         });
+
+        this.validateParams();
     }
 
-    #getParameters(): Required<SendSerialJobParams>["params"] {
-        const params = this.params || {};
-        const expectedParams = ["port", "message"];
-        const missing = expectedParams.filter(p => !(p in params));
-        if (missing.length > 0) {
-            throw new Error(`Missing required parameters: ${missing.join(", ")}`);
+    requiredParams(): requiredJobParamType[] {
+        return [{
+            name: "port",
+            type: "string",
+            validationMask: "^.+$",
+            description: "Serial port to use",
+            required: true
+        },
+        {
+            name: "baudRate",
+            type: "number",
+            validationMask: "^(\\d+)$",
+            description: "Baud rate for the serial connection. Defaults to 9600.",
+            required: false
+        },
+        {
+            name: "message",
+            type: "string",
+            validationMask: "^.+$",
+            description: "Message to send",
+            required: true
+        },
+        {
+            name: "encoding",
+            type: "string",
+            validationMask: "^(utf-8|ascii|base64)$",
+            description: "Encoding of the message. Defaults to 'utf-8'.",
+            required: false
         }
-        if (typeof params.port !== "string")
-            throw new Error("port must be a string");
-        if (params.baudRate !== undefined && (typeof params.baudRate !== "number" || params.baudRate <= 0))
-            throw new Error("baudRate must be a positive number");
-        if (!(typeof params.message === "string" || Buffer.isBuffer(params.message)))
-            throw new Error("message must be a string or Buffer");
-        if (params.encoding && typeof params.encoding !== "string")
-            throw new Error("encoding must be a string");
-        return params as Required<SendSerialJobParams>["params"];
+        ];
     }
+
 
     async job(): Promise<void> {
         this.failed = false;
@@ -49,7 +71,7 @@ export class SendSerialJob extends Job {
 
         let port: string, baudRate: number, message: string | Buffer, encoding: BufferEncoding;
         try {
-            ({ port, baudRate, message, encoding } = this.#getParameters());
+            ({ port, baudRate, message, encoding } = this.params);
         } catch (error) {
             this.failed = true;
             this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
@@ -84,10 +106,13 @@ export class SendSerialJob extends Job {
                 cleanUp();
                 resolve();
             });
-            
+
         }).finally(() => {
             this.log.info(`Job \"${this.name}\" with ID ${this.id} has finished`);
             this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id, failed: this.failed });
         });
     }
 }
+
+
+export default SendSerialJob;

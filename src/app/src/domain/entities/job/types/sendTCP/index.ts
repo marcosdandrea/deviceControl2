@@ -1,4 +1,4 @@
-import { JobType } from "@common/types/job.type";
+import { JobType, requiredJobParamType } from "@common/types/job.type";
 import { Job } from "../..";
 import { jobTypes } from "..";
 
@@ -7,8 +7,10 @@ interface SendTCPJobParams extends JobType {
 }
 
 export class SendTCPJob extends Job {
-
-    static type = "sendTCP";
+    static description = "Sends a TCP packet to a specified IP address and port.";
+    static name = "Send TCP Packet Job";
+    static type = jobTypes.sendTCPJob;
+    
     answer: string | null = null;
 
     constructor(options: SendTCPJobParams) {
@@ -19,33 +21,35 @@ export class SendTCPJob extends Job {
             enableTimoutWatcher: true
         });
 
-        if (options.params?.answer && typeof options.params.answer !== 'string')
-            throw new Error("Answer must be a string or null");
-        
-        this.answer = options.params?.answer || null;
+        this.validateParams();
+
     }
 
-    #getParameters(): Record<string, any> {
-        const params = this.params || {};
-
-        const expectedParams = ["ipAddress", "portNumber", "message"];
-        const missingParams = expectedParams.filter(param => !(param in params));
-
-        if (missingParams.length > 0)
-            throw new Error(`Missing required parameters: ${missingParams.join(", ")}`);
-
-        if (Number(params.portNumber) < 0 || Number(params.portNumber) > 65535)
-            throw new Error("Port Number must be a number between 0 and 65535");
-
-        if (params.message && typeof params.message !== 'string')
-            throw new Error("Message must be a string");
-
-        const ipMask = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        if (!ipMask.test(params.ipAddress))
-            throw new Error("Ip Address must be a valid IPv4 address");
-
-        return params as Record<string, any>;
+    requiredParams(): requiredJobParamType[] {
+        return [{
+            name: "ipAddress",
+            type: "string",
+            validationMask: "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
+            description: "Target IPv4 address",
+            required: true
+        },
+        {
+            name: "portNumber",
+            type: "number",
+            validationMask: "^(\\d{1,5})$",
+            description: "Target port number (0-65535)",
+            required: true
+        },
+        {
+            name: "message",
+            type: "string",
+            validationMask: "^[\\s\\S]+$",
+            description: "Message to send",
+            required: true
+        }
+        ];
     }
+
 
     protected async job(): Promise<void> {
         this.failed = false;
@@ -53,7 +57,7 @@ export class SendTCPJob extends Job {
         this.log.info(`Starting job "${this.name}" with ID ${this.id}`);
 
         try {
-            let { ipAddress, portNumber, message } = this.#getParameters();
+            let { ipAddress, portNumber, message } = this.params;
 
             const net = require('net');
             const client = new net.Socket();
@@ -64,8 +68,8 @@ export class SendTCPJob extends Job {
                     client.write(message);
                     this.log.info(`TCP packet sent successfully to ${ipAddress}:${portNumber}`);
 
-                    console.log (this.answer)
-                    
+                    console.log(this.answer)
+
                     if (this.answer !== null) {
                         this.log.info(`Waiting for response matching: ${this.answer}`);
                         return
@@ -105,3 +109,5 @@ export class SendTCPJob extends Job {
     }
 
 }
+
+export default SendTCPJob;

@@ -28,7 +28,7 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
             case routineEvents.routineCompleted:
                 return false;
             case routineEvents.routineAutoCheckingConditions:
-                return true;
+                return false;
             case routineEvents.routineAborted:
                 return false;
             case routineEvents.routineFailed:
@@ -73,7 +73,7 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
 
         const eventStatus = event.event as RoutineStatus;
 
-        if (eventStatus === routineEvents.routineIdle) {
+        if (eventStatus === routineEvents.routineIdle || eventStatus === routineEvents.routineAutoCheckingConditions) {
             setColor(prevStatus.color);
             setIcon(prevStatus.icon);
             setExpandTag(false);

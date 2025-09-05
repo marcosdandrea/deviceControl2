@@ -1,4 +1,4 @@
-import { JobType } from "@common/types/job.type";
+import { JobType, requiredJobParamType } from "@common/types/job.type";
 import { Job } from "../..";
 import jobEvents from "@common/events/job.events";
 import dgram from 'dgram';
@@ -15,6 +15,9 @@ export interface WakeOnLanJobType extends JobType {
 
 
 export class WakeOnLanJob extends Job {
+    static type = jobTypes.wakeOnLanJob;
+    static name = "Wake-on-LAN Job";
+    static description = "Sends a Wake-on-LAN (WoL) magic packet to a specified MAC address to wake up a device.";
 
     constructor(options: WakeOnLanJobType) {
         super({
@@ -24,26 +27,29 @@ export class WakeOnLanJob extends Job {
             type: jobTypes.sendUDPJob
         });
 
+        this.validateParams()
+
     }
 
-    #getParameters(): Record<string, any> {
-        const params = this.params || {};
+    requiredParams(): requiredJobParamType[] {
+        return [
+            {
+                name: "macAddress",
+                type: "string",
+                description: "The MAC address of the device to wake up (format: XX:XX:XX:XX:XX:XX)",
+                required: true
+            },
+            {
+                name: "portNumber",
+                type: "number",
+                description: "The port number to send the magic packet to (default: 9)",
+                required: false,
 
-        const expectedParams = ["macAddress", "portNumber"];
-        const missingParams = expectedParams.filter(param => !(param in params));
-
-        if (missingParams.length > 0)
-            throw new Error(`Job has missing required parameters: ${missingParams.join(", ")}`);
-
-        if (Number(params.portNumber) < 0 || Number(params.portNumber) > 65535)
-            throw new Error("Port number must be a number between 0 and 65535");
-
-        const macAddressPattern = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
-        if (!macAddressPattern.test(params.macAddress))
-            throw new Error("MAC address must be a valid MAC address");
-
-        return params as Record<string, any>;
+            }
+        ];
     }
+
+
 
     async job(ctx: Context): Promise<void> {
         this.failed = false;
@@ -51,10 +57,10 @@ export class WakeOnLanJob extends Job {
         ctx.log.info(`Starting job "${this.name}" with ID ${this.id}`);
         this.log.info(`Starting job "${this.name}" with ID ${this.id}`);
 
-        let macAddress, portNumber;
+        let macAddress, portNumber
 
         try {
-            ({ macAddress, portNumber } = this.#getParameters());
+            ({ macAddress, portNumber } = this.params)
         } catch (error) {
             this.failed = true;
             this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
@@ -73,7 +79,7 @@ export class WakeOnLanJob extends Job {
             for (let i = 0; i < 16; i++) {
                 for (let j = 0; j < 6; j++) {
                     buffer[6 + i * 6 + j] = macBytes[j];
-                }   
+                }
             }
             return buffer;
         }
@@ -124,3 +130,5 @@ export class WakeOnLanJob extends Job {
 
 
 }
+
+export default WakeOnLanJob;

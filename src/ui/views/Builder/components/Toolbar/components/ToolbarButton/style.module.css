@@ -1,0 +1,18 @@
+.toolbarButton{
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 2px;
+    background-color: var(--component-interactive);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toolbarButton:hover{
+    cursor: pointer;
+    background-color: var(--component-border);
+}
+
+.toolbarButton:active{
+    background-color: var(--component-active);
+}

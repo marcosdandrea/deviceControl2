@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { TriggerInterface, TriggerType } from "@common/types/trigger.type";
+import { requiredTriggerParamType, TriggerInterface, TriggerType } from "@common/types/trigger.type";
 import { Log } from "@src/utils/log";
 import triggerEvents from "@common/events/trigger.events";
 import { Context } from "../context";
@@ -22,13 +22,8 @@ export class Trigger extends EventEmitter implements TriggerInterface {
             throw new Error("Trigger id must be a string");
         this.id = props.id || crypto.randomUUID();
 
-        if (props.name && typeof props.name !== 'string')
-            throw new Error("Trigger name must be a string");
-        this.name = props.name;
-
-        if (props.description && typeof props.description !== 'string')
-            throw new Error("Trigger description must be a string");
-        this.description = props.description || "";
+        this.name = "Name must be set in subclass";
+        this.description = "Description must be set in subclass";
 
         if (props.type && typeof props.type !== 'string')
             throw new Error("Trigger type must be a string");
@@ -41,6 +36,27 @@ export class Trigger extends EventEmitter implements TriggerInterface {
 
     dispatchEvent(eventName: string, ...args: any[]): void {
         this.emit(eventName, ...args);
+    }
+
+    validateParams() {
+        const requiredParams = this.requiredParams();
+        
+        for (const param of requiredParams) {
+            const value = this.params ? this.params[param.name] : undefined;
+            if (param.required && (value === undefined || value === null || value === "")) {
+                throw new Error(`Missing required parameter: ${param.name}`);
+            }
+            if (value && param.validationMask) {
+                const regex = new RegExp(param.validationMask);
+                if (!regex.test(value)) {
+                    throw new Error(`Parameter "${param.name}" is invalid. It must match the pattern: ${param.validationMask}`);
+                }
+            }
+        }
+    }
+
+    requiredParams(): requiredTriggerParamType[] {
+        throw new Error("Required parameters must be implemented in subclasses.");
     }
 
     protected trigger(): void {
@@ -78,7 +94,6 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         ctx.log.info("Trigger rearmed automatically");
 
     }
-
 
     arm(): void {
         if (this.armed)

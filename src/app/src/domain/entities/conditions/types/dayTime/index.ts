@@ -1,7 +1,7 @@
 import { S } from "vitest/dist/chunks/config.Cy0C388Z.js";
 import { conditionTypes } from "..";
 import { Condition } from "../..";
-import { ConditionType } from "@common/types/condition.type";
+import { ConditionType, requiredConditionParamType } from "@common/types/condition.type";
 
 interface ConditionDayTimeParams extends Partial<ConditionType> {
     day?: number;
@@ -11,7 +11,10 @@ interface ConditionDayTimeParams extends Partial<ConditionType> {
 }
 
 export class ConditionDayTime extends Condition {
-    static type: String;
+    static name = "Day Time Condition";
+    static description = "Condition that checks day and time";
+    static type = conditionTypes.dayTime;
+    
     day?: number;
     hour?: number;
     minute?: number;
@@ -21,34 +24,41 @@ export class ConditionDayTime extends Condition {
             ...options,
             type: conditionTypes.dayTime,
             name: options.name || "Day Time Condition",
-            description: options.description || "Condition that checks day and time",
-            timeoutValue: options.timeoutValue
+            description: options.params.description || "Condition that checks day and time",
+            timeoutValue: options.params.timeoutValue
         } as ConditionType);
 
-        if (options.day === undefined && options.hour === undefined && options.minute === undefined) {
-            throw new Error("At least one of day, hour or minute must be specified");
-        }
+        this.validateParams();
+        
+        this.day = options.day;
+        this.hour = options.hour;
+        this.minute = options.minute;
+    }
 
-        if (options.day !== undefined) {
-            if (typeof options.day !== 'number' || options.day < 0 || options.day > 6) {
-                throw new Error("day must be a number between 0 and 6");
+    requiredParams(): requiredConditionParamType[] {
+        return [
+            {
+                name: "day",
+                required: false,
+                type: "number",
+                validationMask: "^(0|1|2|3|4|5|6)$",
+                description: "The target day of the week (0-6, 0 = Sunday)."
+            },
+            {
+                name: "hour",
+                required: false,
+                type: "number",
+                validationMask: "^(2[0-3]|[01]?[0-9])$",
+                description: "The target hour of the day (0-23)."
+            },
+            {
+                name: "minute",
+                required: false,
+                type: "number",
+                validationMask: "^(5[0-9]|[0-4]?[0-9])$",
+                description: "The target minute of the hour (0-59)."
             }
-            this.day = options.day;
-        }
-
-        if (options.hour !== undefined) {
-            if (typeof options.hour !== 'number' || options.hour < 0 || options.hour > 23) {
-                throw new Error("hour must be a number between 0 and 23");
-            }
-            this.hour = options.hour;
-        }
-
-        if (options.minute !== undefined) {
-            if (typeof options.minute !== 'number' || options.minute < 0 || options.minute > 59) {
-                throw new Error("minute must be a number between 0 and 59");
-            }
-            this.minute = options.minute;
-        }
+        ];
     }
 
     protected async doEvaluation({ abortSignal }: { abortSignal: AbortSignal }): Promise<boolean> {

@@ -7,6 +7,7 @@ import PasswordProtection from './components/PasswordProtection';
 
 const Control = () => {
 
+
     return (
         <div className={styles.controlView}>
             <ProjectContextProvider>

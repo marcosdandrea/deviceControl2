@@ -1,5 +1,5 @@
 import { Condition } from "../..";
-import { ConditionType } from "@common/types/condition.type";
+import { ConditionType, requiredConditionParamType } from "@common/types/condition.type";
 import * as ping from "ping";
 import { conditionTypes } from "..";
 
@@ -10,9 +10,12 @@ interface ConditionPingParams extends Partial<ConditionType> {
 }
 
 export class ConditionPing extends Condition {
+    static description = "Condition that pings an IP";
+    static name = "Ping Condition"
+    static type = conditionTypes.ping;
+
     ipAddress: string;
     invertResult: boolean;
-    static type: string
 
     constructor(options: ConditionPingParams) {
         super({
@@ -23,12 +26,28 @@ export class ConditionPing extends Condition {
             timeoutValue: 10000
         } as ConditionType);
 
-        const ipMask = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        if (!options.params.ipAddress || typeof options.params.ipAddress !== "string" || !ipMask.test(options.params.ipAddress))
-            throw new Error("Ip address must be a valid IPv4 address");
+        this.validateParams();
+
         this.ipAddress = options.params.ipAddress;
         this.invertResult = options?.params?.invertResult === true;
-        console.log({ invertResult: this.invertResult });
+    }
+
+    requiredParams(): requiredConditionParamType[] {
+        return [
+            { 
+                name: "ipAddress", 
+                required: true, 
+                validationMask: "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
+                type: "string", 
+                description: "The target IP address to ping." 
+            },
+            { 
+                name: "invertResult", 
+                required: false, 
+                type: "boolean", 
+                description: "If true, inverts the ping result." 
+            }
+        ];
     }
 
     protected async doEvaluation({ abortSignal }: { abortSignal: AbortSignal }): Promise<boolean> {

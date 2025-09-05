@@ -1,5 +1,5 @@
 import { Condition } from "../..";
-import { ConditionType } from "@common/types/condition.type";
+import { ConditionType, requiredConditionParamType } from "@common/types/condition.type";
 import net from 'net';
 import { conditionTypes } from "..";
 
@@ -12,7 +12,10 @@ interface ConditionTCPAnswerParams extends Partial<ConditionType> {
 }
 
 export class ConditionTCPAnswer extends Condition {
-    static type: string
+    static description = "Condition that waits for a TCP answer";
+    static name = "TCP Answer Condition";
+    static type = conditionTypes.tcpAnswer;
+    
     ip: string;
     port: number;
     message: string;
@@ -27,20 +30,43 @@ export class ConditionTCPAnswer extends Condition {
             timeoutValue: options.timeoutValue
         } as ConditionType);
 
-        const ipMask = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        if (!options.params.ip || !ipMask.test(options.params.ip))
-            throw new Error("Ip address must be a valid IPv4 address");
-        if (typeof options.params.port !== 'number' || options.params.port < 0 || options.params.port > 65535)
-            throw new Error("Port must be a number between 0 and 65535");
-        if (!options.params.message || typeof options.params.message !== 'string')
-            throw new Error("Message must be a string");
-        if (!options.params.answer || typeof options.params.answer !== 'string')
-            throw new Error("Answer must be a string");
+        this.validateParams();
 
         this.ip = options.params.ip;
         this.port = options.params.port;
         this.message = options.params.message;
         this.answer = options.params.answer;
+    }
+
+    requiredParams(): requiredConditionParamType[] {
+        return [
+            { 
+                name: "ip",
+                required: true,
+                type: "string",
+                validationMask: "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
+                description: "The target IP address to send the TCP message to."
+            },
+            { 
+                name: "port",
+                required: true,
+                validationMask: "^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4})$",
+                type: "number",
+                description: "The target port to send the TCP message to."
+            },
+            { 
+                name: "message",
+                required: true,
+                type: "string",
+                description: "The TCP message to send."
+            },
+            { 
+                name: "answer",
+                required: true,
+                type: "string",
+                description: "The expected TCP answer message."
+            },
+        ];
     }
 
     protected async doEvaluation({ abortSignal }: { abortSignal: AbortSignal }): Promise<boolean> {

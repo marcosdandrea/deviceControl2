@@ -151,8 +151,7 @@ const Routine = ({ routineData, onSwipeLeft }: Props) => {
                             transform: `scale(${triggerOnSwipeLeft ? 0 : 0.8})`,
                             backgroundColor: Color.primary,
                         }}
-                        className={style.swipeProgress}
-                    />
+                        className={style.swipeProgress} />
                 </div>
             </div>
         </RoutineContextProvider>

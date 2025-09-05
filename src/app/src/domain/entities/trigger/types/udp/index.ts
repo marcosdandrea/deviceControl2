@@ -11,6 +11,9 @@ interface UdpTriggerOptions extends TriggerType {
 
 export class UdpTrigger extends Trigger {
     static type = 'udp';
+    static name = 'UDP Trigger';
+    static description = 'Trigger that listens for UDP messages';
+
     port: number;
     ip: string;
     expectedMessage: string;
@@ -20,25 +23,42 @@ export class UdpTrigger extends Trigger {
         super({
             ...options,
             type: TriggerTypes.udp,
-            name: options.name || 'UDP Trigger',
-            description: options.description || 'Trigger that listens for UDP messages',
         });
 
-        if (typeof options.port !== 'number' || options.port <= 0 || options.port > 65535)
-            throw new Error('Invalid port: must be between 1 and 65535');
-        this.port = options.port;
+        this.validateParams();
 
-        const ipMask = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        if (options.ip && !ipMask.test(options.ip))
-            throw new Error('Invalid ip address');
         this.ip = options.ip || '0.0.0.0';
-
-        if (!options.message || typeof options.message !== 'string')
-            throw new Error('Message must be a string');
+        this.port = options.port;
         this.expectedMessage = options.message;
 
         this.on(triggerEvents.triggerArmed, this.init.bind(this));
         this.on(triggerEvents.triggerDisarmed, this.destroy.bind(this));
+    }
+
+    requiredParams() {
+        return [
+            {
+                name: 'port',
+                type: 'number',
+                validationMask: '^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0)$',
+                description: 'Port number to listen on (1-65535)',
+                required: true,
+            },
+            {
+                name: 'ip',
+                type: 'string',
+                validationMask: '^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$',
+                description: 'IP address to bind to (default: 0.0.0.0)',
+                required: false,
+            },
+            {
+                name: 'message',
+                type: 'string',
+                validationMask: '^.+$',
+                description: 'Message to listen for',
+                required: true,
+            },
+        ];
     }
 
     private init() {
@@ -64,3 +84,5 @@ export class UdpTrigger extends Trigger {
         }
     }
 }
+
+export default UdpTrigger;

@@ -12,6 +12,14 @@ export type TriggerType = {
     params?: any; // Agregar esta línea
 }
 
+export type requiredTriggerParamType = {
+    name: string;
+    type: string;
+    description: string;
+    validationMask: string;
+    required: boolean;
+}
+
 export interface TriggerInterface extends TriggerType, EventEmitter {
     arm: () => void;
     disarm: () => void;

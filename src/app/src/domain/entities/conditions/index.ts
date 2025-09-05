@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { ConditionInterface, ConditionType } from "@common/types/condition.type";
+import { ConditionInterface, ConditionType, requiredConditionParamType } from "@common/types/condition.type";
 import { Log } from "@src/utils/log";
 import conditionEvents from "@common/events/condition.events";
 import { Context } from "../context";
@@ -49,6 +49,35 @@ export class Condition extends EventEmitter implements ConditionInterface {
             this.logger.info(`Event "${event}" dispatched with args:`, args);
         else
             this.logger.info(`Event "${event}" dispatched`);
+    }
+
+    validateParams(): void {
+        const requiredParams = this.requiredParams();
+        for (const param of requiredParams) {
+            const value = this.params[param.name];
+            if (param.required && (value === undefined || value === null)) {
+                throw new Error(`Missing required parameter: ${param.name}`);
+            }
+            if (value !== undefined && value !== null) {
+                if (param.type === "number" && typeof value !== "number") {
+                    throw new Error(`Parameter "${param.name}" must be a number`);
+                }
+                if (param.type === "string" && typeof value !== "string") {
+                    throw new Error(`Parameter "${param.name}" must be a string`);
+                }
+                if (param.validationMask) {
+                    const regex = new RegExp(param.validationMask);
+                    if (!regex.test(String(value))) {
+                        throw new Error(`Parameter "${param.name}" does not match validation mask: ${param.validationMask}. Current value: ${value}`);
+                    }
+                }
+            }
+        }
+        this.logger.info(`All parameters for job "${this.name}" are valid`);
+    }
+
+    requiredParams(): requiredConditionParamType[] {
+        throw new Error("Required parameters must be implemented in subclasses.");
     }
 
 

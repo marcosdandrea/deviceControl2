@@ -1,5 +1,5 @@
 import { Condition } from "../..";
-import { ConditionType } from "@common/types/condition.type";
+import { ConditionType, requiredConditionParamType } from "@common/types/condition.type";
 import dgram from 'dgram';
 import { conditionTypes } from "..";
 
@@ -12,7 +12,9 @@ interface ConditionUDPAnswerParams extends Partial<ConditionType> {
 }
 
 export class ConditionUDPAnswer extends Condition {
-    static type: string
+    static description = "Condition that waits for a UDP answer";
+    static name = "UDP Answer Condition";
+    static type = conditionTypes.udpAnswer;
     ip: string;
     port: number;
     message: string;
@@ -37,10 +39,41 @@ export class ConditionUDPAnswer extends Condition {
         if (!options.params.answer || typeof options.params.answer !== 'string')
             throw new Error("Answer must be a string");
 
+        this.validateParams();
+
         this.ip = options.params.ip;
         this.port = options.params.port;
         this.message = options.params.message;
         this.answer = options.params.answer;
+    }
+
+    requiredParams(): requiredConditionParamType[] {
+        return [
+            { 
+                name: "ip", 
+                required: true, 
+                type: "string", 
+                description: "The target IP address to send the UDP message to." 
+            },
+            { 
+                name: "port", 
+                required: true, 
+                type: "number", 
+                description: "The target port to send the UDP message to." 
+            },
+            { 
+                name: "message", 
+                required: true, 
+                type: "string", 
+                description: "The UDP message to send." 
+            },
+            { 
+                name: "answer", 
+                required: true, 
+                type: "string", 
+                description: "The expected UDP answer message." 
+            },
+        ];
     }
 
     protected async doEvaluation({ abortSignal }: { abortSignal: AbortSignal }): Promise<boolean> {

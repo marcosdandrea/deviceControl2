@@ -1,28 +1,25 @@
-import { TriggerTypes } from "@common/types/trigger.type.js";
 import { Trigger } from "../index.js";
 
-export const createNewTriggerByType = async (type: string, params: any): Promise<Trigger> => {
-    switch (type) {
+export const getTriggerTypes = async (): Promise<Record<string, any>> => {
 
-        case TriggerTypes.api:
-            const { APITrigger } = await import("./api/index.js");
-            return new APITrigger(params);
-        case TriggerTypes.cron:
-            const { CronTrigger } = await import("./cron/index.js");
-            return new CronTrigger(params);
-        case TriggerTypes.tcp:
-            const { TcpTrigger } = await import("./tcp/index.js");
-            return new TcpTrigger(params);
-        case TriggerTypes.udp:
-            const { UdpTrigger } = await import("./udp/index.js");
-            return new UdpTrigger(params);
-        case TriggerTypes.onStart:
-            const { OnStartTrigger } = await import("./onStart/index.js");
-            return new OnStartTrigger(params);
-        case TriggerTypes.onRoutineEvent:
-            const { OnRoutineEventTrigger } = await import("./onRoutineEvent/index.js");
-            return new OnRoutineEventTrigger(params);
-        default:
-            throw new Error(`Unknown trigger type: ${type}`);
+    const triggers = {
+        api: await import("./api/index.js"),
+        cron: await import("./cron/index.js"),
+        tcp: await import("./tcp/index.js"),
+        udp: await import("./udp/index.js"),
+        onStart: await import("./onStart/index.js"),
+        onRoutineEvent: await import("./onRoutineEvent/index.js"),
     }
+    return triggers;
+}
+
+
+export const createNewTriggerByType = async (type: string, params: any): Promise<Trigger> => {
+    const triggerTypes = await getTriggerTypes();
+    const triggerModule = triggerTypes[type];
+
+    if (!triggerModule) 
+        throw new Error(`Trigger module "${type}" not found`);
+
+    return new triggerModule.default(params);
 }

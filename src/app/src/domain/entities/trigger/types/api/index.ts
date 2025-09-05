@@ -1,5 +1,5 @@
 import { Trigger } from "../..";
-import { TriggerType } from "@common/types/trigger.type";
+import { requiredTriggerParamType, TriggerType } from "@common/types/trigger.type";
 import triggerEvents from "@common/events/trigger.events";
 import { ServerManager } from "@src/services/server/serverManager";
 
@@ -9,6 +9,9 @@ interface ApiInterface extends TriggerType {
 
 export class APITrigger extends Trigger {
     static type = "api";
+    static name = "API Trigger";
+    static description = "Trigger that listens to API requests";
+
     endpoint: string;
 
     constructor(options: ApiInterface) {
@@ -16,13 +19,23 @@ export class APITrigger extends Trigger {
         super({
             ...options,
             type: APITrigger.type,
-            name: options.name || "API Trigger",
-            description: options.description || "Trigger that listens to API requests",
         })
+        
+        this.validateParams();        
 
         this.endpoint = options.params?.endpoint || "";
 
         this.#initListeners()
+    }
+
+    requiredParams(): requiredTriggerParamType[] {
+        return [{
+            name: "endpoint",
+            type: "string",
+            validationMask: "^\\/.*",
+            description: "API endpoint to listen for requests (e.g., /api/trigger)",
+            required: true
+        }];
     }
 
     #initListeners() {
@@ -79,3 +92,5 @@ export class APITrigger extends Trigger {
         }
     }
 }
+
+export default APITrigger;

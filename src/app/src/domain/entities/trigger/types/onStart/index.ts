@@ -8,6 +8,9 @@ interface OnStartTriggerOptions extends TriggerType {
 
 export class OnStartTrigger extends Trigger {
     static type = 'onStart';
+    static name = 'OnStart Trigger';
+    static description = 'Trigger that fires on start within an optional delay';
+
     delay: number;
     private timeoutId: NodeJS.Timeout | null = null;
 
@@ -15,17 +18,30 @@ export class OnStartTrigger extends Trigger {
         super({
             ...options,
             type: TriggerTypes.onStart,
-            name: options.name || 'OnStart Trigger',
-            description: options.description || 'Trigger that fires on start',
         });
 
+        this.validateParams();
+        /*
         if (options.delay !== undefined && (typeof options.delay !== 'number' || options.delay < 0))
             throw new Error('delay must be a non-negative number');
+        */
 
         this.delay = options.delay ?? 0;
 
         this.on(triggerEvents.triggerArmed, this.init.bind(this));
         this.on(triggerEvents.triggerDisarmed, this.destroy.bind(this));
+    }
+
+    requiredParams() {
+        return [
+            {
+                name: 'delay',
+                type: 'number',
+                validationMask: '^(0|[1-9][0-9]*)$',
+                description: 'Delay in milliseconds before triggering after start (default 0)',
+                required: false,
+            },
+        ];
     }
 
     private init() {
@@ -42,3 +58,5 @@ export class OnStartTrigger extends Trigger {
         }
     }
 }
+
+export default OnStartTrigger;
