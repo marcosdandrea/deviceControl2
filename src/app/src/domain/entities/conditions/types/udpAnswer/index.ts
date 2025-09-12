@@ -50,28 +50,32 @@ export class ConditionUDPAnswer extends Condition {
     requiredParams(): requiredConditionParamType[] {
         return [
             { 
-                name: "ip", 
-                required: true, 
-                type: "string", 
-                description: "The target IP address to send the UDP message to." 
+            name: "ip", 
+            required: true, 
+            validationMask: "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
+            type: "string", 
+            description: "The target IP address to send the UDP message to." 
             },
             { 
-                name: "port", 
-                required: true, 
-                type: "number", 
-                description: "The target port to send the UDP message to." 
+            name: "port", 
+            required: true, 
+            validationMask: "^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4})$",
+            type: "number", 
+            description: "The target port to send the UDP message to." 
             },
             { 
-                name: "message", 
-                required: true, 
-                type: "string", 
-                description: "The UDP message to send." 
+            name: "message", 
+            required: true, 
+            validationMask: "^[\\s\\S]+$",
+            type: "string", 
+            description: "The UDP message to send." 
             },
             { 
-                name: "answer", 
-                required: true, 
-                type: "string", 
-                description: "The expected UDP answer message." 
+            name: "answer", 
+            required: true, 
+            validationMask: "^[\\s\\S]+$",
+            type: "string", 
+            description: "The expected UDP answer message." 
             },
         ];
     }

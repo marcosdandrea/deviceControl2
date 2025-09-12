@@ -9,10 +9,10 @@ interface ApiInterface extends TriggerType {
 
 export class APITrigger extends Trigger {
     static type = "api";
-    static name = "API Trigger";
-    static description = "Trigger that listens to API requests";
 
     endpoint: string;
+    static easyName = "Por solicitud API";
+    static moduleDescription = "Se activa cuando se recibe una solicitud HTTP en un endpoint API específico.";
 
     constructor(options: ApiInterface) {
 
@@ -31,8 +31,9 @@ export class APITrigger extends Trigger {
     requiredParams(): requiredTriggerParamType[] {
         return [{
             name: "endpoint",
+            easyName: "Ruta",
             type: "string",
-            validationMask: "^\\/.*",
+            validationMask: "^\\/([a-zA-Z0-9-_\\/]*)$",
             description: "API endpoint to listen for requests (e.g., /api/trigger)",
             required: true
         }];

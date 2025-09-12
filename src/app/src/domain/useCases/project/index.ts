@@ -133,11 +133,10 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
             const newRoutine = await createRoutine(routineData, projectData);
             routines[routineData.id] = newRoutine;
          } catch (error) {
-            console.error(error)
-            log.error(`Failed to create routine with ID ${routineData.id}:`, error.message);
+            broadcastToClients(projectEvents.error, { message: `Failed to load routine with ID ${routineData.id}: ${error.message}` });
+            log.error(`Failed to create routine with ID ${routineData.id}: ${error.message}`);
             continue;
          }
-
 
       }
    }

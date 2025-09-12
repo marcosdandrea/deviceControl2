@@ -2,11 +2,12 @@ import React from 'react';
 import style from './style.module.css';
 import { Color } from '@common/theme/colors';
 
-const Button = ({ color, icon, text, onClick, enabled = true }: {
+const Button = ({ color, icon, text, onClick, styles, enabled = true }: {
     color?: string;
     icon?: React.ReactNode;
     text?: string;
     onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
+    styles?: React.CSSProperties;
     enabled?: boolean;
 }) => {
 
@@ -19,7 +20,7 @@ const Button = ({ color, icon, text, onClick, enabled = true }: {
     return (
         <div
             className={`${style.button} ${enabled ? style.enabled : style.disabled}`}
-            style={{ backgroundColor: color ?? Color.primary }} onClick={handleClick}>
+            style={{ backgroundColor: color ?? Color.primary, ...styles }} onClick={handleClick}>
             {icon}
             {text}
         </div>

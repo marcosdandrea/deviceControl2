@@ -71,18 +71,6 @@ export class Server {
     return server;
   }
 
-  /*
-  static async getInstance(props?: ServerProps): Promise<Server> {
-    if (!Server.instance) {
-      const server = new Server(props);
-      await server.initPort(props);
-      await server.start();
-      Server.instance = server;
-    }
-    return Server.instance;
-  }
-  */
-
   private async initPort(props: ServerProps) {
     if (this.port && this.port !== 0) {
       // Puerto definido explícitamente, no buscar

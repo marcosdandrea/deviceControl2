@@ -12,10 +12,10 @@ export class CronTrigger extends Trigger {
 
     day: number;
     dayTime: number;
-    static name = 'Cron Trigger';
-    static description = 'Trigger that fires at specific times';
 
     timeoutTimer: NodeJS.Timeout | null = null;
+    static easyName = "Por día y hora";
+    static moduleDescription = "Se activa en un día y hora específicos de la semana.";
 
     constructor(params: cronTriggerType) {
         super({
@@ -36,6 +36,7 @@ export class CronTrigger extends Trigger {
         return [
             {
                 name: "day",
+                easyName: "Día de la semana (0-6)",
                 type: "number",
                 validationMask: "^(0|1|2|3|4|5|6)$",
                 description: "Day of the week to trigger (0=Sunday, 6=Saturday)",
@@ -43,6 +44,7 @@ export class CronTrigger extends Trigger {
             },
             {
                 name: "dayTime",
+                easyName: "Hora del día (ms desde medianoche)",
                 type: "number",
                 validationMask: "^(0|[1-9][0-9]{0,4}|[1-8][0-9]{5}|86[0-3][0-9]{3}|864[0-7][0-9]{2}|8648[0-2][0-9]|86483[0-5])$",
                 description: "Time of day in milliseconds since midnight (0-86399999)",

@@ -5,7 +5,7 @@ import useProject from "@hooks/useProject";
 
 const CloseProjectButton = () => {
 
-    const { unloadProject } = useProject();
+    const { unloadProject, project } = useProject();
 
     const handleOnCloseProject = async () => {
         try {
@@ -17,6 +17,7 @@ const CloseProjectButton = () => {
 
     return (
         <ToolbarButton
+            disabled={!project}
             icon={<MdOutlineClose />}
             onClick={handleOnCloseProject} />
     );

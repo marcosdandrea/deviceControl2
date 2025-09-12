@@ -10,32 +10,48 @@ type logEntry = {
 const useLogs = () => {
     const {socket} = useContext(SocketIOContext)
     const [logs, setLogs] = useState<Array<logEntry>>([]);
-    const [lastLog, setLastLog] = useState<logEntry>(null);
+    const [lastInfoLog, setLastInfoLog] = useState<logEntry>(null);
+    const [lastErrorLog, setLastErrorLog] = useState<logEntry>(null);
+    const [lastWarningLog, setLastWarningLog] = useState<logEntry>(null);
 
-    const addToLog = (message: string, data?: any) => {
+    const addToInfoLog = (message: string, data?: any) => {
         const newLog = { message, data };
         setLogs((prevLogs) => [...prevLogs, newLog]);
-        setLastLog(newLog);
-    };
+        setLastInfoLog(newLog);
+    }
+
+    const addToWarningLog = (message: string, data?: any) => {
+        const newLog = { message, data };
+        setLogs((prevLogs) => [...prevLogs, newLog]);
+        setLastWarningLog(newLog);
+    }
+
+    const addToErrorLog = (message: string, data?: any) => {
+        const newLog = { message, data };
+        setLogs((prevLogs) => [...prevLogs, newLog]);
+        setLastErrorLog(newLog);
+    }
 
     const clearLogs = () => {
         setLogs([]);
-        setLastLog(null);
+        setLastInfoLog(null);
+        setLastWarningLog(null);
+        setLastErrorLog(null);
     };
 
     useEffect(()=>{
-        socket.on(logEvents.logInfo, addToLog);
-        socket.on(logEvents.logWarning, addToLog);
-        socket.on(logEvents.logError, addToLog);
+        socket.on(logEvents.logInfo, addToInfoLog);
+        socket.on(logEvents.logWarning, addToWarningLog);
+        socket.on(logEvents.logError, addToErrorLog);
 
         return () => {
-            socket.off(logEvents.logInfo, addToLog);
-            socket.off(logEvents.logWarning, addToLog);
-            socket.off(logEvents.logError, addToLog);
+            socket.off(logEvents.logInfo, addToInfoLog);
+            socket.off(logEvents.logWarning, addToWarningLog);
+            socket.off(logEvents.logError, addToErrorLog);
         };
     }, [socket]);
 
-    return { logs, clearLogs, lastLog };
+    return { logs, clearLogs, lastInfoLog, lastWarningLog, lastErrorLog };
 }
  
 export default useLogs;

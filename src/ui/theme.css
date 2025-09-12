@@ -1,5 +1,7 @@
 
 :root{
+      color-scheme: dark;
+
     --component-background: #2c2c2c;
     --component-border: #3a3a3a;
     --component-interactive: #444444;
@@ -7,5 +9,15 @@
 
     --app-background: #242424;
 
+    --primary: #0085ad;
+
+    --secondary: #ffa136;
+
+    --text-secondary: #aaaaaa;
+
+    --error: #ff4d4f;
+
+    --accent-color: rgba(247, 163, 37, 0.452);
 
 }
+

@@ -9,7 +9,15 @@
 }
 
 .routinesContainer {
+    flex: 1;
     display: flex;
     flex-direction: column;
     row-gap: 0.5rem;
+}
+
+.noRoutines{
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

@@ -44,6 +44,7 @@ export class ConditionPing extends Condition {
             { 
                 name: "invertResult", 
                 required: false, 
+                validationMask: "",
                 type: "boolean", 
                 description: "If true, inverts the ping result." 
             }

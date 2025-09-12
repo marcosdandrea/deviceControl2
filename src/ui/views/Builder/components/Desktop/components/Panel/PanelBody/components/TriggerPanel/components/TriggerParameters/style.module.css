@@ -1,0 +1,9 @@
+.triggerParameters {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--component-background);
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.5rem;
+    flex: 1;
+}

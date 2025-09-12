@@ -11,13 +11,13 @@ interface TcpTriggerOptions extends TriggerType {
 
 export class TcpTrigger extends Trigger {
     static type = 'tcp';
-    static name = 'TCP Trigger';
-    static description = 'Trigger that listens for TCP messages';
 
     port: number;
     ip: string;
     expectedMessage: string;
     server?: net.Server;
+    static easyName = 'Por mensaje TCP';
+    static moduleDescription = 'Escucha un mensaje TCP específico en una IP y puerto dados para activar una acción.';
 
     constructor(options: TcpTriggerOptions) {
         super({
@@ -51,20 +51,15 @@ export class TcpTrigger extends Trigger {
         return [
             {
                 name: 'port',
+                easyName: 'Puerto',
                 type: 'number',
                 validationMask: '^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0)$',
                 description: 'Port number to listen on (1-65535)',
                 required: true,
             },
             {
-                name: 'ip',
-                type: 'string',
-                validationMask: '^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$',
-                description: 'IP address to bind to (default: 0.0.0.0)',
-                required: false,
-            },
-            {
                 name: 'message',
+                easyName: 'Mensaje',
                 type: 'string',
                 validationMask: '^.+$',
                 description: 'Message to listen for',

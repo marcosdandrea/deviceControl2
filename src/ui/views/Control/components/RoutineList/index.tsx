@@ -1,11 +1,11 @@
-import React, { useContext } from "react";
+import React from "react";
 import style from "./style.module.css";
 import Routine from "../Routine";
-import { ProjectContext } from "@contexts/projectContextProvider";
+import useProject from "@hooks/useProject";
 
 const RoutineList = () => {
 
-    const { project } = useContext(ProjectContext);
+    const {project} = useProject({fetchProject: true})
 
     return (
         <div className={style.routineList}>
@@ -16,7 +16,7 @@ const RoutineList = () => {
                             <p>No routines available.</p>
                         </div>
                     ) :
-                    project.routines.map((routine) =>
+                    project.routines.filter(r => !r.hidden).map((routine) =>
                         <Routine key={routine.id} routineData={routine} />
                     )
                 }

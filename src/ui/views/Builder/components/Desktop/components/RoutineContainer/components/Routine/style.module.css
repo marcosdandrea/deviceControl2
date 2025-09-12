@@ -1,8 +1,19 @@
 .routine{
     height: 100%;
     min-width: 20rem;
+    max-width: 20rem;
     border-radius: 5px;
     padding: 0.5rem;
     box-sizing: border-box;
     background-color: var(--component-background);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    row-gap: .5rem;
+    border: 1px solid transparent;
+}
+
+.selected{
+    border: 1px solid var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-color);
 }

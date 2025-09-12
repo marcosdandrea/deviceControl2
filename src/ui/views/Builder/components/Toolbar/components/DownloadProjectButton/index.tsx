@@ -26,6 +26,7 @@ const DownloadProjectButton = () => {
 
     return (
         <ToolbarButton
+            disabled={!project}
             icon={<MdOutlineSaveAlt />}
             onClick={handleOnDownload} />
     );

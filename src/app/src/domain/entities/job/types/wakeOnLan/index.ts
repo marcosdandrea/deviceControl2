@@ -3,7 +3,6 @@ import { Job } from "../..";
 import jobEvents from "@common/events/job.events";
 import dgram from 'dgram';
 import { jobTypes } from "..";
-import ip from "ip";
 import { Context } from "@src/domain/entities/context";
 
 export interface WakeOnLanJobType extends JobType {
@@ -24,7 +23,7 @@ export class WakeOnLanJob extends Job {
             ...options,
             timeout: 5000, // Default timeout of 5 seconds
             enableTimoutWatcher: false,
-            type: jobTypes.sendUDPJob
+            type: jobTypes.wakeOnLanJob
         });
 
         this.validateParams()
@@ -34,17 +33,18 @@ export class WakeOnLanJob extends Job {
     requiredParams(): requiredJobParamType[] {
         return [
             {
-                name: "macAddress",
-                type: "string",
-                description: "The MAC address of the device to wake up (format: XX:XX:XX:XX:XX:XX)",
-                required: true
+            name: "macAddress",
+            type: "string",
+            description: "The MAC address of the device to wake up (format: XX:XX:XX:XX:XX:XX)",
+            validationMask: "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$",
+            required: true
             },
             {
-                name: "portNumber",
-                type: "number",
-                description: "The port number to send the magic packet to (default: 9)",
-                required: false,
-
+            name: "portNumber",
+            type: "number",
+            description: "The port number to send the magic packet to (default: 9)",
+            validationMask: "^(6553[0-5]|655[0-2]\\d|65[0-4]\\d{2}|6[0-4]\\d{3}|[1-5]\\d{4}|[1-9]\\d{0,3}|0)$",
+            required: false,
             }
         ];
     }

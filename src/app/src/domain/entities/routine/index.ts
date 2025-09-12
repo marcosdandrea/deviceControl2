@@ -54,12 +54,12 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.description = props.description;
         this.status = "unknown";
         this.enabled = props.enabled;
-        this.runInSync = props.runInSync || false;
-        this.continueOnError = props.continueOnError || true;
+        this.runInSync = props.runInSync;
+        this.continueOnError = props.continueOnError;
         this.triggers = [];
         this.isRunning = false;
         this.failed = false;
-        this.hidden = props.hidden || false;
+        this.hidden = props.hidden;
         this.routineTimeout = props.routineTimeout || 10000;
 
         this.autoCheckConditionEveryMs = props.autoCheckConditionEveryMs || false;
@@ -396,6 +396,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
             const { signal: abortSignal } = this.abortController;
 
             const runInSync = async () => {
+                this.logger.info("Running tasks in sync...");
                 childCtx.log.info("Running tasks in sync...");
 
                 for (const task of this.tasks) {
@@ -429,6 +430,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
                 try {
                     if (this.continueOnError) {
+                        this.logger.info("Running tasks in parallel with continueOnError...");
                         childCtx.log.info("Running tasks in parallel with continueOnError...");
 
                         const result = await Promise.race([
@@ -452,6 +454,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
                             }
 
                     } else {
+                        this.logger.info("Running tasks in parallel without continueOnError...");
                         childCtx.log.info("Running tasks in parallel without continueOnError...");
 
                         const result = await Promise.race([

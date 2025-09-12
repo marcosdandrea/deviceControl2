@@ -29,6 +29,14 @@ export class Trigger extends EventEmitter implements TriggerInterface {
             throw new Error("Trigger type must be a string");
         this.type = props.type;
 
+        if (props.name && typeof props.name !== 'string')
+            throw new Error("Trigger name must be a string");
+        this.name = props.name;
+
+        if (props.description && typeof props.description !== 'string')
+            throw new Error("Trigger description must be a string");
+        this.description = props.description || "";
+        
         this.logger = Log.createInstance(`Trigger "${this.name}"`, true);
         this.params = props.params || {};
 

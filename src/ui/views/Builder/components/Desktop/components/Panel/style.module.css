@@ -1,0 +1,10 @@
+.panel{
+    position: relative;
+    right: 0;
+    height: 100%;
+    background-color: var(--component-background);
+    box-shadow: -3px 0 5px rgba(0,0,0,0.3);
+    transition: all .5s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}

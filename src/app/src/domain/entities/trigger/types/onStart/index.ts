@@ -8,11 +8,11 @@ interface OnStartTriggerOptions extends TriggerType {
 
 export class OnStartTrigger extends Trigger {
     static type = 'onStart';
-    static name = 'OnStart Trigger';
-    static description = 'Trigger that fires on start within an optional delay';
 
     delay: number;
     private timeoutId: NodeJS.Timeout | null = null;
+    static easyName = 'Al Iniciar';
+    static moduleDescription = 'Se activa cuando la aplicación se inicia, con un retraso opcional.';
 
     constructor(options: OnStartTriggerOptions = { name: 'OnStart Trigger' }) {
         super({
@@ -36,6 +36,7 @@ export class OnStartTrigger extends Trigger {
         return [
             {
                 name: 'delay',
+                easyName: 'Retraso (ms)',
                 type: 'number',
                 validationMask: '^(0|[1-9][0-9]*)$',
                 description: 'Delay in milliseconds before triggering after start (default 0)',

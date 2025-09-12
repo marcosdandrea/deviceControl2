@@ -35,13 +35,17 @@ export const createRoutine = async (routineData, projectData): Promise<Routine> 
     let jobTask: Job = null;
     let conditionTask: Condition = null;
 
-    if (!newTask) 
+    if (!newTask)
       throw new Error(`Failed to create task with ID ${taskData.id}`);
 
 
     if (taskData.job) {
-      jobTask = await createNewJobByType(taskData.job.type, taskData.job);
-      if (!jobTask) 
+      try {
+        jobTask = await createNewJobByType(taskData.job.type, taskData.job);
+      } catch (error) {
+        throw new Error(`Error creating job "${taskData.job.name}" for task "${taskData.name}": ${error.message}`);
+      }
+      if (!jobTask)
         throw new Error(`Failed to create job for task with ID ${taskData.id}`);
 
       newTask.setJob(jobTask);
@@ -49,9 +53,9 @@ export const createRoutine = async (routineData, projectData): Promise<Routine> 
 
     if (taskData.condition) {
       conditionTask = await createNewConditionByType(taskData.condition.type, taskData.condition);
-      if (!conditionTask) 
+      if (!conditionTask)
         throw new Error(`Failed to create condition for task with ID ${taskData.id}`);
- 
+
       newTask.setCondition(conditionTask);
     }
     return newTask;

@@ -9,8 +9,8 @@ const getAvailableTriggers = async (_args: any, callback: Function) => {
     for (const [key, modulePromise] of Object.entries(await triggerClasses)) {
         const module = await modulePromise
         triggers[key] = {
-            name: module.default.name,
-            description: module.default.description || "",
+            easyName: module.default.easyName,
+            moduleDescription: module.default.moduleDescription,
             params: module.default.prototype.requiredParams(),
         }
     }

@@ -1,0 +1,21 @@
+.moreOptionsButton {
+    margin: 0.5rem;
+    padding: 0.25rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 1rem;
+    background-color: var(--component-interactive);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.moreOptionsButton:hover {
+    filter: brightness(1.1);
+}
+
+.moreOptionsButton:active {
+    filter: brightness(0.8);
+}

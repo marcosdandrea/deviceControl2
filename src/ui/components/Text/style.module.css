@@ -2,8 +2,12 @@
     font-family: "Open Sans Regular";
     font-size: 1rem;
     color: #212529;
+    width: 100%;
+    user-select: none;
+}
+
+.ellipsis{
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 100%;
 }

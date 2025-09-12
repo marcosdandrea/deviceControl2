@@ -14,6 +14,7 @@ export type TriggerType = {
 
 export type requiredTriggerParamType = {
     name: string;
+    easyName: string;
     type: string;
     description: string;
     validationMask: string;

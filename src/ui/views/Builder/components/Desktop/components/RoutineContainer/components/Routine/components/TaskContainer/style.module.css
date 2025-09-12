@@ -1,0 +1,26 @@
+.taskContainer{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: solid 1px var(--component-border);
+    padding: 0.5rem;
+    box-sizing: border-box;
+    border-radius: 5px;
+    row-gap: 0.5rem;
+    flex: 3;
+}
+
+.taskList{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.5rem;
+    overflow-y: auto;
+}
+
+.draggedItem{
+    opacity: 0.8;
+    cursor: grabbing;
+}

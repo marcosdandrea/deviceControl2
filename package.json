@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "npm-run-all --parallel dev:react dev:electron ",
-    "dev:react": "vite",
+    "dev:react": "vite --host",
     "dev:electron": "node build-electron.mjs && cross-env NODE_ENV=development electron . --trace-warnings",
     "dev:headless": "npm-run-all --parallel dev:react dev:electron:headless",
     "dev:electron:headless": "cross-env HEADLESS=true node build-electron.mjs && cross-env NODE_ENV=development HEADLESS=true node . --trace-warnings",
@@ -24,6 +24,7 @@
     "test:unit": "vitest src --reporter verbose"
   },
   "dependencies": {
+    "antd": "^5.27.3",
     "cors": "^2.8.5",
     "dmxnet": "^0.9.0",
     "dotenv": "^16.5.0",
@@ -35,6 +36,7 @@
     "ping": "^0.4.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-easy-sort": "^1.7.0",
     "react-icons": "^5.5.0",
     "react-resizable-panels": "^3.0.5",
     "react-router-dom": "^7.7.1",

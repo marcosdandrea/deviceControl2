@@ -117,7 +117,7 @@ const Routine = ({ routineData, onSwipeLeft }: Props) => {
                         userSelect: dragging ? "none" : "auto",
                         touchAction: "none"
                     }}
-                    className={routineData.enabled ? style.routine : style.routineDisabled}>
+                    className={`${style.routine} ${routineData.enabled ? "" : style.disabled}`}>
                     <RoutineStatusTag event={lastEvent} />
                     <div
                         className={style.routineContent}>

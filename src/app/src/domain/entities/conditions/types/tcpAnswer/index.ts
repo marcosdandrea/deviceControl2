@@ -15,7 +15,7 @@ export class ConditionTCPAnswer extends Condition {
     static description = "Condition that waits for a TCP answer";
     static name = "TCP Answer Condition";
     static type = conditionTypes.tcpAnswer;
-    
+
     ip: string;
     port: number;
     message: string;
@@ -40,29 +40,31 @@ export class ConditionTCPAnswer extends Condition {
 
     requiredParams(): requiredConditionParamType[] {
         return [
-            { 
+            {
                 name: "ip",
                 required: true,
                 type: "string",
                 validationMask: "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
                 description: "The target IP address to send the TCP message to."
             },
-            { 
+            {
                 name: "port",
                 required: true,
                 validationMask: "^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4})$",
                 type: "number",
                 description: "The target port to send the TCP message to."
             },
-            { 
+            {
                 name: "message",
                 required: true,
+                validationMask: "^[\\s\\S]+$",
                 type: "string",
                 description: "The TCP message to send."
             },
-            { 
+            {
                 name: "answer",
                 required: true,
+                validationMask: "^[\\s\\S]+$",
                 type: "string",
                 description: "The expected TCP answer message."
             },

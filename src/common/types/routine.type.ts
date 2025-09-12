@@ -7,15 +7,17 @@ type commonRoutineProps = {
     id?: id;
     name: name;
     description?: description;
+    
     enabled: boolean;
     runInSync?: boolean;
     continueOnError?: boolean;
     routineTimeout?: number | false;
-    isRunning?: boolean;
     hidden?: boolean;
+    autoCheckConditionEveryMs?: number | false;
+
+    isRunning?: boolean;
     status?: string;
     failed?: boolean;
-    autoCheckConditionEveryMs?: number | false;
 }
 
 export interface RoutineType extends commonRoutineProps {

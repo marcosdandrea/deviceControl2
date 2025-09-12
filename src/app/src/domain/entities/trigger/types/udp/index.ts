@@ -11,12 +11,12 @@ interface UdpTriggerOptions extends TriggerType {
 
 export class UdpTrigger extends Trigger {
     static type = 'udp';
-    static name = 'UDP Trigger';
-    static description = 'Trigger that listens for UDP messages';
 
     port: number;
     ip: string;
     expectedMessage: string;
+    static easyName = 'por mensaje UDP';
+    static moduleDescription = 'Escucha un mensaje UDP específico en una IP y puerto dados para activar una acción.';
     server?: dgram.Socket;
 
     constructor(options: UdpTriggerOptions) {
@@ -40,20 +40,15 @@ export class UdpTrigger extends Trigger {
             {
                 name: 'port',
                 type: 'number',
+                easyName: 'Puerto',
                 validationMask: '^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0)$',
                 description: 'Port number to listen on (1-65535)',
                 required: true,
             },
             {
-                name: 'ip',
-                type: 'string',
-                validationMask: '^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$',
-                description: 'IP address to bind to (default: 0.0.0.0)',
-                required: false,
-            },
-            {
                 name: 'message',
                 type: 'string',
+                easyName: 'Mensaje',
                 validationMask: '^.+$',
                 description: 'Message to listen for',
                 required: true,

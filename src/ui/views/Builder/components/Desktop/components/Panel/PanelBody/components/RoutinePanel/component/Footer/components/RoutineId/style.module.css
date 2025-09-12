@@ -1,0 +1,18 @@
+.routineId{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    column-gap: 0.5rem;
+}
+
+.copyIcon{
+    cursor: pointer;
+}
+
+.copyIcon:hover{
+    filter: brightness(2);
+}
+
+.copyIcon:active{
+    filter: brightness(0.8);
+}

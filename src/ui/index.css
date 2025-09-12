@@ -23,6 +23,16 @@
   src: url("./assets/fonts/OpenSans-Italic.ttf");
 }
 
+@font-face {
+  font-family: "Open Sans Bold";
+  src: url("./assets/fonts/OpenSans-Bold.ttf");
+}
+
+@font-face {
+  font-family: "Open Sans Extrabold";
+  src: url("./assets/fonts/OpenSans-ExtraBold.ttf");
+}
+
 :root {
   font-family: "Open Sans Regular";
   color-scheme: light dark;

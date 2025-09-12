@@ -11,20 +11,20 @@ interface OnRoutineEventTriggerOptions extends TriggerType {
 
 export class OnRoutineEventTrigger extends Trigger {
     static type = 'onRoutineEvent';
-    static name = 'OnRoutineEvent Trigger';
-    static description = 'Trigger that listens for routine events';
 
     routineId: string;
     routineEvent: RoutineActions;
     private eventManager: EventManager;
     private boundHandler: ((payload: any) => void) | null = null;
+    static easyName = 'Por Evento de Rutina';
+    static moduleDescription = 'Se activa cuando una rutina específica cambia de estado (ejecutando, comprobando, completada, fallida, abortada, desconocida).';
 
     constructor(options: OnRoutineEventTriggerOptions) {
         super({
             ...options,
             type: TriggerTypes.onRoutineEvent,
         });
-        
+
         this.validateParams();
         /*
         if (!options.params.routineId || typeof options.params.routineId !== 'string')
@@ -34,6 +34,7 @@ export class OnRoutineEventTrigger extends Trigger {
         //if (!RoutineActions.includes(options.params.routineEvent))
         //    throw new Error(`routineEvent must be one of: ${RoutineActions.join(', ')}`);
         this.routineEvent = options.params.routineEvent;
+        this.routineId = options.params.routineId;
 
         this.eventManager = new EventManager();
 
@@ -45,6 +46,7 @@ export class OnRoutineEventTrigger extends Trigger {
         return [
             {
                 name: 'routineId',
+                easyName: 'ID de la Rutina',
                 type: 'string',
                 validationMask: '^[a-zA-Z0-9-_]+$',
                 description: 'ID of the routine to listen for events',
@@ -52,6 +54,7 @@ export class OnRoutineEventTrigger extends Trigger {
             },
             {
                 name: 'routineEvent',
+                easyName: 'Evento de la Rutina',
                 type: 'string',
                 validationMask: '^(running|checking|completed|failed|aborted|unknown)$',
                 description: 'Event of the routine to listen for (running, checking, completed, failed, aborted, unknown)',
@@ -61,7 +64,7 @@ export class OnRoutineEventTrigger extends Trigger {
     }
 
     private init() {
-        const routineEvent = `routine.${this.routineId}.${this.routineEvent}`;
+        const routineEvent = `routine.${this.routineId}.routine:${this.routineEvent}`;
         if (!this.boundHandler) {
             this.boundHandler = this.trigger.bind(this);
         }
@@ -70,7 +73,7 @@ export class OnRoutineEventTrigger extends Trigger {
     }
 
     private destroy() {
-        const routineEvent = `routine.${this.routineId}.${this.routineEvent}`;
+        const routineEvent = `routine.${this.routineId}.routine:${this.routineEvent}`;
         if (this.boundHandler) {
             this.eventManager.removeListener(routineEvent, this.boundHandler); // Usar la misma referencia
             this.logger.info(`Stopped listening for routine ${this.routineId} event: ${this.routineEvent}`);

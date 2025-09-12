@@ -4,11 +4,12 @@ import { useContext, useEffect, useState } from "react";
 import { Logger } from "@helpers/logger";
 import projectCommands from "@common/commands/project.commands";
 import projectEvents from "@common/events/project.events";
+import { ProjectContext } from "@contexts/projectContextProvider";
 
-const useProject = () => {
+const useProject = (params: { fetchProject?: boolean }) => {
 
     const { socket, emit } = useContext(SocketIOContext);
-    const [project, setProject] = useState<projectType | null>(null);
+    const { project, setProject } = useContext(ProjectContext)
 
     useEffect(() => {
         if (!socket) return;
@@ -46,7 +47,8 @@ const useProject = () => {
             updateProject({ projectData: null });
         }
 
-        emit(projectCommands.getCurrent, null, handleOnGetProject);
+        if (params?.fetchProject)
+            emit(projectCommands.getCurrent, null, handleOnGetProject);
 
         socket.on(projectEvents.changed, handleOnProjectChanged);
         socket.on(projectEvents.loaded, handleOnProjectLoaded);
@@ -104,7 +106,7 @@ const useProject = () => {
         })
     }
 
-    return ({ project, loadProjectFile, unloadProject, getProjectFile });
+    return ({ project, setProject, loadProjectFile, unloadProject, getProjectFile });
 }
 
 export default useProject;
