@@ -38,49 +38,44 @@ export class WaitJob extends Job {
         ctx.log.info(`Starting job "${this.name}"`);
 
         const clearTimeoutTimer = () => {
-            if (this.timeoutTimer) 
+            if (this.timeoutTimer)
                 clearTimeout(this.timeoutTimer);
         }
 
-        const handleOnAbort = () => {
-            clearTimeoutTimer();
-        }
+        let abortListener: (() => void) | null = null;
 
-        const cleanUpAbortListener = () => {
-            abortSignal?.removeEventListener("abort", handleOnAbort);
-        }
- 
         try {
+            let { time } = this.params;
 
-            let { time } = this.params
-
-            if (abortSignal?.aborted) {
-                this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
-                return Promise.reject(new Error(`Job "${this.name}" was aborted before execution`));
-            }
-
-            abortSignal?.addEventListener("abort", handleOnAbort, { once: true });
-
-            await new Promise<void>((resolve) => {
+            await new Promise<void>((resolve, reject) => {
                 if (this.timeoutTimer)
                     clearTimeout(this.timeoutTimer);
+
+                abortListener = () => {
+                    clearTimeoutTimer();
+                    reject(new Error(`Job "${this.name}" was aborted`));
+                };
+
+                abortSignal?.addEventListener("abort", abortListener, { once: true });
 
                 this.timeoutTimer = setTimeout(() => {
                     ctx.log.info(`Job "${this.name}" completed successfully`);
                     this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id });
-                    
                     resolve();
                 }, time);
             });
-            Promise.resolve();            
         } catch (error) {
-            ctx.log.error(`Error in job "${this.name}": ${error.message}`);
-            this.failed = true;
-            this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
-
-            Promise.reject(error);
+            if ((error as Error).message.includes('was aborted')) {
+                this.log.warn((error as Error).message);
+            } else {
+                ctx.log.error(`Error in job "${this.name}": ${(error as Error).message}`);
+                this.failed = true;
+                this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
+            }
+            return Promise.reject(error);
         } finally {
-            cleanUpAbortListener();
+            if (abortListener)
+                abortSignal?.removeEventListener("abort", abortListener);
         }
     }
 

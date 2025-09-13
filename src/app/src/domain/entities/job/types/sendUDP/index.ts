@@ -109,8 +109,13 @@ export class SendUDPJob extends Job {
                 if (!finished) {
                     finished = true;
                     client.close();
-                    this.failed = true;
-                    this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error: err });
+                    if (err.message.includes('was aborted')) {
+                        this.log.warn(err.message);
+                        ctx.log.warn(err.message);
+                    } else {
+                        this.failed = true;
+                        this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error: err });
+                    }
                     reject(err);
                 }
             };
@@ -133,9 +138,11 @@ export class SendUDPJob extends Job {
                 });
             }
         }).finally(() => {
-            this.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
-            ctx.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
-            this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id, failed: this.failed });
+            if (!this.aborted) {
+                this.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
+                ctx.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
+                this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id, failed: this.failed });
+            }
         });
     }
 
