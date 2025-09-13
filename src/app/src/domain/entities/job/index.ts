@@ -11,6 +11,7 @@ export class Job extends EventEmitter implements JobInterface {
     description: JobInterface["description"];
     timeout: JobInterface["timeout"];
     failed: boolean = false;
+    aborted = false;
     log: Log;
     enableTimoutWatcher: boolean = true;
     timeoutTimer: NodeJS.Timeout | null = null;
@@ -134,6 +135,7 @@ export class Job extends EventEmitter implements JobInterface {
             this.#handleOnAbortTimeout = () => {
                 cleanUp();
                 this.log.warn(`Job "${this.name}" was aborted`);
+                this.aborted = true;
                 this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
                 reject(new Error(`Job "${this.name}" was aborted`));
                 this.#handleOnAbortTimeout = null;
@@ -171,6 +173,7 @@ export class Job extends EventEmitter implements JobInterface {
             handleOnAbort = () => {
                 this.log.warn(`Job execution was aborted`);
                 ctx.log.warn(`Job execution was aborted`);
+                this.aborted = true;
                 this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
                 this.abortController?.abort();
                 reject(new Error(`Job "${this.name}" was aborted`));
@@ -192,8 +195,10 @@ export class Job extends EventEmitter implements JobInterface {
             ctx.log.info(`Execution finished successfully`);
             return Promise.resolve();
         } catch (error) {
-            this.failed = true;
-            ctx.log.error(`Execution failed: ${error instanceof Error ? error.message : String(error)}`);
+            if (!this.aborted) {
+                this.failed = true;
+                ctx.log.error(`Execution failed: ${error instanceof Error ? error.message : String(error)}`);
+            }
             // Clean abort listeners before leaving!
             if (handleOnAbort)
                 abortSignal.removeEventListener('abort', handleOnAbort);
