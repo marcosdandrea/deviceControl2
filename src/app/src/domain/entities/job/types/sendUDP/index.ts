@@ -138,7 +138,7 @@ export class SendUDPJob extends Job {
                 });
             }
         }).finally(() => {
-            if (!this.aborted) {
+            if (!this.abortedByUser) {
                 this.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
                 ctx.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
                 this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id, failed: this.failed });

@@ -4,21 +4,19 @@ import jobEvents from "@common/events/job.events";
 import { jobTypes } from "..";
 import { Context } from "@src/domain/entities/context";
 
-
 export class WaitJob extends Job {
     static description = "Waits for a specified amount of time before completing.";
     static name = "Wait Job";
     static type = jobTypes.waitJob;
+    private timeoutTimer: NodeJS.Timeout | null = null;
 
     constructor(options: JobType) {
         super({
             ...options,
-            timeout: 5000,
-            enableTimoutWatcher: false, // WaitJob does not use timeout watcher
             type: jobTypes.waitJob
         });
 
-        this.validateParams();        
+        this.validateParams();
     }
 
     requiredParams(): requiredJobParamType[] {
@@ -31,54 +29,57 @@ export class WaitJob extends Job {
         }];
     }
 
-    async job(ctx: Context): Promise<void> {
-        this.failed = false;
-        const { signal: abortSignal } = this.abortController || {};
-        this.dispatchEvent(jobEvents.jobRunning, { jobId: this.id });
-        ctx.log.info(`Starting job "${this.name}"`);
+    async job(ctx: Context, abortSignal: AbortSignal): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            if (ctx == null)
+                return reject(new Error("Context is required for job execution"));
 
-        const clearTimeoutTimer = () => {
-            if (this.timeoutTimer)
-                clearTimeout(this.timeoutTimer);
-        }
+            if (abortSignal == null)
+               return reject(new Error("AbortSignal is required for job execution"));
 
-        let abortListener: (() => void) | null = null;
+            const { time } = this.params;
+            if (typeof time !== "number" || time < 0 || time > 2147483647) {
+                ctx.log.error(`Invalid 'time' parameter for job "${this.name}": ${time}`);
+                this.failed = true;
+                this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error: "Invalid time parameter" });
+                return reject(new Error("Invalid time parameter. Must be between 0 and 2147483647."));
+            }
 
-        try {
-            let { time } = this.params;
+            this.failed = false;
+            this.dispatchEvent(jobEvents.jobRunning, { jobId: this.id });
 
-            await new Promise<void>((resolve, reject) => {
+            const clearTimeoutTimer = () => {
                 if (this.timeoutTimer)
                     clearTimeout(this.timeoutTimer);
+            };
 
-                abortListener = () => {
-                    clearTimeoutTimer();
-                    reject(new Error(`Job "${this.name}" was aborted`));
-                };
+            let abortListener: (() => void) | null = null;
 
-                abortSignal?.addEventListener("abort", abortListener, { once: true });
+            const cleanup = () => {
+                if (abortListener)
+                    abortSignal.removeEventListener("abort", abortListener);
+                clearTimeoutTimer();
+            };
 
-                this.timeoutTimer = setTimeout(() => {
-                    ctx.log.info(`Job "${this.name}" completed successfully`);
-                    this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id });
-                    resolve();
-                }, time);
-            });
-        } catch (error) {
-            if ((error as Error).message.includes('was aborted')) {
-                this.log.warn((error as Error).message);
-            } else {
-                ctx.log.error(`Error in job "${this.name}": ${(error as Error).message}`);
-                this.failed = true;
-                this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
-            }
-            return Promise.reject(error);
-        } finally {
-            if (abortListener)
-                abortSignal?.removeEventListener("abort", abortListener);
-        }
+            abortListener = () => {
+                cleanup();
+                ctx.log.warn(`Job "${this.name}" was aborted`);
+                this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
+                reject(new Error("Job aborted"));
+            };
+
+            abortSignal.addEventListener("abort", abortListener);
+
+            this.timeoutTimer = setTimeout(() => {
+                cleanup();
+                ctx.log.info(`Job "${this.name}" completed successfully`);
+                this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id });
+                resolve();
+            }, time);
+
+            this.timeoutTimer.unref?.();
+        });
     }
-
 }
 
 export default WaitJob;

@@ -112,7 +112,7 @@ export class SendSerialJob extends Job {
             });
 
         }).finally(() => {
-            if (!this.aborted) {
+            if (!this.abortedByUser) {
                 this.log.info(`Job \"${this.name}\" with ID ${this.id} has finished`);
                 this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id, failed: this.failed });
             }
