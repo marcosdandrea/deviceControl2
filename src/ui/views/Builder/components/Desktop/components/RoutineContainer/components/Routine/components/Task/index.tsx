@@ -61,7 +61,8 @@ const Task = ({ taskData }) => {
 
     const handleOnMoreOptionsClick = (e) => {
         e.stopPropagation();
-        Navigate(`/builder/${routineData.id}/task/${taskData.id}`)
+        const queryParams = taskData.instanceId ? `?instanceId=${taskData.instanceId}` : "";
+        Navigate(`/builder/${routineData.id}/task/${taskData.id}${queryParams}`)
     }
 
 
@@ -99,7 +100,7 @@ const Task = ({ taskData }) => {
                 justifyContent: "center",
                 alignItems: "center",
             }}
-            id={taskData.id}>
+            id={taskData.instanceId || taskData.id}>
             <div className={style.taskContent}>
                 <div className={style.taskHeader}>
                     {getJobIcon(taskData.job.type)}

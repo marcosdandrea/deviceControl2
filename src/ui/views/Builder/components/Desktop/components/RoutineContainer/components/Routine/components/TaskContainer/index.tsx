@@ -6,31 +6,34 @@ import useProject from "@hooks/useProject";
 import Text from "@components/Text";
 import Task from "../Task";
 import { nanoid } from "nanoid";
+import { TaskInstance } from "@common/types/routine.type";
 
 const TaskContainer = () => {
 
     const { routineData } = useContext(routineContext);
     const { project } = useProject({ fetchProject: false });
-    const [tasks, setTasks] = useState(routineData?.tasks || []);
+    const [tasks, setTasks] = useState<any[]>(routineData?.tasks || []);
 
     useEffect(() => {
         if (!project || !routineData) return;
 
-        let routineTasks = [...(routineData.tasksId?.map((taskId: string) => {
-            return project.tasks.find(t => t.id === taskId);
-        }) || []), {}].filter(t => t !== undefined);
+        const routineTasks = (routineData.tasksId as TaskInstance[] | undefined)?.map((taskInstance) => {
+            const task = project.tasks.find(t => t.id === taskInstance.taskId);
+            if (!task) return null;
+            return { ...task, instanceId: taskInstance.id };
+        }).filter(task => task !== null) || [];
 
-        // Si la tarea aparece duplicada, modifica su propiedad "name" agregándole el número de repetición entre paréntesis
         const taskCount: Record<string, number> = {};
-        routineTasks = routineTasks.map(task => {
+        const routineTasksWithDisplayName = routineTasks.map(task => {
             const count = taskCount[task.id] || 0;
             taskCount[task.id] = count + 1;
             return count > 0 ? { ...task, name: `${task.name} (${count + 1})` } : task;
         });
 
-        // If there are tasks in the routine, set them
-        if (routineTasks.length > 0) {
-            setTasks(routineTasks)
+        if (routineTasksWithDisplayName.length > 0) {
+            setTasks([...routineTasksWithDisplayName, { instanceId: nanoid(8), isPlaceholder: true }])
+        } else {
+            setTasks([{ instanceId: nanoid(8), isPlaceholder: true }]);
         }
 
     }, [project, routineData])
@@ -41,7 +44,15 @@ const TaskContainer = () => {
         const movedItem = newTasks.splice(oldIndex, 1)[0];
         newTasks.splice(newIndex, 0, movedItem);
         setTasks(newTasks);
-        routineData.tasksId = newTasks.map(task => task.id).filter(id => id !== undefined);
+        const updatedTaskInstances = newTasks
+            .filter(task => task && !task.isPlaceholder && task.instanceId)
+            .map(task => {
+                const existingInstance = (routineData.tasksId as TaskInstance[] | undefined)?.find(instance => instance.id === task.instanceId);
+                if (existingInstance)
+                    return existingInstance;
+                return { id: task.instanceId, taskId: task.id } as TaskInstance;
+            });
+        routineData.tasksId = updatedTaskInstances;
     }
 
     return (
@@ -49,7 +60,7 @@ const TaskContainer = () => {
             <Text
                 color="gray"
                 size={12}>
-                {`Las siguiente tareas (${tasks?.length - 1 || 0}) correrán en ${routineData.runInSync ? "serie" : "paralelo"}`}
+                {`Las siguiente tareas (${Math.max((tasks?.length || 1) - 1, 0)}) correrán en ${routineData.runInSync ? "serie" : "paralelo"}`}
             </Text>
                 <div className={style.listContainer} >
                 <SortableList
@@ -61,7 +72,7 @@ const TaskContainer = () => {
                     {
                         tasks?.map((task: any) => (
                             <Task
-                                key={nanoid(8)}
+                                key={task?.instanceId || task?.id || nanoid(8)}
                                 taskData={task} />
                         ))
                     }

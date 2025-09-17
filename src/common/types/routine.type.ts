@@ -38,12 +38,12 @@ export interface RoutineType extends commonRoutineProps {
 export interface RoutineInterface extends commonRoutineProps {
     triggers: TriggerInterface[];
     tasks: TaskInterface[];
-    addTask: (task: TaskInterface) => void;
-    removeTask: (taskId: id) => void;
+    addTask: (task: TaskInterface, instanceId?: id) => void;
+    removeTask: (taskId: id, instanceId?: id) => void;
     getTasks: () => TaskInterface[];
     swapTaskOrder: (taskId: id, newIndex: number) => void;
-    addTrigger: (trigger: TriggerInterface) => void;
-    removeTrigger: (triggerId: id) => void;
+    addTrigger: (trigger: TriggerInterface, instanceId?: id) => void;
+    removeTrigger: (triggerId: id, instanceId?: id) => void;
     getTriggers: () => TriggerInterface[];
     run: (triggeredBy: TriggerInterface, ctx: Context) => void;
     abort: (cause: string) => void;

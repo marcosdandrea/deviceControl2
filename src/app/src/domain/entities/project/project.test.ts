@@ -121,8 +121,8 @@ describe("Project Entity", () => {
         expect(savedProject.name).toBe("Recreated Project");
         expect(savedProject.routines.length).toBe(1);
         expect(savedProject.routines[0].name).toBe("Test Routine");
-        expect(savedProject.routines[0].tasks.length).toBe(1);
-        expect(savedProject.routines[0].tasks[0].name).toBe("Test Task");
+        expect(savedProject.routines[0].tasksId?.length).toBe(1);
+        expect(savedProject.routines[0].tasksId?.[0].taskId).toBe(project.tasks[0].id);
 
         project.close()
         expect(Project.getInstance()).toBeNull();

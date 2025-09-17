@@ -1,6 +1,6 @@
 import React, { createContext, useEffect, useMemo, useRef, useState } from "react";
 import style from './style.module.css'
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import useProject from "@hooks/useProject";
 import Text from "@components/Text";
 import { Input, Switch } from "antd";
@@ -10,7 +10,7 @@ import TypeTriggerField from "./components/TypeTriggerField";
 import TriggerParameters from "./components/TriggerParameters";
 import Footer from "./components/Footer";
 
-export const triggerContext = createContext({ trigger: undefined, setTrigger: (trigger: TriggerType) => { }, defaultTrigger: undefined, setInvalidParams: (params: string[]) => { }, invalidParams: [] as string[] });
+export const triggerContext = createContext({ trigger: undefined, setTrigger: (trigger: TriggerType) => { }, defaultTrigger: undefined, setInvalidParams: (params: string[]) => { }, invalidParams: [] as string[], triggerInstanceId: undefined });
 
 const defaultTrigger = {
     id: '',
@@ -23,9 +23,11 @@ const defaultTrigger = {
 
 const TriggerPanel = () => {
     const { triggerId } = useParams()
+    const [searchParams] = useSearchParams();
     const { project } = useProject({ fetchProject: false })
     const [trigger, setTrigger] = useState<TriggerType | undefined>(undefined);
     const [invalidParams, setInvalidParams] = useState<string[]>([]);
+    const triggerInstanceId = searchParams.get('instanceId') || undefined;
 
     useEffect(() => {
         if (project && triggerId) {
@@ -40,7 +42,7 @@ const TriggerPanel = () => {
     }, [project, triggerId])
 
     return (
-        <triggerContext.Provider value={{ trigger, setTrigger, defaultTrigger, setInvalidParams, invalidParams }}>
+        <triggerContext.Provider value={{ trigger, setTrigger, defaultTrigger, setInvalidParams, invalidParams, triggerInstanceId }}>
             <div className={style.triggerPanel}>
                 <div className={style.header}>
                     <Text color='white'>

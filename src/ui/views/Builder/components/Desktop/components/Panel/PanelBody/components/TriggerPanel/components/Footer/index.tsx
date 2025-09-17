@@ -4,9 +4,10 @@ import { Button, Popconfirm } from 'antd';
 import { triggerContext } from '../..';
 import useProject from '@hooks/useProject';
 import { useNavigate, useParams } from 'react-router-dom';
+import { nanoid } from 'nanoid';
 
 const Footer = () => {
-    const { trigger, invalidParams } = useContext(triggerContext)
+    const { trigger, invalidParams, triggerInstanceId } = useContext(triggerContext)
     const { routineId } = useParams()
     const { project, setProject } = useProject({ fetchProject: false })
     const [isLastTrigger, setIsLastTrigger] = useState(false)
@@ -18,17 +19,33 @@ const Footer = () => {
         if (project && routineId && trigger?.id) {
             const routine = project.routines.find(r => r.id === routineId)
             if (routine) {
-                setBelongsToRoutine(routine.triggersId.includes(trigger.id))
+                const triggerInstanceExists = routine.triggersId?.some((triggerInstance: any) => {
+                    if (typeof triggerInstance === 'string') {
+                        if (triggerInstanceId)
+                            return triggerInstance === triggerInstanceId
+                        return triggerInstance === trigger.id
+                    }
+                    if (triggerInstanceId)
+                        return triggerInstance.id === triggerInstanceId
+                    return triggerInstance.triggerId === trigger.id
+                }) || false
+                setBelongsToRoutine(triggerInstanceExists)
             }
         } else {
             setBelongsToRoutine(false)
         }
-    }, [routineId, trigger, project])
+    }, [routineId, trigger, project, triggerInstanceId])
 
     useEffect(() => {
         if (project && trigger?.id) {
             const trigerUseCount = project.routines.reduce((count, routine) => {
-                return count + (routine.triggersId.includes(trigger.id) ? 1 : 0);
+                if (!routine.triggersId) return count;
+                const occurrences = routine.triggersId.filter((triggerInstance: any) => {
+                    if (typeof triggerInstance === 'string')
+                        return triggerInstance === trigger.id
+                    return triggerInstance.triggerId === trigger.id
+                }).length
+                return count + occurrences;
             }, 0);
             setIsLastTrigger(trigerUseCount === 1)
         }
@@ -58,13 +75,14 @@ const Footer = () => {
         const routine = project.routines.find(r => r.id === routineId)
         if (!routine) return
         if (!routine.triggersId) routine.triggersId = []
-        routine.triggersId.push(trigger.id)
+        const newInstanceId = nanoid(8)
+        routine.triggersId.push({ id: newInstanceId, triggerId: trigger.id })
         //actualiza el proyecto
         setProject(prev => ({
             ...prev,
             routines: prev.routines.map(r => r.id === routineId ? routine : r)
         }))
-        navigate(`/builder/${routineId}/trigger/${trigger.id}`)
+        navigate(`/builder/${routineId}/trigger/${trigger.id}?instanceId=${newInstanceId}`)
     }
 
     const handleOnClickDelete = () => {
@@ -72,20 +90,36 @@ const Footer = () => {
         if (!project || !trigger) return
         const routine = project.routines.find(r => r.id === routineId)
         if (!routine) return
-        routine.triggersId = routine.triggersId.filter(id => id !== trigger.id)
-        //actualiza el proyecto
-        setProject(prev => ({
-            ...prev,
-            routines: prev.routines.map(r => r.id === routineId ? routine : r)
-        }))
+        if (!routine.triggersId) routine.triggersId = []
 
-        //si es el ultimo uso del trigger, eliminarlo del proyecto
-        if (isLastTrigger) {
-            setProject(prev => ({
-                ...prev,
-                triggers: prev.triggers.filter(t => t.id !== trigger.id)
-            }))
+        let removed = false
+        if (triggerInstanceId) {
+            const originalLength = routine.triggersId.length
+            routine.triggersId = routine.triggersId.filter((triggerInstance: any) => {
+                if (typeof triggerInstance === 'string')
+                    return triggerInstance !== triggerInstanceId
+                return triggerInstance.id !== triggerInstanceId
+            })
+            removed = routine.triggersId.length !== originalLength
+        } else {
+            const index = routine.triggersId.findIndex((triggerInstance: any) => {
+                if (typeof triggerInstance === 'string')
+                    return triggerInstance === trigger.id
+                return triggerInstance.triggerId === trigger.id
+            })
+            if (index > -1) {
+                routine.triggersId.splice(index, 1)
+                removed = true
+            }
         }
+
+        if (!removed) return
+
+        if (isLastTrigger) {
+            project.triggers = project.triggers.filter(t => t.id !== trigger.id)
+        }
+
+        setProject({ ...project })
         navigate(-1)
     }
 
