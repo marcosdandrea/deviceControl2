@@ -19,16 +19,52 @@
       "routineTimeout": 20000,
       "autoCheckConditionEveryMs": false,
       "triggersId": [
-        { "id": "VVnBlJ-F9v-trigger-1", "triggerId": "ydtJn15O" },
-        { "id": "VVnBlJ-F9v-trigger-2", "triggerId": "0DWlU13O" }
+        {
+          "id": "VVnBlJ-F9v-trigger-1",
+          "triggerId": "ydtJn15O"
+        },
+        {
+          "id": "VVnBlJ-F9v-trigger-2",
+          "triggerId": "0DWlU13O"
+        }
       ],
       "tasksId": [
-        { "id": "VVnBlJ-F9v-task-1", "taskId": "l9HYU0Sj" },
-        { "id": "VVnBlJ-F9v-task-2", "taskId": "k26-mVw4" },
-        { "id": "VVnBlJ-F9v-task-3", "taskId": "vLiHOH6t" },
-        { "id": "VVnBlJ-F9v-task-4", "taskId": "eR0b9MUh" },
-        { "id": "VVnBlJ-F9v-task-5", "taskId": "vLiHOH6t" },
-        { "id": "VVnBlJ-F9v-task-6", "taskId": "mgypBUEP" }
+        {
+          "id": "VVnBlJ-F9v-task-1",
+          "taskId": "l9HYU0Sj"
+        },
+        {
+          "taskId": "6Ff5GAer",
+          "id": "Et-DcYox"
+        },
+        {
+          "taskId": "BE9ynQMp",
+          "id": "7KdJVQ1r"
+        },
+        {
+          "taskId": "J8s4A2Em",
+          "id": "o_o8carc"
+        },
+        {
+          "id": "VVnBlJ-F9v-task-2",
+          "taskId": "k26-mVw4"
+        },
+        {
+          "id": "VVnBlJ-F9v-task-3",
+          "taskId": "vLiHOH6t"
+        },
+        {
+          "id": "VVnBlJ-F9v-task-4",
+          "taskId": "eR0b9MUh"
+        },
+        {
+          "id": "VVnBlJ-F9v-task-5",
+          "taskId": "vLiHOH6t"
+        },
+        {
+          "id": "VVnBlJ-F9v-task-6",
+          "taskId": "mgypBUEP"
+        }
       ]
     },
     {
@@ -37,17 +73,54 @@
       "description": "Rutina que se ejecuta cuando se completa la rutina 1",
       "status": "unknown",
       "enabled": true,
+      "runInSync": true,
       "continueOnError": true,
       "isRunning": false,
-      "routineTimeout": 10000,
+      "routineTimeout": 60000,
       "autoCheckConditionEveryMs": false,
       "triggersId": [
-        { "id": "W3lioPt28w-trigger-1", "triggerId": "2n1SdvOd" },
-        { "id": "W3lioPt28w-trigger-2", "triggerId": "Yn0vZSy9" }
+        {
+          "id": "W3lioPt28w-trigger-1",
+          "triggerId": "2n1SdvOd"
+        },
+        {
+          "id": "W3lioPt28w-trigger-2",
+          "triggerId": "Yn0vZSy9"
+        }
       ],
       "tasksId": [
-        { "id": "W3lioPt28w-task-1", "taskId": "WteROnKh" },
-        { "id": "W3lioPt28w-task-2", "taskId": "sQa_ne1A" }
+        {
+          "id": "W3lioPt28w-task-2",
+          "taskId": "sQa_ne1A"
+        },
+        {
+          "id": "W3lioPt28w-task-1",
+          "taskId": "WteROnKh"
+        },
+        {
+          "taskId": "-KyhLfeb",
+          "id": "O4aemGmE"
+        },
+        {
+          "taskId": "yNRJzR8g",
+          "id": "r6CrTtkU"
+        },
+        {
+          "id": "nVDwCBwa",
+          "taskId": "-KyhLfeb"
+        },
+        {
+          "taskId": "63Up4tVy",
+          "id": "VvHlHtFn"
+        },
+        {
+          "id": "Ysrw4Iko",
+          "taskId": "-KyhLfeb"
+        },
+        {
+          "taskId": "qrj1vo_m",
+          "id": "8zCHe_Yp"
+        }
       ]
     }
   ],
@@ -117,6 +190,69 @@
         "description": "",
         "params": {
           "channel": 1,
+          "universe": 1,
+          "value": 0
+        },
+        "type": "sendArtnetJob"
+      },
+      "condition": null,
+      "retries": 3,
+      "timeout": 15000,
+      "waitBeforeRetry": 15000,
+      "continueOnError": true
+    },
+    {
+      "id": "6Ff5GAer",
+      "name": "Canal 2 al 0% ",
+      "description": "",
+      "job": {
+        "id": "f3fdfcce-956c-4133-909f-753511402f12",
+        "name": "f3fdfcce-956c-4133-909f-753511402f12",
+        "description": "",
+        "params": {
+          "channel": 2,
+          "universe": 1,
+          "value": 0
+        },
+        "type": "sendArtnetJob"
+      },
+      "condition": null,
+      "retries": 3,
+      "timeout": 15000,
+      "waitBeforeRetry": 15000,
+      "continueOnError": true
+    },
+    {
+      "id": "BE9ynQMp",
+      "name": "Canal 3 al 0% ",
+      "description": "",
+      "job": {
+        "id": "f3fdfcce-956c-4133-909f-753511402f12",
+        "name": "f3fdfcce-956c-4133-909f-753511402f12",
+        "description": "",
+        "params": {
+          "channel": 3,
+          "universe": 1,
+          "value": 0
+        },
+        "type": "sendArtnetJob"
+      },
+      "condition": null,
+      "retries": 3,
+      "timeout": 15000,
+      "waitBeforeRetry": 15000,
+      "continueOnError": true
+    },
+    {
+      "id": "J8s4A2Em",
+      "name": "Canal 4 al 0%",
+      "description": "",
+      "job": {
+        "id": "f3fdfcce-956c-4133-909f-753511402f12",
+        "name": "f3fdfcce-956c-4133-909f-753511402f12",
+        "description": "",
+        "params": {
+          "channel": 4,
           "universe": 1,
           "value": 0
         },
@@ -211,30 +347,9 @@
       "continueOnError": true
     },
     {
-      "id": "WteROnKh",
-      "name": "Canal 1 al maximo",
-      "description": "",
-      "job": {
-        "id": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
-        "name": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
-        "description": "",
-        "params": {
-          "channel": 1,
-          "universe": 1,
-          "value": 253
-        },
-        "type": "sendArtnetJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
       "id": "sQa_ne1A",
       "name": "Envía un TCP con respuesta",
-      "description": "",
+      "description": "Tarea con condicion",
       "job": {
         "id": "ab169bae-cf7c-4b30-8939-06424903b3e6",
         "name": "ab169bae-cf7c-4b30-8939-06424903b3e6",
@@ -256,6 +371,109 @@
           "answer": "Chau"
         }
       },
+      "retries": 3,
+      "timeout": 15000,
+      "waitBeforeRetry": 15000,
+      "continueOnError": true
+    },
+    {
+      "id": "WteROnKh",
+      "name": "Canal 1 al maximo",
+      "description": "",
+      "job": {
+        "id": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
+        "name": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
+        "description": "",
+        "params": {
+          "channel": 1,
+          "universe": 1,
+          "value": 253
+        },
+        "type": "sendArtnetJob"
+      },
+      "condition": null,
+      "retries": 3,
+      "timeout": 15000,
+      "waitBeforeRetry": 15000,
+      "continueOnError": true
+    },
+    {
+      "id": "-KyhLfeb",
+      "name": "Espera de 1 segundo",
+      "description": "",
+      "job": {
+        "id": "902a35ed-b8d2-4a0f-ae00-04ee8961c330",
+        "name": "902a35ed-b8d2-4a0f-ae00-04ee8961c330",
+        "description": "",
+        "params": {
+          "time": 1000
+        },
+        "type": "waitJob"
+      },
+      "condition": null,
+      "retries": 3,
+      "timeout": 15000,
+      "waitBeforeRetry": 15000,
+      "continueOnError": true
+    },
+    {
+      "id": "yNRJzR8g",
+      "name": "Canal 2 al maximo",
+      "description": "",
+      "job": {
+        "id": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
+        "name": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
+        "description": "",
+        "params": {
+          "channel": 2,
+          "universe": 1,
+          "value": 253
+        },
+        "type": "sendArtnetJob"
+      },
+      "condition": null,
+      "retries": 3,
+      "timeout": 15000,
+      "waitBeforeRetry": 15000,
+      "continueOnError": true
+    },
+    {
+      "id": "63Up4tVy",
+      "name": "Canal 3 al maximo",
+      "description": "",
+      "job": {
+        "id": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
+        "name": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
+        "description": "",
+        "params": {
+          "channel": 3,
+          "universe": 1,
+          "value": 253
+        },
+        "type": "sendArtnetJob"
+      },
+      "condition": null,
+      "retries": 3,
+      "timeout": 15000,
+      "waitBeforeRetry": 15000,
+      "continueOnError": true
+    },
+    {
+      "id": "qrj1vo_m",
+      "name": "Canal 4 al maximo",
+      "description": "",
+      "job": {
+        "id": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
+        "name": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
+        "description": "",
+        "params": {
+          "channel": 4,
+          "universe": 1,
+          "value": 253
+        },
+        "type": "sendArtnetJob"
+      },
+      "condition": null,
       "retries": 3,
       "timeout": 15000,
       "waitBeforeRetry": 15000,

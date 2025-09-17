@@ -37,21 +37,21 @@ export class SendArtnetJob extends Job {
         return [{
             name: "channel",
             type: "number",
-            validationMask: "^(\\d{1,3})$",
+            validationMask: "^(?:[1-9]|[1-9]\\d|[1-4]\\d\\d|50[0-9]|51[0-2])$",
             description: "DMX channel to set (1-512)",
             required: true
         },
         {
             name: "universe",
             type: "number",
-            validationMask: "^(\\d{1,5})$",
+            validationMask: "^(?:6553[0-5]|655[0-2]\\d|65[0-4]\\d{2}|6[0-4]\\d{3}|[1-9]?\\d{1,4})$",
             description: "DMX universe (0-65535)",
             required: true
         },
         {
             name: "value",
             type: "number",
-            validationMask: "^(\\d{1,3})$",
+            validationMask: "^(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)$",
             description: "DMX value to set (0-255)",
             required: true
         }

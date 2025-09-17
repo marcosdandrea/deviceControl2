@@ -88,7 +88,6 @@ const Footer = () => {
         thisRoutine.tasksId.push({ id: nanoid(8), taskId: task.id })
         setProject({ ...project })
         message.success('Tarea agregada a la rutina correctamente')
-        Navigation("/builder")
     }
 
     const countHowManyTimesTaskIsUsedInThisProject = (taskId: string) => {
@@ -148,7 +147,6 @@ const Footer = () => {
                     project.tasks.splice(taskIndex, 1)
                     setProject({ ...project })
                     message.success('Tarea eliminada del proyecto correctamente')
-                    Navigation("/builder")
                     return
                 }
             }
@@ -167,7 +165,6 @@ const Footer = () => {
                             onClick={()=>{
                                 updateTaskInProject(task)
                                 addTaskToRoutine(routineId, task.id)
-                                Navigation("/builder")
                             }}
                             disabled={!allowSaving}
                             type='primary'
@@ -183,7 +180,6 @@ const Footer = () => {
                         } else {
                             updateTaskInProject(task)
                         }
-                        Navigation("/builder")
                     }}
                     disabled={!allowSaving}
                     type={isNewTask ? 'primary' : 'default'}
@@ -192,7 +188,6 @@ const Footer = () => {
                         isNewTask ? "Crear y Añadir" : "Actualizar"
                     }
                 </Button>
-
             </div>
             <Popconfirm
                 styles={{ root: { width: "15rem" } }}

@@ -1,10 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react';
 import style from './style.module.css'
-import { Button, Popconfirm } from 'antd';
+import { Button, message, Popconfirm } from 'antd';
 import { triggerContext } from '../..';
 import useProject from '@hooks/useProject';
 import { useNavigate, useParams } from 'react-router-dom';
 import { nanoid } from 'nanoid';
+import { i } from 'node_modules/vite/dist/node/types.d-aGj9QkWt';
 
 const Footer = () => {
     const { trigger, invalidParams, triggerInstanceId } = useContext(triggerContext)
@@ -69,20 +70,29 @@ const Footer = () => {
                 ...prev,
                 triggers: [...prev.triggers, trigger]
             }))
+            message.success('Disparador creado correctamente.')
+            
         }
-        //agrega el trigger a la rutina
+        //agrega el trigger a la rutina si es que no pertenece ya
         if (!routineId) return
         const routine = project.routines.find(r => r.id === routineId)
         if (!routine) return
         if (!routine.triggersId) routine.triggersId = []
-        const newInstanceId = nanoid(8)
-        routine.triggersId.push({ id: newInstanceId, triggerId: trigger.id })
+
+        let instanceId = triggerInstanceId
+        if (!belongsToRoutine) {
+            instanceId = nanoid(8)
+            routine.triggersId.push({ id: instanceId, triggerId: trigger.id })
+            message.success('Disparador agregado a la rutina correctamente.')
+        }else{
+            message.success('Disparador actualizado correctamente.')
+        }
         //actualiza el proyecto
         setProject(prev => ({
             ...prev,
             routines: prev.routines.map(r => r.id === routineId ? routine : r)
         }))
-        navigate(`/builder/${routineId}/trigger/${trigger.id}?instanceId=${newInstanceId}`)
+        navigate(`/builder/${routineId}/trigger/${trigger.id}?instanceId=${instanceId}`)
     }
 
     const handleOnClickDelete = () => {
@@ -130,7 +140,11 @@ const Footer = () => {
                 onClick={handleOnClickSaveAndAdd}
                 style={{ flex: 1 }}
                 type='primary'>
-                {isANewTrigger ? "Guardar y agregar a la rutina" : "Agregar a la rutina"}
+                {isANewTrigger 
+                    ? "Guardar y agregar a la rutina" 
+                    : belongsToRoutine 
+                        ? "Actualizar" 
+                        : "Agregar a la rutina"}
             </Button>
             <Popconfirm
                 title="Eliminar Disparador"

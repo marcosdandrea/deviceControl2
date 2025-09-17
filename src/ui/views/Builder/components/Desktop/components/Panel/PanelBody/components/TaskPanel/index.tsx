@@ -11,6 +11,7 @@ import ConditionConfiguration from './components/ConditionConfiguration';
 import Footer from './components/Footer';
 import TaskNameField from './components/TaskNameField';
 import WarningIcon from '@components/WarningIcon';
+import Header from './components/Header';
 
 export const taskContext = createContext({ task: undefined, setTask: (task) => { }, defaultTask: undefined, taskInstanceId: undefined });
 
@@ -66,9 +67,8 @@ const TaskPanel = () => {
     return (
         <taskContext.Provider value={{ task, setTask, defaultTask, taskInstanceId }}>
             <div className={style.taskPanel}>
-                <Text color='white'>
-                    Configuración de Tarea: {task?.name}
-                </Text>
+                <Header/>
+                <div className={style.body}>
                 <TaskNameField />
                 <Input.TextArea
                     value={task?.description}
@@ -88,9 +88,9 @@ const TaskPanel = () => {
                     value={task?.waitBeforeRetry}
                     onChange={(e) => setTask({ ...task, waitBeforeRetry: Number(e.target.value) })} />
                 <Input
-                    addonBefore={  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        Tiempo de espera (ms)
-                        {shouldWarnTaskTimeout() && <WarningIcon message="La suma de los tiempos de espera de todas las tareas de esta rutina es mayor o igual que el maximo tiempo de ejecución de la rutina. La rutina podría fallar por timeout antes que se termine de ejecutar una de sus tareas." />}
+                    addonBefore={<div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        Timeout (ms)
+                        {shouldWarnTaskTimeout() && <WarningIcon blink={false} message="La suma de todos los timeouts de todas las tareas de esta rutina es igual o mayor que el límite máximo de ejecución de la rutina completa. Esto quiere decir que la rutina podría agotar el tiempo asignado de ejecución (timeout) y fallar antes de que todas las tareas hayan finalizado." />}
                     </div>}
                     type='number'
                     status={(task?.timeout === 0 || task?.timeout >= 1000) ? '' : 'error'}
@@ -99,6 +99,7 @@ const TaskPanel = () => {
                     onChange={(e) => setTask({ ...task, timeout: Number(e.target.value) })} />
                 <JobConfiguration />
                 <ConditionConfiguration />
+                </div>
                 <Footer />
             </div>
         </taskContext.Provider>

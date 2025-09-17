@@ -6,9 +6,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { routineConfigurationContext } from '../..';
 import useProject from '@hooks/useProject';
 import RoutineId from './components/RoutineId';
+import { nanoid } from 'nanoid';
 
 const Footer = () => {
-    const {routineId} = useParams()
+    const { routineId } = useParams()
     const { project, setProject } = useProject({ fetchProject: false })
     const { routine, setRoutine } = useContext(routineConfigurationContext)
     const [enableSave, setEnableSave] = React.useState(false)
@@ -45,6 +46,15 @@ const Footer = () => {
         }
     }
 
+    const handleOnDuplicateRoutine = () => {
+        if (routine?.id) {
+            const newRoutine = { ...routine, id: nanoid(10), name: `${routine.name} (Copia)` }
+            setProject({ ...project, routines: [...project.routines, newRoutine] })
+            navigate(`/builder/newRoutine`, { replace: true })
+            message.success('Rutina duplicada correctamente')
+        }
+    }
+
     return (
         <div className={style.footer}>
 
@@ -57,16 +67,26 @@ const Footer = () => {
                         onClick={handleOnSave}>
                         {routineId === 'newRoutine' ? 'Crear Rutina' : 'Guardar Cambios'}
                     </Button>
+                    {
+                        routineId !== 'newRoutine' &&
+                        <Button
+                            style={{ width: '100%' }}
+                            type="default"
+                            disabled={!enableSave}
+                            onClick={handleOnDuplicateRoutine}>
+                            Duplicar Rutina
+                        </Button>
+                    }
                 </div>
                 <Popconfirm
-                    disabled={routineId === 'newRoutine'} 
+                    disabled={routineId === 'newRoutine'}
                     title="¿Estás seguro de que deseas eliminar esta rutina?"
                     cancelText="Cancelar"
                     okText="Eliminar"
                     okButtonProps={{ danger: true }}
                     onConfirm={handleOnDeleteRoutine}>
                     <Button
-                        disabled={routineId === 'newRoutine'} 
+                        disabled={routineId === 'newRoutine'}
                         style={{ width: '100%' }}
                         type="link"
                         danger>

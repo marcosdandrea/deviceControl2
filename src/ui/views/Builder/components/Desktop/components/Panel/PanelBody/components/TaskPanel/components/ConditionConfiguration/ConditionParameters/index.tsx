@@ -33,7 +33,8 @@ const ConditionParameters = () => {
     }, [task, availableConditions])
 
     if (!task?.condition || Object.keys(task.condition?.params).length === 0) 
-        return (<div className={style.noConditionSelected}>
+        return (<></>)
+/*         return (<div className={style.noConditionSelected}>
             <MdInfo size={30} color="var(--primary)"/>
             <Text
                 ellipsis={false}
@@ -42,7 +43,7 @@ const ConditionParameters = () => {
                 color='white'>
                 Si no selecciona una condición, la tarea se completará exitosamente una vez ejecutado el trabajo.
             </Text>
-        </div>)
+        </div>) */
 
     const handleOnChangeValue = (paramName: string, value: any) => {
         const paramDef = conditionParams.find(p => p.name === paramName);
@@ -74,8 +75,6 @@ const ConditionParameters = () => {
             )
         );
     }
-
-    console.log (task)
 
     const validateParam = (value: any, validationMask: string) => {
         if (validationMask) {

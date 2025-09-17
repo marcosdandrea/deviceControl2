@@ -9,6 +9,7 @@ import { TriggerType } from "@common/types/trigger.type";
 import TypeTriggerField from "./components/TypeTriggerField";
 import TriggerParameters from "./components/TriggerParameters";
 import Footer from "./components/Footer";
+import Header from "./components/Header";
 
 export const triggerContext = createContext({ trigger: undefined, setTrigger: (trigger: TriggerType) => { }, defaultTrigger: undefined, setInvalidParams: (params: string[]) => { }, invalidParams: [] as string[], triggerInstanceId: undefined });
 
@@ -44,11 +45,7 @@ const TriggerPanel = () => {
     return (
         <triggerContext.Provider value={{ trigger, setTrigger, defaultTrigger, setInvalidParams, invalidParams, triggerInstanceId }}>
             <div className={style.triggerPanel}>
-                <div className={style.header}>
-                    <Text color='white'>
-                        Configuración del disparador: "{trigger?.name}"
-                    </Text>
-                </div>
+                    <Header />
                 <div className={style.body} >
                     <TriggerNameField />
                     <Input.TextArea

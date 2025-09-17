@@ -15,6 +15,7 @@ const TaskNameField = () => {
     const [searchValue, setSearchValue] = useState("")
     const [taskExists, setTaskExists] = useState(false)
     const [searchingMode, setSearchingMode] = useState(false)
+    const [currentTask, setCurrentTask] = useState(task?.id || null)
 
     useEffect(() => {
         if (task) {
@@ -33,8 +34,7 @@ const TaskNameField = () => {
 
     const notFoundContent = () => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <MdNewLabel size={20} color="var(--secondary)" />
-            <Text size={14} color='var(--secondary)'>Escriba el nombre de la nueva Tarea</Text>
+            <Text size={14} color='var(--secondary)'>Presione el boton + para crear</Text>
         </div>
     )
 
@@ -44,7 +44,9 @@ const TaskNameField = () => {
     }
 
     const handleOnEditTaskName = () => {
-        if (!taskExists) return
+        if (!taskExists) 
+            return
+        
         setEditNameMode(false)
         setSearchingMode(false)
         if (task.name === searchValue) return
@@ -80,12 +82,24 @@ const TaskNameField = () => {
         } else {
             setTaskExists(false)
             setSearchingMode(false)
+            setTask(null)
         }
     }
 
     const handleOnEnableEditNameMode = () => {
         console.log(`Enabling edit mode for task name: ${task.name}`)
         setEditNameMode(true)
+    }
+
+    const handleOnSearchingBlurs = () => {
+        //setSearchingMode(false)
+        //setTaskExists(true)
+        //setTask(currentTask)
+    }
+
+    const handleOnSearchFocus = () => {
+        setCurrentTask(task || null)
+        setSearchingMode(true)
     }
 
     return (
@@ -114,6 +128,8 @@ const TaskNameField = () => {
                     <Select
                         showSearch
                         notFoundContent={notFoundContent()}
+                        onBlur={handleOnSearchingBlurs}
+                        onFocus={handleOnSearchFocus}
                         optionFilterProp="label"
                         placeholder="Seleccione una tarea o escriba un nombre para crear una nueva"
                         value={task?.name || "Escriba un nombre para crear una nueva"}
