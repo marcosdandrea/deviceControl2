@@ -1,4 +1,3 @@
-import { id } from "./commons.type";
 
 /** Ajustá estos tipos a @common/types si los tenés ya definidos */
 type LogLevel = "info" | "warn" | "error" | "debug";

@@ -1,5 +1,5 @@
+import { Context } from "@src/domain/entities/context";
 import { description, id, name } from "./commons.type";
-import { contextType } from "./context.type";
 import { TaskInterface, TaskType } from "./task.type";
 import { TriggerInterface, TriggerType } from "./trigger.type";
 
@@ -20,9 +20,19 @@ type commonRoutineProps = {
     failed?: boolean;
 }
 
+export type TaskInstance = {
+    id: id;
+    taskId: id;
+}
+
+export type TriggerInstance = {
+    id: id;
+    triggerId: id;
+}
+
 export interface RoutineType extends commonRoutineProps {
-    triggersId?: string[];
-    tasksId?: string[];
+    triggersId?: TriggerInstance[];
+    tasksId?: TaskInstance[];
 }
 
 export interface RoutineInterface extends commonRoutineProps {
@@ -35,7 +45,7 @@ export interface RoutineInterface extends commonRoutineProps {
     addTrigger: (trigger: TriggerInterface) => void;
     removeTrigger: (triggerId: id) => void;
     getTriggers: () => TriggerInterface[];
-    run: (triggeredBy: TriggerInterface, ctx: contextType) => void;
+    run: (triggeredBy: TriggerInterface, ctx: Context) => void;
     abort: (cause: string) => void;
     toJson: () => RoutineType;
 }
