@@ -14,8 +14,12 @@ export const dummyProjectData =
                 id: "routine-1",
                 name: "Routine 1",
                 description: "This is a dummy routine for testing purposes.",
-                tasksId: ["task-1"],
-                triggersId: ["apiTrigger-1"],
+                tasksId: [
+                    { id: "routine-1-task-1", taskId: "task-1" }
+                ],
+                triggersId: [
+                    { id: "routine-1-trigger-1", triggerId: "apiTrigger-1" }
+                ],
                 routineTimeout: 90000,
                 enabled: true,
                 autoCheckConditionEveryMs: false
@@ -24,24 +28,36 @@ export const dummyProjectData =
                 id: "routine-2",
                 name: "Routine 2",
                 description: "This routine will trigger when routine 1 is completed.",
-                tasksId: ["task-1"],
-                triggersId: ["routineEventTrigger-1"],
+                tasksId: [
+                    { id: "routine-2-task-1", taskId: "task-1" }
+                ],
+                triggersId: [
+                    { id: "routine-2-trigger-1", triggerId: "routineEventTrigger-1" }
+                ],
                 enabled: true,
             },
             {
                 id: "routine-3",
                 name: "Routine 3",
                 description: "This routine will trigger when routine 1 is aborted.",
-                tasksId: ["task-0"],
-                triggersId: ["routineEventTrigger-2"],
+                tasksId: [
+                    { id: "routine-3-task-1", taskId: "task-0" }
+                ],
+                triggersId: [
+                    { id: "routine-3-trigger-1", triggerId: "routineEventTrigger-2" }
+                ],
                 enabled: true,
             },
             {
                 id: "routine-4",
                 name: "Routine 4",
                 description: "This routine will trigger if routine 1 fails.",
-                tasksId: ["task-0"],
-                triggersId: ["routineEventTrigger-3"],
+                tasksId: [
+                    { id: "routine-4-task-1", taskId: "task-0" }
+                ],
+                triggersId: [
+                    { id: "routine-4-trigger-1", triggerId: "routineEventTrigger-3" }
+                ],
                 enabled: true,
             }
         ],

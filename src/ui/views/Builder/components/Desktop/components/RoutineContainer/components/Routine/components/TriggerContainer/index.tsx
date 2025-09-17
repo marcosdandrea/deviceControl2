@@ -6,22 +6,28 @@ import useProject from "@hooks/useProject";
 import Text from "@components/Text";
 import Trigger from "../Trigger";
 import { nanoid } from "nanoid";
+import { TriggerInstance } from "@common/types/routine.type";
 
 const TriggersContainer = () => {
 
     const {routineData} = useContext(routineContext);
     const {project} = useProject({fetchProject: false})
-    const [triggers, setTriggers] = useState(routineData?.triggers || []);
+    const [triggers, setTriggers] = useState<any[]>(routineData?.triggers || []);
 
     useEffect(()=>{
         if (!project || !routineData || !project.triggers) return;
-        const routineTriggers = project.triggers.filter(trigger => routineData.triggersId?.includes(trigger.id)) || [];
-        setTriggers([...routineTriggers, {}])
+        const routineTriggers = (routineData.triggersId as TriggerInstance[] | undefined)?.map((triggerInstance) => {
+            const trigger = project.triggers.find(t => t.id === triggerInstance.triggerId);
+            if (!trigger) return null;
+            return { ...trigger, instanceId: triggerInstance.id };
+        }).filter(trigger => trigger !== null) || [];
+
+        setTriggers([...routineTriggers, { instanceId: nanoid(8), isPlaceholder: true }])
 
     },[project, routineData])
 
     const onSortEnd = (oldIndex: number, newIndex: number) => {
-        
+
     }   
 
     return (
@@ -40,7 +46,7 @@ const TriggersContainer = () => {
                     {
                         triggers?.map((trigger: any) => (
                             <Trigger
-                                key={trigger.id || nanoid(4)}
+                                key={trigger?.instanceId || trigger?.id || nanoid(4)}
                                 triggerData={trigger}/>
                         ))
                     }

@@ -8,12 +8,13 @@
 import routineEvents from "@common/events/routine.events";
 import triggerEvents from "@common/events/trigger.events";
 import { id } from "@common/types/commons.type";
-import { RoutineInterface, RoutineStatus, RoutineType } from "@common/types/routine.type";
+import { RoutineInterface, RoutineStatus, RoutineType, TaskInstance, TriggerInstance } from "@common/types/routine.type";
 import { TaskInterface } from "@common/types/task.type";
 import { TriggerInterface } from "@common/types/trigger.type";
 import { Log } from "@src/utils/log";
 import { EventEmitter } from "events";
 import crypto from "crypto";
+import { nanoid } from "nanoid";
 import { Trigger } from "../trigger";
 import { Context } from "../context";
 import { TimeoutController } from "@src/controllers/Timeout";
@@ -40,6 +41,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
     tasks: TaskInterface[] = [];
     triggers: TriggerInterface[] = [];
+    taskInstances: TaskInstance[] = [];
+    triggerInstances: TriggerInstance[] = [];
 
     private _anyListeners: Function[];
 
@@ -63,6 +66,9 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.failed = false;
         this.hidden = props.hidden;
         this.routineTimeout = props.routineTimeout || 10000;
+
+        this.taskInstances = props.tasksId ? [...props.tasksId] : [];
+        this.triggerInstances = props.triggersId ? [...props.triggersId] : [];
 
         this.autoCheckConditionEveryMs = props.autoCheckConditionEveryMs || false;
         this.suspendAutoCheckConditions = false;
@@ -161,27 +167,43 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.#eventDispatcher(routineEvents.routineExecutionModeChanged, { runInSync });
     }
 
-    addTask(task: TaskInterface): void {
+    addTask(task: TaskInterface, instanceId?: id): void {
+        if (!instanceId || !this.taskInstances.some(instance => instance.id === instanceId)) {
+            const resolvedInstanceId = instanceId || nanoid(8);
+            this.taskInstances.push({ id: resolvedInstanceId, taskId: task.id });
+            instanceId = resolvedInstanceId;
+        }
+
         this.tasks.push(task);
         this.logger.info(`Task ${task.name} added`);
-        this.#eventDispatcher(routineEvents.routineTaskAdded, { taskId: task.id });
+        this.#eventDispatcher(routineEvents.routineTaskAdded, { taskId: task.id, taskInstanceId: instanceId });
     }
 
-    removeTask(taskId: id): void {
-        const task = this.tasks.find(t => t.id === taskId);
-        if (!task)
+    removeTask(taskId: id, instanceId?: id): void {
+        let taskIndex = -1;
+
+        if (instanceId)
+            taskIndex = this.taskInstances.findIndex(instance => instance.id === instanceId);
+
+        if (taskIndex === -1)
+            taskIndex = this.tasks.findIndex(t => t.id === taskId);
+
+        if (taskIndex === -1)
             throw new Error(`Task with id ${taskId} not found`);
 
-        this.tasks = this.tasks.filter(t => t.id !== taskId);
-        this.#eventDispatcher(routineEvents.routineTaskRemoved, { taskId: task.id });
+        const [removedTask] = this.tasks.splice(taskIndex, 1);
+        const [removedInstance] = this.taskInstances.splice(taskIndex, 1);
+
+        this.#eventDispatcher(routineEvents.routineTaskRemoved, { taskId: removedTask.id, taskInstanceId: removedInstance?.id });
 
     }
 
     removeAllTasks(): void {
-        this.tasks.forEach(task => {
-            this.#eventDispatcher(routineEvents.routineTaskRemoved, { taskId: task.id });
+        this.tasks.forEach((task, index) => {
+            this.#eventDispatcher(routineEvents.routineTaskRemoved, { taskId: task.id, taskInstanceId: this.taskInstances[index]?.id });
         });
         this.tasks = [];
+        this.taskInstances = [];
         this.logger.info("All tasks removed from routine");
     }
 
@@ -203,9 +225,13 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
         const taskToSwap = this.tasks[newIndex]
         const taskToMove = this.tasks[taskIndex];
+        const taskInstanceToSwap = this.taskInstances[newIndex];
+        const taskInstanceToMove = this.taskInstances[taskIndex];
 
         this.tasks[newIndex] = taskToMove;
         this.tasks[taskIndex] = taskToSwap;
+        this.taskInstances[newIndex] = taskInstanceToMove;
+        this.taskInstances[taskIndex] = taskInstanceToSwap;
 
         this.logger.info(`Task ${taskToMove.name} moved from index ${taskIndex} to ${newIndex}`);
         this.#eventDispatcher(routineEvents.routineTaskOrderChanged, { taskToMoveId: taskToMove.id, newIndex });
@@ -237,18 +263,24 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.logger.info(`Trigger "${trigger.name}" unbound`);
     }
 
-    addTrigger(trigger: TriggerInterface): void {
+    addTrigger(trigger: TriggerInterface, instanceId?: id): void {
 
         if (!(trigger instanceof Trigger))
             throw new Error("Invalid trigger");
 
-        if (this.triggers.find(t => t.id === trigger.id))
-            throw new Error(`Trigger with id ${trigger.id} already exists`);
+        let resolvedInstanceId = instanceId;
+        if (!instanceId || !this.triggerInstances.some(instance => instance.id === instanceId)) {
+            resolvedInstanceId = instanceId || nanoid(8);
+            this.triggerInstances.push({ id: resolvedInstanceId, triggerId: trigger.id });
+        }
 
-        this.#bindTriggerEvents(trigger);
-        this.triggers.push(trigger);
+        if (!this.triggers.find(t => t.id === trigger.id)) {
+            this.#bindTriggerEvents(trigger);
+            this.triggers.push(trigger);
+        }
+
         this.logger.info(`Trigger "${trigger.name}" added`);
-        this.#eventDispatcher(routineEvents.routineTriggerAdded, { triggerId: trigger.id, triggerName: trigger.name, triggerType: trigger.type });
+        this.#eventDispatcher(routineEvents.routineTriggerAdded, { triggerId: trigger.id, triggerInstanceId: resolvedInstanceId, triggerName: trigger.name, triggerType: trigger.type });
 
         const armTrigger = () => {
             if (this.enabled && !trigger.armed)
@@ -259,14 +291,31 @@ export class Routine extends EventEmitter implements RoutineInterface {
         armTrigger();
     }
 
-    removeTrigger(triggerId: id): void {
+    removeTrigger(triggerId: id, instanceId?: id): void {
         const trigger = this.triggers.find(t => t.id === triggerId);
         if (!trigger)
             throw new Error(`Trigger with id ${triggerId} not found`);
 
-        this.#unbindTriggerEvents(trigger);
-        this.triggers = this.triggers.filter(t => t.id !== triggerId);
-        this.#eventDispatcher(routineEvents.routineTriggerRemoved, { triggerId: trigger.id, triggerName: trigger.name, triggerType: trigger.type });
+        let instanceIndex = -1;
+
+        if (instanceId)
+            instanceIndex = this.triggerInstances.findIndex(instance => instance.id === instanceId);
+
+        if (instanceIndex === -1)
+            instanceIndex = this.triggerInstances.findIndex(instance => instance.triggerId === triggerId);
+
+        if (instanceIndex === -1)
+            throw new Error(`Trigger instance with id ${instanceId || triggerId} not found`);
+
+        const [removedInstance] = this.triggerInstances.splice(instanceIndex, 1);
+        const hasRemainingInstances = this.triggerInstances.some(instance => instance.triggerId === triggerId);
+
+        if (!hasRemainingInstances) {
+            this.#unbindTriggerEvents(trigger);
+            this.triggers = this.triggers.filter(t => t.id !== triggerId);
+        }
+
+        this.#eventDispatcher(routineEvents.routineTriggerRemoved, { triggerId: trigger.id, triggerInstanceId: removedInstance?.id, triggerName: trigger.name, triggerType: trigger.type });
     }
 
     getTriggers(): TriggerInterface[] {
@@ -530,8 +579,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
             routineTimeout: this.routineTimeout,
             autoCheckConditionEveryMs: this.autoCheckConditionEveryMs,
             hidden: this.hidden,
-            triggersId: this.triggers.map(trigger => trigger.id),
-            tasksId: this.tasks.map(task => task.id)
+            triggersId: this.triggerInstances.map(instance => ({ ...instance })),
+            tasksId: this.taskInstances.map(instance => ({ ...instance }))
         }
     }
 

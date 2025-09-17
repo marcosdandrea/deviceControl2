@@ -2,7 +2,7 @@ import React, { createContext, useEffect, useState } from 'react';
 import style from './style.module.css'
 import JobConfiguration from './components/JobConfiguration';
 import Text from '@components/Text';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import useProject from '@hooks/useProject';
 import { TaskType } from '@common/types/task.type';
 import { nanoid } from 'nanoid';
@@ -12,7 +12,7 @@ import Footer from './components/Footer';
 import TaskNameField from './components/TaskNameField';
 import WarningIcon from '@components/WarningIcon';
 
-export const taskContext = createContext({ task: undefined, setTask: (task) => { }, defaultTask: undefined });
+export const taskContext = createContext({ task: undefined, setTask: (task) => { }, defaultTask: undefined, taskInstanceId: undefined });
 
 const defaultTask = {
     id: nanoid(8),
@@ -27,8 +27,10 @@ const defaultTask = {
 
 const TaskPanel = () => {
     const { taskId , routineId} = useParams()
+    const [searchParams] = useSearchParams();
     const { project } = useProject({ fetchProject: false })
     const [task, setTask] = useState<any>(undefined);
+    const taskInstanceId = searchParams.get('instanceId') || undefined;
 
     useEffect(() => {
         if (project && taskId) {
@@ -47,9 +49,12 @@ const TaskPanel = () => {
         if (project && routineId && task) {
             const routine = project.routines.find(r => r.id === routineId);
             if (routine) {
-                const tasksInRoutine = project.tasks.filter(t => routine.tasksId.includes(t.id));
+                const tasksInRoutine = (routine.tasksId || []).map((taskInstance: any) => {
+                    const taskData = project.tasks.find(t => t.id === taskInstance.taskId || taskInstance);
+                    return taskData;
+                }).filter(task => task);
                 //suma de cada tarea el timeout
-                const totalTimeout = tasksInRoutine.reduce((acc, t) => acc + (t.timeout || 0), 0);
+                const totalTimeout = tasksInRoutine.reduce((acc, t) => acc + (t?.timeout || 0), 0);
 
                 //si la suma de todos los timeouts de las tareas de la rutina es mayor que el timeout de la rutina, muestra una advertencia
                 return (routine.routineTimeout > 0 && totalTimeout >= Number(routine.routineTimeout)) 
@@ -59,7 +64,7 @@ const TaskPanel = () => {
     }
 
     return (
-        <taskContext.Provider value={{ task, setTask, defaultTask }}>
+        <taskContext.Provider value={{ task, setTask, defaultTask, taskInstanceId }}>
             <div className={style.taskPanel}>
                 <Text color='white'>
                     Configuración de Tarea: {task?.name}

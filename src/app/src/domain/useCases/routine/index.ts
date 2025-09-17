@@ -62,28 +62,28 @@ export const createRoutine = async (routineData, projectData): Promise<Routine> 
   }
 
   // ---- Crear tasks a la rutina ----
-  for (const taskId of routineData.tasksId || []) {
-    if (taskId) {
-      const taskData = projectData.tasks.find(t => t.id === taskId);
+  for (const taskInstance of routineData.tasksId || []) {
+    if (taskInstance?.taskId) {
+      const taskData = projectData.tasks.find(t => t.id === taskInstance.taskId);
       if (!taskData) {
-        log.warn(`Task with ID ${taskId} not found for routine ${routine.id}`);
+        log.warn(`Task with ID ${taskInstance.taskId} not found for routine ${routine.id}`);
         continue;
       }
       const task = await createRoutineTask(taskData);
-      routine.addTask(task);
+      routine.addTask(task, taskInstance.id);
     }
   }
 
   // ---- Asociar triggers ----
-  for (const triggerId of routineData.triggersId || []) {
-    if (triggerId) {
-      const trigger = currentProject.triggers.find(t => t.id === triggerId);
+  for (const triggerInstance of routineData.triggersId || []) {
+    if (triggerInstance?.triggerId) {
+      const trigger = currentProject.triggers.find(t => t.id === triggerInstance.triggerId);
       if (trigger) {
-        routine.addTrigger(trigger);
+        routine.addTrigger(trigger, triggerInstance.id);
       }
-      else log.warn(`Trigger with ID ${triggerId} not found for routine ${routine.id}`);
+      else log.warn(`Trigger with ID ${triggerInstance.triggerId} not found for routine ${routine.id}`);
     } else {
-      log.warn(`Trigger with ID ${triggerId} not found for routine ${routine.id}`);
+      log.warn(`Trigger with ID ${triggerInstance?.triggerId} not found for routine ${routine.id}`);
     }
   }
 

@@ -17,7 +17,8 @@ const Trigger = ({ triggerData }) => {
 
     const handleOnMoreOptionsClick = (e) => {
         e.stopPropagation();
-        Navigate(`/builder/${routineData.id}/trigger/${triggerData.id}`)
+        const queryParams = triggerData.instanceId ? `?instanceId=${triggerData.instanceId}` : "";
+        Navigate(`/builder/${routineData.id}/trigger/${triggerData.id}${queryParams}`)
     }
 
     const handleOnAddNewTrigger = (e) => {
@@ -103,7 +104,7 @@ const Trigger = ({ triggerData }) => {
                     alignItems: "center",
                 }}
                 isDraggable={false}
-                id={triggerData.id}>
+                id={triggerData.instanceId || triggerData.id}>
                 <div className={style.triggerContent}>
                     <div className={style.triggerHeader}>
                         {getTriggerIcon(triggerData.type)}

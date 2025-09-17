@@ -19,16 +19,16 @@
       "routineTimeout": 20000,
       "autoCheckConditionEveryMs": false,
       "triggersId": [
-        "ydtJn15O",
-        "0DWlU13O"
+        { "id": "VVnBlJ-F9v-trigger-1", "triggerId": "ydtJn15O" },
+        { "id": "VVnBlJ-F9v-trigger-2", "triggerId": "0DWlU13O" }
       ],
       "tasksId": [
-        "l9HYU0Sj",
-        "k26-mVw4",
-        "vLiHOH6t",
-        "eR0b9MUh",
-        "vLiHOH6t",
-        "mgypBUEP"
+        { "id": "VVnBlJ-F9v-task-1", "taskId": "l9HYU0Sj" },
+        { "id": "VVnBlJ-F9v-task-2", "taskId": "k26-mVw4" },
+        { "id": "VVnBlJ-F9v-task-3", "taskId": "vLiHOH6t" },
+        { "id": "VVnBlJ-F9v-task-4", "taskId": "eR0b9MUh" },
+        { "id": "VVnBlJ-F9v-task-5", "taskId": "vLiHOH6t" },
+        { "id": "VVnBlJ-F9v-task-6", "taskId": "mgypBUEP" }
       ]
     },
     {
@@ -42,12 +42,12 @@
       "routineTimeout": 10000,
       "autoCheckConditionEveryMs": false,
       "triggersId": [
-        "2n1SdvOd",
-        "Yn0vZSy9"
+        { "id": "W3lioPt28w-trigger-1", "triggerId": "2n1SdvOd" },
+        { "id": "W3lioPt28w-trigger-2", "triggerId": "Yn0vZSy9" }
       ],
       "tasksId": [
-        "WteROnKh",
-        "sQa_ne1A"
+        { "id": "W3lioPt28w-task-1", "taskId": "WteROnKh" },
+        { "id": "W3lioPt28w-task-2", "taskId": "sQa_ne1A" }
       ]
     }
   ],

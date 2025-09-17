@@ -4,12 +4,13 @@ import { Button, message, Popconfirm } from 'antd';
 import { taskContext } from '../..';
 import { ProjectContext } from '@contexts/projectContextProvider';
 import { useNavigate, useParams } from 'react-router-dom';
+import { nanoid } from 'nanoid';
 
 const Footer = () => {
     const Navigation = useNavigate()
     const { routineId, taskId } = useParams()
     const { project, setProject } = useContext(ProjectContext)
-    const { task } = useContext(taskContext)
+    const { task, taskInstanceId } = useContext(taskContext)
     const [allowSaving, setAllowSaving] = useState(false)
     const [isNewTask, setIsNewTask] = useState(taskId === "newTask")
 
@@ -69,7 +70,7 @@ const Footer = () => {
         const thisRoutine = project.routines.find(r => r.id === routineId)
         if (!thisRoutine) return;
         if (!thisRoutine.tasksId) thisRoutine.tasksId = []
-        thisRoutine.tasksId.push(taskId)
+        thisRoutine.tasksId.push({ id: nanoid(8), taskId })
         setProject({ ...project })
         message.success('Tarea agregada a la rutina correctamente')
     }
@@ -84,7 +85,7 @@ const Footer = () => {
         const thisRoutine = project.routines.find(r => r.id === routineId)
         if (!thisRoutine) return;
         if (!thisRoutine.tasksId) thisRoutine.tasksId = []
-        thisRoutine.tasksId.push(task.id)
+        thisRoutine.tasksId.push({ id: nanoid(8), taskId: task.id })
         setProject({ ...project })
         message.success('Tarea agregada a la rutina correctamente')
         Navigation("/builder")
@@ -94,8 +95,12 @@ const Footer = () => {
         if (!project) return 0;
         let count = 0;
         project.routines.forEach(r => {
-            if (r.tasksId && r.tasksId.includes(taskId)) {
-                count += r.tasksId.filter(tId => tId === taskId).length
+            if (r.tasksId) {
+                count += r.tasksId.filter((taskInstance: any) => {
+                    if (typeof taskInstance === 'string')
+                        return taskInstance === taskId;
+                    return taskInstance.taskId === taskId;
+                }).length
             }
         })
         return count;
@@ -105,34 +110,50 @@ const Footer = () => {
         if (!project || !task) return;
         const thisRoutine = project.routines.find(r => r.id === routineId)
         if (!thisRoutine) return;
+        if (!thisRoutine.tasksId) thisRoutine.tasksId = []
 
-        //busca dentro de la rutina actual cuantas veces se está usando esta tarea
-        const thisTask = thisRoutine.tasksId?.filter(tId => tId === task.id) || []
-        if (thisTask.length > 1) {
-            //si la tarea se está usando más de una vez, solo elimina una instancia
-            const index = thisRoutine.tasksId.indexOf(task.id)
+        const routineTaskInstances = thisRoutine.tasksId.filter((taskInstance: any) => {
+            if (typeof taskInstance === 'string')
+                return taskInstance === task.id;
+            return taskInstance.taskId === task.id;
+        })
+
+        const instanceIdToRemove = taskInstanceId || (routineTaskInstances[0] && (typeof routineTaskInstances[0] === 'string' ? routineTaskInstances[0] : routineTaskInstances[0].id));
+
+        const findRoutineIndex = () => {
+            if (!instanceIdToRemove) return -1;
+            return thisRoutine.tasksId.findIndex((taskInstance: any) => {
+                if (typeof taskInstance === 'string')
+                    return taskInstance === instanceIdToRemove;
+                return taskInstance.id === instanceIdToRemove;
+            })
+        }
+
+        if (routineTaskInstances.length > 1) {
+            const index = findRoutineIndex()
             if (index > -1) {
                 thisRoutine.tasksId.splice(index, 1)
                 setProject({ ...project })
             }
             message.success('Una instancia de la tarea ha sido eliminada de la rutina correctamente')
         } else {
-            //si la tarea solo se está usando una vez, elimina la tarea de la rutina y del proyecto (si no se está usando en otra rutina)
-            if (countHowManyTimesTaskIsUsedInThisProject(task.id) == 1) {
+            const totalUsageCount = countHowManyTimesTaskIsUsedInThisProject(task.id)
+            const index = findRoutineIndex()
+            if (index > -1) {
+                thisRoutine.tasksId.splice(index, 1)
+            }
+            if (totalUsageCount == 1) {
                 const taskIndex = project.tasks.findIndex(t => t.id === task.id)
                 if (taskIndex !== -1) {
                     project.tasks.splice(taskIndex, 1)
+                    setProject({ ...project })
                     message.success('Tarea eliminada del proyecto correctamente')
                     Navigation("/builder")
+                    return
                 }
-            } else{
-                const index = thisRoutine.tasksId.indexOf(task.id)
-                if (index > -1) {
-                    thisRoutine.tasksId.splice(index, 1)
-                    setProject({ ...project })
-                }
-                message.success('Tarea eliminada de la rutina correctamente')
             }
+            setProject({ ...project })
+            message.success('Tarea eliminada de la rutina correctamente')
         }
 
     }

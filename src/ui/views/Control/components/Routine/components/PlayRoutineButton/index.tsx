@@ -75,7 +75,11 @@ const PlayRoutineButton = ({ event, enabled }: { event: { event: string, data: a
 
     useEffect(() => {
         if (!project || !routine) return;
-        const routineTriggers = project.triggers.filter(trigger => routine.triggersId.includes(trigger.id));
+        const routineTriggers = project.triggers.filter(trigger => routine.triggersId?.some((triggerInstance: any) => {
+            if (typeof triggerInstance === 'string')
+                return triggerInstance === trigger.id;
+            return triggerInstance.triggerId === trigger.id;
+        }));
         const hasApiTrigger = routineTriggers.some(trigger => trigger.type === TriggerTypes.api);
         setApiTrigger(hasApiTrigger ? routineTriggers.find(trigger => trigger.type === TriggerTypes.api) : null);
         setShowButton(hasApiTrigger)
