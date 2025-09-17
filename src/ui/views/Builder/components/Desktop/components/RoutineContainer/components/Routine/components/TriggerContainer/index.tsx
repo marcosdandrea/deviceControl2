@@ -4,25 +4,24 @@ import SortableList from "react-easy-sort";
 import { routineContext } from "../..";
 import useProject from "@hooks/useProject";
 import Text from "@components/Text";
-import Task from "../Task";
 import Trigger from "../Trigger";
+import { nanoid } from "nanoid";
 
 const TriggersContainer = () => {
 
     const {routineData} = useContext(routineContext);
-    const {project} = useProject()
+    const {project} = useProject({fetchProject: false})
     const [triggers, setTriggers] = useState(routineData?.triggers || []);
 
     useEffect(()=>{
-        if (!project || !routineData) return;
+        if (!project || !routineData || !project.triggers) return;
         const routineTriggers = project.triggers.filter(trigger => routineData.triggersId?.includes(trigger.id)) || [];
         setTriggers([...routineTriggers, {}])
 
     },[project, routineData])
 
     const onSortEnd = (oldIndex: number, newIndex: number) => {
-        console.log(oldIndex, newIndex);
-        console.log (routineData)
+        
     }   
 
     return (
@@ -41,7 +40,7 @@ const TriggersContainer = () => {
                     {
                         triggers?.map((trigger: any) => (
                             <Trigger
-                                key={trigger.id}
+                                key={trigger.id || nanoid(4)}
                                 triggerData={trigger}/>
                         ))
                     }

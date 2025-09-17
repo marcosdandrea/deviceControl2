@@ -1,6 +1,6 @@
 import path from 'path';
 import { app } from 'electron';
-import { isDev } from '@utils/index.js';
+import { isDev } from '@src/utils/index.js';
 import { pathToFileURL } from 'url';
 
 

@@ -13,6 +13,14 @@
     border: 1px solid transparent;
 }
 
+.body{
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.5rem;
+    height: 100%;
+    flex: 1;
+}
+
 .selected{
     border: 1px solid var(--accent-color);
     box-shadow: 0 0 10px var(--accent-color);

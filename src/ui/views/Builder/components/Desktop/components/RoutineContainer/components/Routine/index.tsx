@@ -25,8 +25,10 @@ const Routine = forwardRef<HTMLDivElement, RoutineProps>(({ routineData }, ref) 
                 ref={ref}
                 className={`${style.routine} ${routineId === routineData.id ? style.selected : ''}`} >
                 <RoutineHeader />
+                <div className={style.body} >
                 <TriggersContainer />
                 <TaskContainer />
+                </div>
             </div>
         </routineContext.Provider>
     );

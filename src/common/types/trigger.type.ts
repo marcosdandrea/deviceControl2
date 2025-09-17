@@ -8,6 +8,7 @@ export type TriggerType = {
     armed?: boolean;
     type?: string;
     reArmOnTrigger?: boolean;
+    disableRearming?: boolean;
     triggered?: boolean;
     params?: any; // Agregar esta línea
 }

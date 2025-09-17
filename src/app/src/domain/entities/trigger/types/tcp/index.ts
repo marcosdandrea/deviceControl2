@@ -2,6 +2,8 @@ import net from 'net';
 import { Trigger } from '../..';
 import triggerEvents from '@common/events/trigger.events';
 import { TriggerType, TriggerTypes } from '@common/types/trigger.type';
+import { test } from 'vitest';
+import systemCommands from '@common/commands/system.commands';
 
 interface TcpTriggerOptions extends TriggerType {
     port: number;
@@ -39,9 +41,9 @@ export class TcpTrigger extends Trigger {
         throw new Error('Message must be a string');
         */
 
-        this.port = options.port;
-        this.ip = options.ip || '0.0.0.0';
-        this.expectedMessage = options.message;
+        this.port = options.params.port;
+        this.ip = options.params.ip || '0.0.0.0';
+        this.expectedMessage = options.params.message;
 
         this.on(triggerEvents.triggerArmed, this.init.bind(this));
         this.on(triggerEvents.triggerDisarmed, this.destroy.bind(this));
@@ -53,6 +55,7 @@ export class TcpTrigger extends Trigger {
                 name: 'port',
                 easyName: 'Puerto',
                 type: 'number',
+                testAction: systemCommands.checkTCPPortAvailability,
                 validationMask: '^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0)$',
                 description: 'Port number to listen on (1-65535)',
                 required: true,

@@ -2,6 +2,7 @@ import dgram from 'dgram';
 import { Trigger } from '../..';
 import triggerEvents from '@common/events/trigger.events';
 import { TriggerType, TriggerTypes } from '@common/types/trigger.type';
+import systemCommands from '@common/commands/system.commands';
 
 interface UdpTriggerOptions extends TriggerType {
     port: number;
@@ -27,9 +28,9 @@ export class UdpTrigger extends Trigger {
 
         this.validateParams();
 
-        this.ip = options.ip || '0.0.0.0';
-        this.port = options.port;
-        this.expectedMessage = options.message;
+        this.ip = options.params.ip || '0.0.0.0';
+        this.port = options.params.port;
+        this.expectedMessage = options.params.message;
 
         this.on(triggerEvents.triggerArmed, this.init.bind(this));
         this.on(triggerEvents.triggerDisarmed, this.destroy.bind(this));
@@ -41,6 +42,7 @@ export class UdpTrigger extends Trigger {
                 name: 'port',
                 type: 'number',
                 easyName: 'Puerto',
+                testAction: systemCommands.checkUDPPortAvailability,
                 validationMask: '^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0)$',
                 description: 'Port number to listen on (1-65535)',
                 required: true,
@@ -65,6 +67,11 @@ export class UdpTrigger extends Trigger {
             if (data.trim() === this.expectedMessage) {
                 this.trigger();
             }
+        });
+        this.server.on('error', (err) => {
+            this.logger.error(`UDP Trigger socket error: ${err.message}`);
+            this.server?.close();
+            this.server = undefined;
         });
         this.server.bind(this.port, this.ip, () => {
             this.logger.info(`UDP Trigger listening on ${this.ip}:${this.port}`);

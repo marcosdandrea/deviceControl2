@@ -8,7 +8,7 @@ import { Breadcrumb } from "antd";
 
 const PanelHeader = () => {
     const navigation = useNavigate();
-    const { project } = useProject()
+    const { project } = useProject({ fetchProject: false });
     const { routineId, taskId, triggerId } = useParams()
     const [routineName, setRoutineName] = useState('Rutina');
     const [taskName, setTaskName] = useState('Tarea');

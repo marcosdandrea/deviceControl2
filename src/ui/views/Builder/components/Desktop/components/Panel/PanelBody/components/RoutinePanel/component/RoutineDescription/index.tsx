@@ -14,6 +14,7 @@ const RoutineDescription = () => {
     return (
         <div>
             <Input.TextArea
+                tabIndex={2}
                 placeholder='Descripción de la rutina (opcional)'
                 autoSize={{ minRows: 2, maxRows: 4 }}
                 value={routine ? routine.description : ""}

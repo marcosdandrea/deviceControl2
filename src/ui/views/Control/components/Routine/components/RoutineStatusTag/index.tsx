@@ -35,6 +35,8 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
                 return false;
             case routineEvents.routineIdle:
                 return false;
+            case routineEvents.routineTimeout:
+                return false;
             default:
                 return false;
         }
@@ -51,6 +53,8 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
             case routineEvents.routineAborted:
                 return (<MdStopCircle size={22} />);
             case routineEvents.routineFailed:
+                return (<MdError size={22} />);
+            case routineEvents.routineTimeout:
                 return (<MdError size={22} />);
             default:
                 return (<MdHelp size={22} />);

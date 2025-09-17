@@ -11,6 +11,10 @@ import UploadAndApplyButton from './components/Toolbar/components/UploadAndApply
 import CloseProjectButton from './components/Toolbar/components/CloseProjectButton';
 import OpenControlView from './components/Toolbar/components/OpenControlView';
 import OpenTerminalView from './components/Toolbar/components/OpenTerminalView';
+import ProjectName from './components/Toolbar/components/ProjectName';
+import NewProjectButton from './components/Toolbar/components/NewProjectButton';
+import Divider from './components/Toolbar/components/Divider';
+import OpenConfigButton from './components/Toolbar/components/OpenConfigButton';
 
 const Builder = () => {
 
@@ -22,15 +26,25 @@ const Builder = () => {
                 }} >
                 <div className={styles.builderView}>
                     <Toolbar >
-                        <LoadProjectButton />
-                        <DownloadProjectButton />
-                        <UploadAndApplyButton />
-                        <CloseProjectButton />
-                        <OpenControlView />
-                        <OpenTerminalView/>
+                        <div className={styles.toolbarLeft} >
+                            <NewProjectButton />
+                            <LoadProjectButton />
+                            <Divider />
+                            <DownloadProjectButton />
+                            <UploadAndApplyButton />
+                            <Divider />
+                            <CloseProjectButton />
+                        </div>
+                        <div className={styles.toolbarCenter} >
+                            <ProjectName />
+                        </div>
+                        <div className={styles.toolbarRight} >
+                            <OpenConfigButton />
+                            <OpenControlView />
+                            <OpenTerminalView />
+                        </div>
                     </Toolbar>
                     <Desktop />
-                    <StatusBar />
                 </div>
             </ConfigProvider >
         </ProjectContextProvider>

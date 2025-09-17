@@ -1,8 +1,8 @@
+import { TimeoutController } from "@src/controllers/Timeout";
 import { description, id, name, RunCtx } from "./commons.type";
 import { ConditionInterface, ConditionType } from "./condition.type";
 import { contextInterface } from "./context.type";
 import { JobInterface, JobType } from "./job.type";
-import { Log } from "@src/utils/log";
 
 export type TaskType = {
     id?: id;
@@ -16,11 +16,13 @@ export type TaskType = {
     waitBeforeRetry?: number;
     continueOnError?: boolean;
     checkConditionBeforeExecution?: boolean;
+    timeout?: number; // in milliseconds
 }
 
 export interface TaskInterface extends TaskType {
     job?: JobInterface;
     condition?: ConditionInterface | null;
+    timeoutController: TimeoutController;
     setJob: (job: JobInterface) => void;
     setCondition: (condition: ConditionInterface | null) => void;
     setRetries: (retries: number) => void;

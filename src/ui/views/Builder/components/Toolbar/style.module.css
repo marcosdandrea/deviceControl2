@@ -1,11 +1,9 @@
 .toolbar{
     z-index: 1;
     width: 100%;
-    height: 2.5rem;
+    height: 3rem;
     display: flex;
     flex-direction: row;
-    column-gap: 5px;
-    padding: 5px;
     box-sizing: border-box;
     border-bottom: solid 1px var(--component-border);
     background-color: var(--component-background);

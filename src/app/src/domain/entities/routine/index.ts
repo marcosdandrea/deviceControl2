@@ -16,6 +16,8 @@ import { EventEmitter } from "events";
 import crypto from "crypto";
 import { Trigger } from "../trigger";
 import { Context } from "../context";
+import { TimeoutController } from "@src/controllers/Timeout";
+import timeoutEvents from "@common/events/timeout.events";
 
 export const RoutineActions = ["enable", "disable", "run", "stop"] as const;
 export type RoutineActions = typeof RoutineActions[number];
@@ -43,7 +45,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
     logger: Log;
     abortController: AbortController | null;
-    timeoutController: AbortController | null;
+    timeoutController: TimeoutController | null = null;
 
     constructor(props: RoutineType) {
         super();
@@ -215,9 +217,9 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
         const { ctx } = args;
 
-        if (!(ctx instanceof Context)) 
+        if (!(ctx instanceof Context))
             throw new Error(`Invalid context provided on listener`);
-        
+
         try {
             await this.run(trigger, ctx);
         } catch (err) {
@@ -236,7 +238,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
     }
 
     addTrigger(trigger: TriggerInterface): void {
-        
+
         if (!(trigger instanceof Trigger))
             throw new Error("Invalid trigger");
 
@@ -298,35 +300,6 @@ export class Routine extends EventEmitter implements RoutineInterface {
         return this;
     }
 
-    #taskTimeout({ cancelSignal }: { cancelSignal: AbortSignal }): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if (!this.routineTimeout)
-                return resolve();
-
-            const timeoutTimer = setTimeout(() => {
-                this.logger.warn(`Task timed out after ${this.routineTimeout}ms`);
-                reject(new Error("Task timed out after " + this.routineTimeout + "ms"));
-            }, this.routineTimeout || 10000);
-
-            cancelSignal.addEventListener("abort", () => {
-                this.logger.info(`Task timeout cancelled`);
-                clearTimeout(timeoutTimer);
-                resolve();
-            });
-        });
-    }
-
-    async #abortSignalController(): Promise<void> {
-        const { signal: abortSignal } = this.abortController;
-
-        return new Promise((_resolve, reject) => {
-            abortSignal.addEventListener("abort", () => {
-                this.#eventDispatcher(routineEvents.routineAborted);
-                this.logger.warn(`Routine aborted with cause: ${this.abortController.signal.reason}`);
-                reject(new Error(`Routine aborted: ${this.abortController.signal.reason}`));
-            });
-        });
-    }
 
     async checkAllTaskConditions(): Promise<boolean> {
         const tasksWithConditions = this.tasks.filter(t => t.condition);
@@ -362,13 +335,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
         }
 
         this.abortController = new AbortController();
-
-        const handleOnError = (err: Error) => {
-            this.failed = true;
-            this.logger.error(`Error running tasks: ${err?.message || err}`);
-            this.#eventDispatcher(routineEvents.routineError, { error: err });
-        }
-
+        const { signal: userAbortSignal } = this.abortController;        
+        
         this.#suspendAutoCheckingConditions()
         this.isRunning = true;
         this.failed = false;
@@ -380,127 +348,153 @@ export class Routine extends EventEmitter implements RoutineInterface {
             this.isRunning = false
         }
 
-        const ctxNode = { 
-            type: 'routine', 
+        const ctxNode = {
+            type: 'routine',
             id: this.id,
             name: this.name
         };
         const childCtx = ctx.createChildContext(ctxNode);
         childCtx.log.info(`Routine ${this.name} started`);
-        
+
         childCtx.onFinish((data) => {
             this.#eventDispatcher(routineEvents.routineFinished, data);
         });
 
         return new Promise(async (resolve, reject) => {
-            const { signal: abortSignal } = this.abortController;
 
-            const runInSync = async () => {
-                this.logger.info("Running tasks in sync...");
-                childCtx.log.info("Running tasks in sync...");
+            const runInSync = async (abortSignal: AbortSignal) => {
+                this.logger.info(childCtx.log.info("Running tasks in sync..."));
 
                 for (const task of this.tasks) {
                     try {
                         childCtx.log.info(`Running task ${task.name}...`);
-                        this.timeoutController = new AbortController();
-                        const { signal: cancelSignal } = this.timeoutController;
-
-                        await Promise.race([
-                            task.run({ abortSignal, runCtx: childCtx }),
-                            this.#taskTimeout({ cancelSignal })
-                        ]);
-
+                        await task.run({ abortSignal, runCtx: childCtx });
                         childCtx.log.info(`Task ${task.name} completed`);
-                        this.timeoutController.abort();
                     } catch (e) {
+                        if (abortSignal.aborted) {
+                            childCtx.log.warn(`Task ${task.name} aborted: ${abortSignal.reason}`);
+                            this.#setStatus("aborted");
+                            throw new Error(`Routine aborted: ${abortSignal.reason}`);
+                        }
                         if (this.continueOnError) {
                             childCtx.log.warn(`Task failed: ${e?.message || e}`);
-                            handleOnError(e);
+                            this.#setStatus("failed");
                         } else {
-                            handleOnError(e);
+                            this.#setStatus("failed");
                             throw new Error("Task failed. Breaking execution 'Continue on error' is disabled");
                         }
                     }
                 }
+
             }
 
-            const runInParallel = async () => {
-                this.timeoutController = new AbortController();
-                const { signal: cancelSignal } = this.timeoutController;
+            const runInParallelBreakOnError = async (abortSignal: AbortSignal) => {
+                return new Promise<void>(async (resolve, reject) => {
 
-                try {
-                    if (this.continueOnError) {
-                        this.logger.info("Running tasks in parallel with continueOnError...");
-                        childCtx.log.info("Running tasks in parallel with continueOnError...");
-
-                        const result = await Promise.race([
-                            Promise.allSettled(this.tasks.map(task => task.run({ abortSignal, runCtx: childCtx }))),
-                            this.#abortSignalController(),
-                            this.#taskTimeout({ cancelSignal })
-                        ]) as PromiseSettledResult<void>[];
-
-                        this.timeoutController.abort();
-
-                        if (result.every((res) => res.status === 'fulfilled'))
-                            childCtx.log.info(`Tasks completed: ${this.getTasks().map(task => task.name).join(', ')}`);
-                        else
-                            for (const res of result) {
-                                if (res.status === 'rejected') {
-                                    childCtx.log.warn(`Task failed: ${res.reason}`);
-                                    handleOnError(res.reason);
-                                } else {
-                                    childCtx.log.info(`Task completed: ${res.value}`);
-                                }
-                            }
-
-                    } else {
-                        this.logger.info("Running tasks in parallel without continueOnError...");
-                        childCtx.log.info("Running tasks in parallel without continueOnError...");
-
-                        const result = await Promise.race([
-                            Promise.all(this.tasks.map(task => task.run({ abortSignal, runCtx: ctx }))),
-                            this.#abortSignalController(),
-                            this.#taskTimeout({ cancelSignal })
-                        ]);
-
-                        this.timeoutController.abort();
+                    this.logger.info(childCtx.log.info("Running tasks in parallel without continueOnError..."));
+                    try {
+                        const result = await Promise.all(this.tasks.map(task => task.run({ abortSignal, runCtx: childCtx })))
                         childCtx.log.info(`Tasks completed: ${result}`);
+                        resolve();
+                    } catch (e) {
+                        if (abortSignal.aborted) {
+                            childCtx.log.warn(`Tasks aborted: ${abortSignal.reason}`);
+                            this.#setStatus("aborted");
+                            return reject(new Error(`Routine aborted: ${abortSignal.reason}`));
+                        }
+                        this.#setStatus("failed");
+                        return reject(e);
                     }
-                } catch (err) {
-                    if (!this.abortController?.signal.aborted)
-                        handleOnError(err)
-                }
+                });
             }
+
+            const runInParallelContinueOnError = async (abortSignal: AbortSignal) => {
+
+                return new Promise<void>(async (resolve, reject) => {
+                    this.logger.info(childCtx.log.info("Running tasks in parallel with continueOnError..."));
+
+                    const result = await Promise.allSettled(this.tasks.map(task => task.run({ abortSignal, runCtx: childCtx })))
+
+                    if (result.every((res) => res.status === 'fulfilled')) {
+                        childCtx.log.info(`Tasks completed: ${this.getTasks().map(task => task.name).join(', ')}`);
+                        this.#setStatus("completed");
+                        resolve();
+                    } else {
+                        for (const res of result) {
+                            if (res.status === 'rejected') {
+                                childCtx.log.warn(`Task failed: ${res.reason}`);
+                            } else {
+                                childCtx.log.info(`Task completed: ${res.value}`);
+                            }
+                        }
+                        this.#setStatus("failed");
+                        reject("Some tasks failed. Check logs for details")
+                    }
+                })
+            }
+
+            //starts timeout controller if routineTimeout is set
+            if (this.routineTimeout && this.routineTimeout > 0) {
+                this.timeoutController = new TimeoutController(this.routineTimeout);
+            }
+
+            //local abort controller for abort tasks
+            const abortTasksController = new AbortController();
+            const { signal: abortTasksSignal } = abortTasksController;
+
+            //handler to abort tasks when routine is aborted or timeout occurs
+            const handleOnAbortExecution = () => {
+                abortTasksController.abort("Routine aborted");
+            }
+
+            userAbortSignal.addEventListener("abort", handleOnAbortExecution);
+            this.timeoutController.on(timeoutEvents.timeout, handleOnAbortExecution)
 
             try {
+
                 if (this.runInSync)
-                    await runInSync();
+                    await Promise.race([
+                        runInSync(abortTasksSignal),
+                        this.timeoutController.start(this.abortController.signal),
+                    ])
                 else
-                    await runInParallel();
+                    if (this.continueOnError)
+                        await Promise.race([
+                            runInParallelContinueOnError(abortTasksSignal),
+                            this.timeoutController.start(this.abortController.signal),
+                        ]);
+                    else
+                        await Promise.race([
+                            runInParallelBreakOnError(abortTasksSignal),
+                            this.timeoutController.start(this.abortController.signal),
+                        ]);
 
-
-                if (this.failed) {
-                    if (this.#setStatus("failed")) {
-                        childCtx.log.error("Routine ended with errors");
-                        this.#eventDispatcher(routineEvents.routineFailed);
-                    }
-                } else if (!this.abortController || !this.abortController.signal.aborted) {
-                    if (this.#setStatus("completed")) {
-                        childCtx.log.info("Routine completed successfully");
-                        this.#eventDispatcher(routineEvents.routineCompleted);
-                    }
-                } else {
-                    childCtx.log.warn("Routine was aborted");
-                }
+                this.#setStatus("completed")
+                this.logger.info(childCtx.log.info("Routine completed successfully"));
+                this.#eventDispatcher(routineEvents.routineCompleted);
 
                 resolve();
             } catch (e) {
-                if (this.#setStatus("failed")) {
-                    childCtx.log.error(`Routine ended with error: ${e?.message || e}`);
-                    this.#eventDispatcher(routineEvents.routineFailed);
-                }
+
+                    if (userAbortSignal.aborted) {
+                        this.#setStatus("aborted");
+                        this.logger.warn(childCtx.log.warn(`Routine aborted by user: ${e?.message || e}`))
+                        this.#eventDispatcher(routineEvents.routineAborted);
+                    } else if (this.timeoutController?.timedout) {
+                        this.logger.warn(childCtx.log.warn(`Routine timed out: ${e?.message || e}`))
+                        this.#eventDispatcher(routineEvents.routineTimeout);
+                        this.#setStatus("timedout");
+                    } else {
+                        this.#setStatus("failed");
+                        this.logger.error(childCtx.log.error(`Routine ended with error: ${e?.message || e}`))
+                        this.#eventDispatcher(routineEvents.routineFailed);
+                    }
+
                 reject(e);
             } finally {
+                userAbortSignal.removeEventListener("abort", handleOnAbortExecution);
+                this.timeoutController?.clear()
+                this.timeoutController?.removeAllListeners();
                 cleanOnFinish();
                 this.#resumeAutoCheckingConditions();
                 childCtx.finish();

@@ -51,7 +51,7 @@ const TaskContainer = () => {
                 size={12}>
                 {`Las siguiente tareas (${tasks?.length - 1 || 0}) correrán en ${routineData.runInSync ? "serie" : "paralelo"}`}
             </Text>
-            
+                <div className={style.listContainer} >
                 <SortableList
                     dir="vertical"
                     className={style.taskList}
@@ -66,6 +66,7 @@ const TaskContainer = () => {
                         ))
                     }
                 </SortableList>
+            </div>
         </div>
     );
 }

@@ -1,11 +1,11 @@
 import React from "react";
 import ToolbarButton from "../ToolbarButton";
-import { MdFileOpen } from "react-icons/md";
 import useProject from "@hooks/useProject";
+import { HiFolderOpen } from "react-icons/hi2";
 
 const LoadProjectButton = () => {
 
-    const { loadProjectFile } = useProject();
+    const { loadProjectFile } = useProject({ fetchProject: false });
 
     const openFile = () => {
         return new Promise<ArrayBuffer | String>((resolve, reject) => {
@@ -43,7 +43,7 @@ const LoadProjectButton = () => {
 
     return (
         <ToolbarButton 
-            icon={<MdFileOpen />} 
+            icon={<HiFolderOpen size={20}/>} 
             onClick={handleOnLoad} />
     );
 }

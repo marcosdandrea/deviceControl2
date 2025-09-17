@@ -4,9 +4,10 @@ export const ProjectContext = createContext(null);
 
 const ProjectContextProvider = ({children}) => {
     const [project, setProject] = useState(null);
+    const [unsavedChanges, setUnsavedChanges] = useState(false);
 
     return (
-        <ProjectContext.Provider value={{ project, setProject }}>
+        <ProjectContext.Provider value={{ project, setProject, unsavedChanges, setUnsavedChanges }}>
             {children}
         </ProjectContext.Provider>
     );

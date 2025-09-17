@@ -7,6 +7,7 @@ import crypto from "crypto";
 import { EventEmitter } from "events";
 import taskEvents from "@common/events/task.events";
 import { Context } from "../context";
+import { TimeoutController } from "../../../controllers/Timeout";
 
 export class Task extends EventEmitter implements TaskInterface {
     id: id;
@@ -21,6 +22,8 @@ export class Task extends EventEmitter implements TaskInterface {
     checkConditionBeforeExecution: boolean;
     failed: boolean;
     aborted: boolean;
+    timeout?: number;
+    timeoutController: TimeoutController;
 
     log: Log;
     startTime: number | null = null;
@@ -58,6 +61,12 @@ export class Task extends EventEmitter implements TaskInterface {
         if (props?.waitBeforeRetry && Number(props.waitBeforeRetry) < 0)
             throw new Error("waitBeforeRetry must be a positive number or zero");
         this.waitBeforeRetry = props.waitBeforeRetry || 100;
+
+        if (!props.timeout || Number(props.timeout) < 0)
+            throw new Error("Task timeout must be a positive number or zero");
+
+        this.timeout = props.timeout;
+        this.timeoutController = new TimeoutController(Number(props.timeout));
 
         this.log.info(`Task "${this.name}" created with ID "${this.id}"`);
     }
@@ -109,17 +118,64 @@ export class Task extends EventEmitter implements TaskInterface {
      * @returns 
      */
     async run({ abortSignal, runCtx }: { abortSignal: AbortSignal, runCtx: Context }): Promise<void> {
-        this.startTime = Date.now();
+        return new Promise<void>(async (resolve, reject) => {
+            this.startTime = Date.now();
 
-        const ctxNode = {
-            type: 'task', 
-            id: this.id,
-            name: this.name
-        };
-        const childCtx = runCtx.createChildContext(ctxNode);
-        childCtx.log.info(`Starting task "${this.name}" (ID: ${this.id})`);
+            const ctxNode = {
+                type: 'task',
+                id: this.id,
+                name: this.name
+            };
+            const childCtx = runCtx.createChildContext(ctxNode);
+            childCtx.log.info(`Starting task "${this.name}" (ID: ${this.id})`);
 
-        this.#dispatchEvent(taskEvents.taskRunning, { taskId: this.id, taskName: this.name });
+            this.#dispatchEvent(taskEvents.taskRunning, { taskId: this.id, taskName: this.name });
+
+            const abortJobsAndConditionsController = new AbortController();
+
+            const onAbort = () => {
+                this.aborted = true;
+                abortJobsAndConditionsController.abort();
+            };
+
+            abortSignal.addEventListener("abort", onAbort, { once: true });
+            
+            try {
+                this.failed = false;
+                await Promise.race([
+                    this.jobsAndConditions({ abortSignal: abortJobsAndConditionsController.signal, childCtx }),
+                    this.timeoutController.start(abortSignal)
+                ]);
+                childCtx.log.info(`Task "${this.name}" completed successfully`);
+                this.#dispatchEvent(taskEvents.taskCompleted, { taskId: this.id, taskName: this.name, duration: Date.now() - (this.startTime ?? Date.now()) });
+                resolve();
+            } catch (error) {
+                if (abortSignal.aborted) {
+                    this.aborted = true;
+                    this.timeoutController.clear();
+                    childCtx.log.info(`Task ${this.name} aborted.`);
+                    this.#dispatchEvent(taskEvents.taskAborted, { taskId: this.id, taskName: this.name });
+                    reject(`Task "${this.name}" aborted`);
+                } else if (this.timeoutController.timedout) {
+                    childCtx.log.error(`Task ${this.name} timed out.`)
+                    abortJobsAndConditionsController.abort();
+                    this.failed = true;
+                    this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
+                    reject(`Task ${this.name} timed out.`);
+                } else {
+                    this.failed = true;
+                    this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
+                    childCtx.log.error(`Task ${this.name} failed: ${error instanceof Error ? error.message : String(error)}`);
+                    reject(error);
+                } 
+            } finally {
+                this.timeoutController.clear();
+            }
+        })
+    }
+
+
+    async jobsAndConditions({ abortSignal, childCtx }: { abortSignal: AbortSignal, childCtx: Context }): Promise<void> {
 
         this.totalRetries = 0;
         this.failed = false;
@@ -138,74 +194,69 @@ export class Task extends EventEmitter implements TaskInterface {
             this.failed = false;
             const duration = Date.now() - (this.startTime ?? Date.now());
             childCtx.log.info(`Task "${this.name}" completed successfully in ${duration}ms`);
-            this.#dispatchEvent(taskEvents.taskCompleted, { taskId: this.id, taskName: this.name, failed: false, duration });
         }
 
         const checkCondition = async (): Promise<boolean> => {
 
-            try{
+            try {
                 await this.condition!.evaluate({ abortSignal, ctx: childCtx })
                 childCtx.log.info(`Condition met for task ${this.name}, finishing task execution.`);
                 onTaskCompleted();
                 return true
-            }catch(error){
+            } catch (error) {
                 this.log.warn(`Condition not met for task ${this.name}`);
                 return false
             }
-            
+
         };
 
+
         while (this.totalRetries < this.retries) {
-
             try {
-
                 checkAbort();
 
-                if (this.condition) {
-                    if (this.checkConditionBeforeExecution) {
-                        childCtx.log.info(`Checking condition before executing task ${this.name}.`)
-                        this.log.info(`Checking condition before executing job for task ${this.name}`);
-                        const conditionMet = await checkCondition();
-                        this.log.info(`Condition before execution for task ${this.name} evaluated to ${conditionMet}`);
-                        if (conditionMet)
-                            return Promise.resolve();
+                // Si hay condición y se debe chequear antes de ejecutar el job
+                if (this.condition && this.checkConditionBeforeExecution) {
+                    this.log.info(childCtx.log.info(`Checking condition before executing task ${this.name}.`));
+                    const conditionMet = await checkCondition();
+                    this.log.info(`Condition before execution for task ${this.name} evaluated to ${conditionMet}`);
+                    if (conditionMet) {
+                        // Solo termina si la condición indica que no es necesario ejecutar el job
+                        return Promise.resolve();
                     }
                 }
 
-                childCtx.log.info(`Executing job for task ${this.name}, attempt ${this.totalRetries + 1} of ${this.retries}.`);
-                this.log.info(`Executing job for task ${this.name}, attempt ${this.totalRetries + 1} of ${this.retries}.`);
+                this.log.info(childCtx.log.info(`Executing job for task ${this.name}, attempt ${this.totalRetries + 1} of ${this.retries}.`));
                 await this.job.execute({ abortSignal, ctx: childCtx });
 
+                // Si no hay condición, termina después de ejecutar el job
                 if (!this.condition) {
-                    childCtx.log.info(`No condition set for task ${this.name}, finishing task execution.`)
-                    this.log.info("No condition set, finishing task execution.")
+                    this.log.info(childCtx.log.info(`No condition set for task ${this.name}, finishing task execution.`))
                     onTaskCompleted();
                     return Promise.resolve();
                 }
 
-                if (await checkCondition())
+                // Si hay condición, evalúa después de ejecutar el job
+                const conditionMetAfterJob = await checkCondition();
+                if (conditionMetAfterJob) {
                     return Promise.resolve();
+                }
 
-                childCtx.log.info(`Condition not met, will retry.`);
-                this.log.info(`Condition not met, will retry.`);
+                this.log.info(childCtx.log.info(`Condition not met after job execution, will retry.`));
 
             } catch (error) {
 
                 if (this.aborted) {
-                    childCtx.log.info(`Task ${this.name} aborted, not continuing.`);
-                    this.log.info(`Task ${this.name} aborted, not continuing.`);
-                    this.#dispatchEvent(taskEvents.taskAborted, { taskId: this.id, taskName: this.name });
+                    this.timeoutController.clear();
+                    this.log.info(childCtx.log.info(`Task ${this.name} aborted, not continuing.`));
                     throw error
                 }
 
-                childCtx.log.info(`Error in task ${this.name}: ${error instanceof Error ? error.message : String(error)}`);
-                this.log.error(`Error in task ${this.name}: ${error instanceof Error ? error.message : String(error)}`, error);
-                this.#dispatchEvent(taskEvents.taskError, { taskId: this.id, taskName: this.name, error });
+                this.log.error(childCtx.log.info(`Error in task ${this.name}: ${error instanceof Error ? error.message : String(error)}`), error);
 
                 if (!this.continueOnError) {
-                    this.log.info(`Task ${this.name} failed and will not continue due to continueOnError being false.`);
-                    childCtx.log.info(`Task ${this.name} failed and will not continue due to continueOnError being false.`);
-                    this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
+                    this.timeoutController.clear();
+                    this.log.info(childCtx.log.info(`Task ${this.name} failed and will not continue due to continueOnError being false.`));
                     return Promise.reject(`Task ${this.name} failed and will not continue due to continueOnError being false.`);
                 }
 
@@ -214,15 +265,13 @@ export class Task extends EventEmitter implements TaskInterface {
             this.totalRetries++;
 
             if (this.totalRetries >= this.retries) {
-                this.log.info(`Max retries reached for task ${this.name}.`);
-                childCtx.log.info(`Max retries reached for task ${this.name}.`);
-                this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error: new Error(`Max retries reached for task ${this.name}`) });
+                this.timeoutController.clear();
+                this.log.info(childCtx.log.info(`Max retries reached for task ${this.name}.`));
                 this.failed = true;
                 return Promise.reject(`Max retries reached for task ${this.name}`);
             }
 
-            this.log.info(`Retrying task ${this.name} in ${this.waitBeforeRetry}ms.`);
-            childCtx.log.info(`Retrying task ${this.name} in ${this.waitBeforeRetry}ms.`);
+            this.log.info(childCtx.log.info(`Retrying task ${this.name} in ${this.waitBeforeRetry}ms.`));
 
             await new Promise((resolve, reject) => {
                 const timeout = setTimeout(() => {
@@ -241,7 +290,7 @@ export class Task extends EventEmitter implements TaskInterface {
                 }
             });
 
-            this.#dispatchEvent(taskEvents.taskRetrying, { taskId: this.id, taskName: this.name, attempt: this.totalRetries });
+            this.#dispatchEvent(taskEvents.taskRetrying, { taskId: this.id, taskName: this.name, attempt: this.retries, totalRetries: this.totalRetries });
         }
     }
 
@@ -258,6 +307,7 @@ export class Task extends EventEmitter implements TaskInterface {
             job: this.job.toJson(),
             condition: this.condition ? this.condition.toJson() : null,
             retries: this.retries,
+            timeout: this.timeout,
             waitBeforeRetry: this.waitBeforeRetry,
             continueOnError: this.continueOnError
         };

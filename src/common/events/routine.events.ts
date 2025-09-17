@@ -22,5 +22,7 @@ export default {
     routineFailed: "routine:failed",
     routineAborted: "routine:aborted",
 
-    routineFinished: "routine:finished"
+    routineFinished: "routine:finished",
+
+    routineTimeout: "routine:timeout"
 }

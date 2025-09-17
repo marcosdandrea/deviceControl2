@@ -1,21 +1,20 @@
 {
   "appId": "com.proyecciones.deviceControl",
-  "productName": "Device Control",
+  "productName": "Device Control 2",
   "files": ["dist-electron", "dist-react"],
-  "extraResources": ["dist-electron/preload.cjs"],
-  "icon": "./resources/AS_icon.ico",
+  "icon": "./resources/icons/win/icon.ico",
   "asar": true,
   "mac": {
-    "icon": "./resources/AS_icon.icns",
+    "icon": "./resources/icons/mac/icon.icns",
     "target": "dmg"
   },
   "linux": {
-    "icon": "./resources/AS_icon.png",
+    "icon": "./resources/icons/png/512x512.png",
     "target": "AppImage",
     "category": "Utility"
   },
   "win": {
-    "icon": "./resources/AS_icon.ico",
+    "icon": "./resources/icons/win/icon.ico",
     "target": ["portable", "msi"]
   }
 }

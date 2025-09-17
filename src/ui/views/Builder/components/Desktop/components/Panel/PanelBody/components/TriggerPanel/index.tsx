@@ -10,14 +10,14 @@ import TypeTriggerField from "./components/TypeTriggerField";
 import TriggerParameters from "./components/TriggerParameters";
 import Footer from "./components/Footer";
 
-export const triggerContext = createContext({ trigger: undefined, setTrigger: (trigger: TriggerType) => { }, defaultTrigger: undefined, invalidParams: [] as string[] });
+export const triggerContext = createContext({ trigger: undefined, setTrigger: (trigger: TriggerType) => { }, defaultTrigger: undefined, setInvalidParams: (params: string[]) => { }, invalidParams: [] as string[] });
 
 const defaultTrigger = {
     id: '',
     name: '',
     type: '',
     params: {},
-    reArmOnTrigger: false,
+    reArmOnTrigger: true,
     description: '',
 } as TriggerType
 
@@ -25,7 +25,7 @@ const TriggerPanel = () => {
     const { triggerId } = useParams()
     const { project } = useProject({ fetchProject: false })
     const [trigger, setTrigger] = useState<TriggerType | undefined>(undefined);
-    const invalidParams = useRef<string[]>([])
+    const [invalidParams, setInvalidParams] = useState<string[]>([]);
 
     useEffect(() => {
         if (project && triggerId) {
@@ -40,7 +40,7 @@ const TriggerPanel = () => {
     }, [project, triggerId])
 
     return (
-        <triggerContext.Provider value={{ trigger, setTrigger, defaultTrigger, invalidParams }}>
+        <triggerContext.Provider value={{ trigger, setTrigger, defaultTrigger, setInvalidParams, invalidParams }}>
             <div className={style.triggerPanel}>
                 <div className={style.header}>
                     <Text color='white'>
@@ -59,7 +59,7 @@ const TriggerPanel = () => {
                         className="ant-input-outlined"
                         style={{ display: 'flex', borderRadius: "8px", justifyContent: "space-between", alignItems: "center", paddingRight: "0.5rem" }}>
                         <Input
-                            disabled={trigger?.name === ''}
+                            disabled={trigger?.name === '' || trigger?.type === '' || trigger?.disableRearming}
                             style={{
                                 width: '200px',
                                 color: "var(--text-secondary)",
@@ -71,7 +71,7 @@ const TriggerPanel = () => {
                             readOnly
                             tabIndex={-1} />
                         <Switch
-                            disabled={trigger?.name === ''}
+                            disabled={trigger?.name === '' || trigger?.type === '' || trigger?.disableRearming}
                             checked={trigger?.reArmOnTrigger}
                             onChange={(checked) => setTrigger({ ...trigger, reArmOnTrigger: checked })} />
 

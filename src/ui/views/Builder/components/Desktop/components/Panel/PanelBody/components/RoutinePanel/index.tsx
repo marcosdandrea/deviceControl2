@@ -17,7 +17,8 @@ const getDefaultRoutine = () => (
         description: '',
         tasksId: [],
         triggersId: [],
-        active: false,
+        enabled: true,
+        continueOnError: true,
     }
 )
 

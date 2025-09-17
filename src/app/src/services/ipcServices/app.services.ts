@@ -11,6 +11,7 @@ const getAvailableTriggers = async (_args: any, callback: Function) => {
         triggers[key] = {
             easyName: module.default.easyName,
             moduleDescription: module.default.moduleDescription,
+            disableRearming: module.default.disableRearming,
             params: module.default.prototype.requiredParams(),
         }
     }

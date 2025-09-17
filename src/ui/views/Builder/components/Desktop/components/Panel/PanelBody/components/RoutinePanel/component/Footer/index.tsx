@@ -2,12 +2,13 @@ import Text from '@components/Text';
 import style from './style.module.css'
 import { Button, message, Popconfirm } from 'antd';
 import React, { useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { routineConfigurationContext } from '../..';
 import useProject from '@hooks/useProject';
 import RoutineId from './components/RoutineId';
 
 const Footer = () => {
+    const {routineId} = useParams()
     const { project, setProject } = useProject({ fetchProject: false })
     const { routine, setRoutine } = useContext(routineConfigurationContext)
     const [enableSave, setEnableSave] = React.useState(false)
@@ -21,9 +22,6 @@ const Footer = () => {
         }
     }, [routine])
 
-    const handleOnCancel = () => {
-        navigate(-1)
-    }
 
     const handleOnSave = () => {
         const routineIndex = project?.routines?.findIndex(r => r.id === routine.id)
@@ -32,6 +30,8 @@ const Footer = () => {
         } else {
             setProject({ ...project, routines: [...project.routines.slice(0, routineIndex), routine, ...project.routines.slice(routineIndex + 1)] })
         }
+        message.success(`Rutina ${routineIndex === -1 || routineIndex === undefined ? 'creada' : 'actualizada'} correctamente`)
+        navigate(`/builder/${routine.id}`, { replace: true })
     }
 
     const handleOnDeleteRoutine = () => {
@@ -55,22 +55,18 @@ const Footer = () => {
                         type="primary"
                         disabled={!enableSave}
                         onClick={handleOnSave}>
-                        Guardar
-                    </Button>
-                    <Button
-                        style={{ width: '100%' }}
-                        type="default"
-                        onClick={handleOnCancel}>
-                        Cancelar
+                        {routineId === 'newRoutine' ? 'Crear Rutina' : 'Guardar Cambios'}
                     </Button>
                 </div>
                 <Popconfirm
+                    disabled={routineId === 'newRoutine'} 
                     title="¿Estás seguro de que deseas eliminar esta rutina?"
                     cancelText="Cancelar"
                     okText="Eliminar"
                     okButtonProps={{ danger: true }}
                     onConfirm={handleOnDeleteRoutine}>
                     <Button
+                        disabled={routineId === 'newRoutine'} 
                         style={{ width: '100%' }}
                         type="link"
                         danger>

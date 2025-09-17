@@ -46,7 +46,8 @@ export class OnRoutineEventTrigger extends Trigger {
         return [
             {
                 name: 'routineId',
-                easyName: 'ID de la Rutina',
+                options: "routinesID",
+                easyName: 'Nombre de la Rutina',
                 type: 'string',
                 validationMask: '^[a-zA-Z0-9-_]+$',
                 description: 'ID of the routine to listen for events',
@@ -55,8 +56,9 @@ export class OnRoutineEventTrigger extends Trigger {
             {
                 name: 'routineEvent',
                 easyName: 'Evento de la Rutina',
+                options: ["running","checking","completed","failed","aborted","timeout","unknown"],                            
                 type: 'string',
-                validationMask: '^(running|checking|completed|failed|aborted|unknown)$',
+                validationMask: '^(running|checking|completed|failed|aborted|timeout|unknown)$',
                 description: 'Event of the routine to listen for (running, checking, completed, failed, aborted, unknown)',
                 required: true,
             },

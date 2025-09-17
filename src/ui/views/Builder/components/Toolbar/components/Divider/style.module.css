@@ -1,0 +1,6 @@
+.divider{
+    height: 80%;
+    width: 1px;
+    background-color: var(--component-active);
+    align-self: center;
+}

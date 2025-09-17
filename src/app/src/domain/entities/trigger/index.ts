@@ -12,6 +12,7 @@ export class Trigger extends EventEmitter implements TriggerInterface {
     armed: boolean = false;
     triggered: boolean = false;
     reArmOnTrigger: boolean = true;
+    disableRearming: boolean = false;
     logger: Log;
     params?: TriggerInterface["params"];
 
@@ -39,6 +40,9 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         
         this.logger = Log.createInstance(`Trigger "${this.name}"`, true);
         this.params = props.params || {};
+
+        this.reArmOnTrigger = props.reArmOnTrigger !== undefined ? props.reArmOnTrigger : true;
+        this.disableRearming = props.disableRearming !== undefined ? props.disableRearming : false;
 
     }
 
@@ -133,6 +137,7 @@ export class Trigger extends EventEmitter implements TriggerInterface {
             armed: this.armed,
             triggered: this.triggered,
             reArmOnTrigger: this.reArmOnTrigger,
+            disableRearming: this.disableRearming,
             params: this.params,
             type: this.type
         };

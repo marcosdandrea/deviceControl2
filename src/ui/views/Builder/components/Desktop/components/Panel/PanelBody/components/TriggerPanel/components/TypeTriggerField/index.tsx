@@ -15,7 +15,7 @@ const TypeTriggerField = () => {
                 acc[param.name] = undefined;
                 return acc;
             }, {} as Record<string, string>);
-            setTrigger({ ...trigger, type: value, params });
+            setTrigger({ ...trigger, ...selectedTrigger, type: value, params });
         }
     }
 

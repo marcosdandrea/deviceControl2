@@ -39,7 +39,7 @@ const Footer = () => {
             return task.condition.invalidParams.length > 0
         }
 
-        if (task.name.trim() === "" || jobHasNoType() || hasJobInvalidParams() || conditionHasInvalidParams()) {
+        if (task.name.trim() === "" || jobHasNoType() || hasJobInvalidParams() || conditionHasInvalidParams() || task.timeout < 1000) {
             setAllowSaving(false);
             return;
         }

@@ -20,6 +20,8 @@ const StatusLabel = ({ event }) => {
                 return "Completada";
             case routineEvents.routineFailed:
                 return "Fallida";
+            case routineEvents.routineTimeout:
+                return "Agotado el tiempo de espera";            
             case routineEvents.routineRunning:
                 return "En Ejecución";
             case "unknown":

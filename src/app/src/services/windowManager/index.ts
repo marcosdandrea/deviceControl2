@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { BrowserWindow } from "electron";
-import { Log } from "@utils/log.js";
+import { Log } from "@src/utils/log.js";
 
 const log = Log.createInstance("windowManager", true);
 

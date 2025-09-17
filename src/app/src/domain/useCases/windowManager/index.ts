@@ -1,13 +1,12 @@
 import { WindowManager } from "@src/services/windowManager/index.js"
-import { getUIPath } from "@utils/pathResolver.js"
-import { isDev } from "@utils/index.js"
-import path from "path";
-//import { setWebContents } from "@src/services/ipcServices/index.js";
-import { Log } from "@utils/log.js";
+import { isDev } from "@src/utils/index.js"
+import { Log } from "@src/utils/log.js";
 
 const log = Log.createInstance("windowManagerUseCase", true)
 
 let mainWindow: import('electron').BrowserWindow | null = null
+
+const fullscreen = process.argv.includes('--fullscreen') || process.argv.includes('--f') || process.env.FULLSCREEN === 'true'
 
 export const getWebContents = () => mainWindow?.webContents || null;
 
@@ -25,7 +24,7 @@ export const createMainWindow = async () => {
         mainWindow.show()
         return mainWindow
     }
-    
+
     const WM = WindowManager.getInstance()
     const win = await WM.createWindow({
         name: "main",
@@ -37,14 +36,19 @@ export const createMainWindow = async () => {
     })
 
     //setWebContents(win.webContents)
-    
+    const serverManager = await import('@src/services/server/serverManager.js');
+    const mainServer = serverManager.ServerManager.getInstance("main")
+    const addresses = mainServer.getAddresses()
+
     if (isDev()) {
         win.loadURL('http://localhost:5123/control');
         win.webContents.openDevTools({ mode: "detach" })
     } else {
-        win.loadURL(getUIPath());
-        win.maximize()
-        win.setFullScreen(true)
+        win.loadURL(`http://${addresses[0]}/control`);
+        if (fullscreen) {
+            win.maximize()
+            win.setFullScreen(true)
+        }
     }
 
     setMainWindow(win)
@@ -53,12 +57,12 @@ export const createMainWindow = async () => {
     win.setTitle(appTitle)
 
     //import ("./mainWindowMenuManager.js")
-    import ("./mainWindowTitleManager.js")
+    import("./mainWindowTitleManager.js")
     log.info("Main window created")
 
     win.on("close", async (event) => {
         event.preventDefault()
-        const appUseCases = await import('@useCases/app/index.js');
+        const appUseCases = await import('@src/domain/useCases/app/index.js');
         win.destroy()
         appUseCases.closeApp()
     })

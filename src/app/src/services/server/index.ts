@@ -3,6 +3,7 @@ import express from 'express';
 import { createServer } from "http";
 import { Log } from '@src/utils/log';
 import cors from 'cors';
+import os from 'os';
 
 const log = Log.createInstance('Server', true);
 
@@ -139,6 +140,10 @@ export class Server {
       res.sendFile('index.html', { root: path });
     });
 
+    this.app.get('/terminal', (_: express.Request, res: express.Response) => {
+      res.sendFile('index.html', { root: path });
+    });
+
   }
 
   bindRoute(route: string, callback: Function) {
@@ -206,6 +211,28 @@ export class Server {
     if (Server.instance) {
       Server.instance.close();
       Server.instance = null;
+    }
+  }
+
+  /**
+   * Devuelve todas las direcciones IP donde el servidor está funcionando.
+   * Si el servidor está en '0.0.0.0', retorna todas las IPs locales.
+   * Si está en una IP específica, retorna solo esa.
+   */
+  getAddresses(): string[] {
+    if (this.ip === '0.0.0.0') {
+      const interfaces = os.networkInterfaces();
+      const addresses: string[] = [];
+      for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name] || []) {
+          if (iface.family === 'IPv4' && !iface.internal) {
+            addresses.push(iface.address);
+          }
+        }
+      }
+      return addresses;
+    } else {
+      return [this.ip];
     }
   }
 }

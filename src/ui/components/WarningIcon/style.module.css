@@ -1,0 +1,19 @@
+.warningIcon{
+
+
+}
+
+.icon{
+    color: var(--warning-color);
+    opacity: 1;
+}
+
+.blink {
+    animation: attention 1s infinite;
+}
+
+@keyframes attention {
+    50% {
+        opacity: 0.5;
+    }
+}

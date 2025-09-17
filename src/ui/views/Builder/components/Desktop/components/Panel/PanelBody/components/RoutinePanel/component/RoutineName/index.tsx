@@ -12,6 +12,7 @@ const RoutineName = () => {
 
     return (
         <Input
+            tabIndex={1}
             placeholder="Nombre de la rutina"
             status={!routine.name ? "error" : routine && routine.name.trim() === '' ? 'error' : ''}
             addonBefore="Nombre"

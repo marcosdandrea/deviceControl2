@@ -13,10 +13,13 @@ export class OnStartTrigger extends Trigger {
     private timeoutId: NodeJS.Timeout | null = null;
     static easyName = 'Al Iniciar';
     static moduleDescription = 'Se activa cuando la aplicación se inicia, con un retraso opcional.';
+    static disableRearming = true;
 
-    constructor(options: OnStartTriggerOptions = { name: 'OnStart Trigger' }) {
+    constructor(options: OnStartTriggerOptions) {
         super({
             ...options,
+            reArmOnTrigger: false,
+            disableRearming: true,
             type: TriggerTypes.onStart,
         });
 
@@ -26,10 +29,11 @@ export class OnStartTrigger extends Trigger {
             throw new Error('delay must be a non-negative number');
         */
 
-        this.delay = options.delay ?? 0;
+        this.delay = Number(options.params?.delay) ?? 0;
 
         this.on(triggerEvents.triggerArmed, this.init.bind(this));
         this.on(triggerEvents.triggerDisarmed, this.destroy.bind(this));
+        this.timeoutId = null;
     }
 
     requiredParams() {
@@ -46,8 +50,18 @@ export class OnStartTrigger extends Trigger {
     }
 
     private init() {
-        if (this.timeoutId) return;
+
+        console.log("OnStartTrigger initialized with delay:", this.delay);
+        if (this.timeoutId) 
+            clearTimeout(this.timeoutId);
+
+        if (this.delay <= 0) {
+            this.trigger();
+            return;
+        }
+
         this.timeoutId = setTimeout(() => {
+            clearTimeout(this.timeoutId!);
             this.trigger();
         }, this.delay);
     }

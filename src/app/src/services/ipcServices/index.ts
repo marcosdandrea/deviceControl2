@@ -1,6 +1,6 @@
 import projectServices from './projects.services';
 import { Log } from '@src/utils/log';
-import { getAppVersion, getServerPorts, getSystemTime } from './system.services';
+import { checkTCPPortAvailability, checkUDPPortAvailability, getAppVersion, getServerPorts, getSystemTime } from './system.services';
 import projectCommands from '@common/commands/project.commands';
 import { ServerManager } from '../server/serverManager';
 import projectsServices from './projects.services';
@@ -23,6 +23,8 @@ const init = (io: import('socket.io').Server) => {
         socket.on(systemCommands.getSystemTime, getSystemTime)
         socket.on(systemCommands.getAppVersion, getAppVersion)
         socket.on(systemCommands.getServerPorts, getServerPorts);
+        socket.on(systemCommands.checkUDPPortAvailability, checkUDPPortAvailability);
+        socket.on(systemCommands.checkTCPPortAvailability, checkTCPPortAvailability);
 
         //app
         socket.on(appCommands.getTriggerTypes, appServices.getAvailableTriggers);

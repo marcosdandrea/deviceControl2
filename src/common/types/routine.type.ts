@@ -41,4 +41,4 @@ export interface RoutineInterface extends commonRoutineProps {
 }
 
 
-export type RoutineStatus = "running" | "checking" | "completed" | "aborted" | "failed" | "unknown";
+export type RoutineStatus = "running" | "checking" | "completed" | "aborted" | "failed" | "unknown" | "timedout";

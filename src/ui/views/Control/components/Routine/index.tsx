@@ -37,7 +37,8 @@ const Routine = ({ routineData, onSwipeLeft }: Props) => {
         routineEvents.routineRunning,
         routineEvents.routineFailed,
         routineEvents.routineAutoCheckingConditions,
-        routineEvents.routineIdle
+        routineEvents.routineIdle,
+        routineEvents.routineTimeout
     ]);
 
     // Curva “resorte” (rubber-band). Para deltas negativos (izquierda).

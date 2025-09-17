@@ -1,15 +1,11 @@
 import { projectType } from "@common/types/project.types";
-import { Condition } from "@src/domain/entities/conditions";
-import { createNewConditionByType } from "@src/domain/entities/conditions/types";
-import { Job } from "@src/domain/entities/job";
-import { createNewJobByType } from "@src/domain/entities/job/types";
 import { Project } from "@src/domain/entities/project"
 import { Routine } from "@src/domain/entities/routine";
 import { Task } from "@src/domain/entities/task";
 import { Trigger } from "@src/domain/entities/trigger";
 import { createNewTriggerByType } from "@src/domain/entities/trigger/types";
 import { Log } from "@src/utils/log";
-import { writeFile } from "@src/services/fileSystem"
+import { readFile, writeFile } from "@src/services/fileSystem"
 import { setMainWindowTitle } from "../windowManager/mainWindowTitleManager";
 import { EventManager } from "@src/services/eventManager";
 import projectEvents from "@common/events/project.events";
@@ -162,6 +158,44 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
 
 }
 
+export const saveLastProject = async (): Promise<void> => {
+   const project = Project.getInstance();
+   if (!project)
+      throw new Error("No project is currently loaded.");
+   const projectData = project.toJson();
+   try {
+      await writeFile("./currentProject.dc2", JSON.stringify(projectData, null, 2))
+      log.info(`Project auto-saved successfully to ./currentProject.dc2`);
+   } catch (error) {
+      log.error(`Failed to auto-save project to ./currentProject.dc2:`, error);
+      throw new Error(`Failed to auto-save project: ${error.message}`);
+   }
+}
+
+export const getLastProject = async (): Promise<projectType> => {
+   try {
+      const projectData = await readFile("./currentProject.dc2");
+      return projectData;
+   } catch (error) {
+      log.error(`Failed to load last project:`, error);
+      throw new Error("Failed to load last project");
+   }
+}
+
+export const loadLastProject = async (): Promise<projectType> => {
+   try {
+      const projectContent = await getLastProject();
+      if (!projectContent)
+         throw new Error("No last project found.");
+      await loadProject(projectContent);
+      log.info("Last project loaded successfully:", projectContent?.name || 'Unnamed Project');
+      return projectContent;
+   } catch (error) {
+      log.error(`Failed to load last project:`, error);
+      throw new Error("Failed to load last project");
+   }
+}
+
 export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promise<Project | string> => {
 
    try {
@@ -169,6 +203,7 @@ export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promis
       const projectRawData = await decryptData(fileContent) as string;
       const projectContent = JSON.parse(projectRawData);
       await loadProject(projectContent);
+      await saveLastProject();
       log.info("Project file loaded successfully:", projectContent.name);
    } catch (error) {
       log.error(`Failed to load project file:`, error);

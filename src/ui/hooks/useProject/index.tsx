@@ -1,6 +1,6 @@
 import { projectType } from "@common/types/project.types";
 import { SocketIOContext } from "@components/SocketIOProvider";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { Logger } from "@helpers/logger";
 import projectCommands from "@common/commands/project.commands";
 import projectEvents from "@common/events/project.events";
@@ -9,7 +9,23 @@ import { ProjectContext } from "@contexts/projectContextProvider";
 const useProject = (params: { fetchProject?: boolean }) => {
 
     const { socket, emit } = useContext(SocketIOContext);
-    const { project, setProject } = useContext(ProjectContext)
+    const { project, setProject: setProjectInContext, unsavedChanges, setUnsavedChanges } = useContext(ProjectContext)
+
+    const setProject = (
+        value: ((prev: projectType | null) => projectType | null) | (projectType | null)
+    ) => {
+        setProjectInContext((prev) => {
+            const updatedProject =
+                typeof value === "function"
+                    ? (value as (prev: projectType | null) => projectType | null)(prev)
+                    : value;
+            return updatedProject
+                ? { ...updatedProject, modifiedAt: new Date().toISOString() }
+                : updatedProject;
+        });
+        setUnsavedChanges(true);
+    }
+
 
     useEffect(() => {
         if (!socket) return;
@@ -25,6 +41,7 @@ const useProject = (params: { fetchProject?: boolean }) => {
                 Logger.log("Project data loaded:", projectData);
                 setProject(projectData);
             }
+            setUnsavedChanges(false);
         }
 
         const handleOnProjectChanged = (payload) => {
@@ -75,14 +92,21 @@ const useProject = (params: { fetchProject?: boolean }) => {
     }
 
     const unloadProject = async () => {
-        if (!socket) return;
+        return new Promise<void>((resolve, reject) => {
+            if (!socket) return;
 
-        emit(projectCommands.close, (response: { success?: boolean; error?: string }) => {
-            if (response.error) {
-                Logger.error("Error unloading project:", response.error);
-            }
+            emit(projectCommands.close, null, (response: { success?: boolean; error?: string }) => {
+                if (response.error) {
+                    reject(new Error(response.error));
+                    Logger.error("Error unloading project:", response.error);
+                } else {
+                    setProjectInContext(null);
+                    setUnsavedChanges(false);
+                    resolve();
+                }
+            })
         });
-        return;
+
     }
 
     const getProjectFile = async (): Promise<string | null> => {
@@ -106,7 +130,7 @@ const useProject = (params: { fetchProject?: boolean }) => {
         })
     }
 
-    return ({ project, setProject, loadProjectFile, unloadProject, getProjectFile });
+    return ({ project, setProject, loadProjectFile, unloadProject, getProjectFile, unsavedChanges });
 }
 
 export default useProject;

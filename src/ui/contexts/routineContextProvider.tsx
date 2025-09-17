@@ -20,6 +20,8 @@ export const RoutineContextProvider = ({ children, routine }) => {
                 return Color.failed;
             case routineEvents.routineRunning:
                 return Color.working;
+            case routineEvents.routineTimeout:
+                return Color.failed;
             case "unknown":
                 return Color.unknown;
             default:

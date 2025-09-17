@@ -15,6 +15,15 @@ const TriggerNameField = () => {
     const [searchValue, setSearchValue] = useState("")
     const [triggerExists, setTriggerExists] = useState(false)
     const [searchingMode, setSearchingMode] = useState(false)
+    const [existentTriggers, setExistentTriggers] = useState(project?.triggers || [])
+
+    useEffect(()=>{
+        if (project){
+            setExistentTriggers(project.triggers)
+        } else {
+            setExistentTriggers([])
+        }
+    },[project])
 
     useEffect(() => {
         if (trigger) {
@@ -58,10 +67,10 @@ const TriggerNameField = () => {
 
     const handleOnChangeSelect = (value) => {
         setSearchingMode(false)
-        const selectedTask = project?.tasks.find(t => t.id === value)
-        setSearchValue(selectedTask.name)
-        if (selectedTask) {
-            setTrigger(selectedTask)
+        const selectedTrigger = project?.triggers.find(t => t.id === value)
+        setSearchValue(selectedTrigger.name)
+        if (selectedTrigger) {
+            setTrigger(selectedTrigger)
             setTriggerExists(true)
         } else {
             setTrigger({ ...defaultTrigger, id: nanoid(8), name: '' })
@@ -78,6 +87,7 @@ const TriggerNameField = () => {
             setTriggerExists(true)
             setSearchingMode(true)
         } else {
+            setTrigger({ ...defaultTrigger, id: nanoid(8), name: value })
             setTriggerExists(false)
             setSearchingMode(false)
         }
@@ -121,7 +131,7 @@ const TriggerNameField = () => {
                         onSearch={handleOnSearchTrigger}
                         status={trigger && trigger.name.trim() === '' ? 'error' : ''}
                         onChange={handleOnChangeSelect}
-                        options={project?.triggers.map(t => ({ label: t.name, value: t.id }))} />
+                        options={existentTriggers.map(t => ({ label: t.name, value: t.id }))} />
             }
             {
                 triggerExists

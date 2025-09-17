@@ -1,0 +1,10 @@
+.projectName{
+    display: flex;
+    align-items: center;
+}
+
+.editButton{
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}

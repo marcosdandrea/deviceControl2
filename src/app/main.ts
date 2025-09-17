@@ -3,6 +3,9 @@ import { Log } from '@src/utils/log';
 import ipcServices, { broadcastToClients } from '@src/services/ipcServices/index.js';
 import { ServerManager } from '@src/services/server/serverManager';
 import logEvents from '@common/events/log.events';
+import { loadLastProject } from '@src/domain/useCases/project';
+import path from "path";
+import { app } from "electron";
 
 const enableHeapSnapshoot = false
 const isHeadless = process.argv.includes('--headless') || process.argv.includes('--h') || process.env.HEADLESS === 'true'
@@ -43,8 +46,15 @@ const coreProcesses = async () => {
   Log.eventEmitter.on(logEvents.logError, (data) => broadcastToClients(logEvents.logError, data));
   Log.eventEmitter.on(logEvents.logDebug, (data) => broadcastToClients(logEvents.logDebug, data));
 
+  let staticFilesPath: string;
+  if (isDevelopment) {
+    staticFilesPath = path.join(process.cwd(), "dist-react");
+  } else {
+    staticFilesPath = path.join(app.getAppPath(), "dist-react");
+  }
+
   if (!isDevelopment)
-    mainServer.setStaticFiles(`${process.cwd()}/dist-react`);
+    mainServer.setStaticFiles(staticFilesPath);
 
   log.info(`Main server started on port ${mainServer.port} with Socket.IO enabled`);
 
@@ -56,9 +66,14 @@ const coreProcesses = async () => {
 
   log.info(`General purpose server started on port ${generalServer.port}.`);
 
-  const { createApp } = await import('@domain/useCases/app/index.js');
+  const { createApp } = await import('@src/domain/useCases/app/index.js');
   await createApp()
+  try {
+    await loadLastProject();
+  } catch (error) {
+    log.error('Cannot load last project:', error);
 
+  }
 }
 
 (async () => {
@@ -71,7 +86,7 @@ const coreProcesses = async () => {
     const { app } = await import('electron');
     app.whenReady().then(async () => {
       await coreProcesses();
-      const { createMainWindow } = await import('@domain/useCases/windowManager/index.js')
+      const { createMainWindow } = await import('@src/domain/useCases/windowManager/index.js')
       await createMainWindow()
 
       log.info('App is ready');
@@ -82,7 +97,7 @@ const coreProcesses = async () => {
     });
 
     app.on('activate', async () => {
-      const { createMainWindow } = await import('@domain/useCases/windowManager/index.js')
+      const { createMainWindow } = await import('@src/domain/useCases/windowManager/index.js')
       await createMainWindow()
     });
 

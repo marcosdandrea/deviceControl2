@@ -5,7 +5,6 @@ export type ConditionType = {
     id: id;
     name: name;
     description?: description;
-    timeoutValue: number;
     type: string;
     params: Record<string, any>;
 }
@@ -20,6 +19,5 @@ export type requiredConditionParamType = {
 
 export interface ConditionInterface extends ConditionType {
     evaluate: ({ abortSignal, ctx }: { abortSignal: AbortSignal, ctx: Context }) => Promise<boolean>;
-    setTimeoutValue: (timeout: number) => void;
     toJson: () => ConditionType;
 }
