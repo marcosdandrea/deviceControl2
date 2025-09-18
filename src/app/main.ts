@@ -5,7 +5,7 @@ import { ServerManager } from '@src/services/server/serverManager';
 import logEvents from '@common/events/log.events';
 import { loadLastProject } from '@src/domain/useCases/project';
 import path from "path";
-import { app } from "electron";
+import type { App } from "electron";
 
 const enableHeapSnapshoot = false
 const isHeadless = process.argv.includes('--headless') || process.argv.includes('--h') || process.env.HEADLESS === 'true'
@@ -30,6 +30,8 @@ if (enableHeapSnapshoot)
     console.log('Snapshot guardado en:', file);
   }, 15000)
 
+let electronApp: App | undefined;
+
 const coreProcesses = async () => {
 
   //server for panel and administration
@@ -49,8 +51,12 @@ const coreProcesses = async () => {
   let staticFilesPath: string;
   if (isDevelopment) {
     staticFilesPath = path.join(process.cwd(), "dist-react");
+  } else if (isHeadless) {
+    staticFilesPath = path.join(__dirname, "dist-react");
+  } else if (electronApp) {
+    staticFilesPath = path.join(electronApp.getAppPath(), "dist-react");
   } else {
-    staticFilesPath = path.join(app.getAppPath(), "dist-react");
+    staticFilesPath = path.join(process.cwd(), "dist-react");
   }
 
   if (!isDevelopment)
@@ -84,6 +90,7 @@ const coreProcesses = async () => {
   } else {
 
     const { app } = await import('electron');
+    electronApp = app;
     app.whenReady().then(async () => {
       await coreProcesses();
       const { createMainWindow } = await import('@src/domain/useCases/windowManager/index.js')
