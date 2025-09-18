@@ -21,6 +21,7 @@
     "dist:mac": "npm run clean:dist && npm run transpile:electron && npm run build:vite && electron-builder --mac --arm64",
     "dist:win": "npm run clean:dist && npm run transpile:electron && npm run build:vite && electron-builder --win --x64",
     "dist:linux": "npm run clean:dist && npm run transpile:electron && npm run build:vite && electron-builder --linux --x64",
+    "dist:raspberry": "npm run clean:dist && npm run transpile:electron && npm run build:vite && electron-builder --linux --arm64",
     "test:unit": "vitest src --reporter verbose"
   },
   "dependencies": {
