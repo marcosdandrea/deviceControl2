@@ -22,7 +22,7 @@ describe("CronTrigger Tests", () => {
         expect(cronTrigger).toBeInstanceOf(CronTrigger);
         expect(cronTrigger.name).toBe("test-cron-trigger");
         expect(cronTrigger.day).toBe(today);
-        expect(cronTrigger.dayTime).toBe(dayTime + 60000);
+        expect(cronTrigger.time).toBe(dayTime + 60000);
         expect(cronTrigger.reArmOnTrigger).toBe(true);
 
         cronTrigger.arm();

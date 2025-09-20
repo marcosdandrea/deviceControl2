@@ -12,24 +12,35 @@ export const getAppVersion = (_data: null, cb: Function) => {
 export const getServerPorts = (_data: null, cb: Function) => {
     const mainServer = ServerManager.getInstance("main");
     const generalServer = ServerManager.getInstance("general");
-    cb({ 
+    cb({
         main: mainServer.port,
         general: generalServer.port
-     });
+    });
 }
 
 export const checkUDPPortAvailability = async (data: { port: number }, cb: Function) => {
     const { port } = data;
-    const {isUdpPortAvailable} = await import('@src/utils/checkIfPortIsInUse.js');
-    isUdpPortAvailable(port).then(isAvailable => {
+    const { isUdpPortAvailable } = await import('@src/utils/checkIfPortIsInUse.js');
+    try {
+        const isAvailable = await isUdpPortAvailable(Number(port));
         cb({ isAvailable });
-    });
+    } catch (error) {
+        cb({ isAvailable: false, error: error?.message || error });
+    }
 }
 
 export const checkTCPPortAvailability = async (data: { port: number }, cb: Function) => {
     const { port } = data;
-    const {isTcpPortAvailable} = await import('@src/utils/checkIfPortIsInUse.js');
-    isTcpPortAvailable(port).then(isAvailable => {
+    const { isTcpPortAvailable } = await import('@src/utils/checkIfPortIsInUse.js');
+    try {
+        const isAvailable = await isTcpPortAvailable(Number(port));
         cb({ isAvailable });
-    });
+    } catch (error) {
+        cb({ isAvailable: false, error: error?.message || error });
+    }
+}
+
+export const getNetworkInterfaces = (_data: null, cb: Function) => {
+    const mainServer = ServerManager.getInstance("main");
+    cb({ interfaces: mainServer.getNetworkInterfaces() });
 }

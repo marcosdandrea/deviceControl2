@@ -13,7 +13,7 @@ const RoutineList = () => {
                 {
                     !project?.routines ? (
                         <div className={style.noRoutines}>
-                            <p>No routines available.</p>
+                            <p>No hay rutinas para mostrar</p>
                         </div>
                     ) :
                     project.routines.filter(r => !r.hidden).map((routine) =>

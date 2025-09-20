@@ -14,7 +14,7 @@ const JobParameters = () => {
         const thisJob = availableJobs[task.job.type]
         if (!thisJob)
             setJobParams([])
-        else{
+        else {
             const params = thisJob.params.map(param => ({
                 ...param,
                 isValid: task.job.params ? validateParam(task.job.params[param.name], param.validationMask) : false
@@ -24,20 +24,22 @@ const JobParameters = () => {
 
     }, [task, availableJobs])
 
-        if (!task || Object.keys(task.job.params).length === 0) return (<></>)
+    if (!task || Object.keys(task.job.params).length === 0) return (<></>)
 
     const handleOnChangeValue = (paramName: string, value: any) => {
         const isValid = validateParam(value, jobParams.find(p => p.name === paramName)?.validationMask)
-        setJobParams(()=>{
+        setJobParams(() => {
             const updatedJobParams = jobParams.map(p => p.name === paramName ? { ...p, isValid } : p)
-            setTask({ ...task, job: { 
-                ...task.job, 
-                invalidParams: updatedJobParams.filter(p => !p.isValid).map(p => p.name) ,
-                params: { 
-                    ...task.job.params, 
-                    [paramName]: value , 
-                },  
-            } })
+            setTask({
+                ...task, job: {
+                    ...task.job,
+                    invalidParams: updatedJobParams.filter(p => !p.isValid).map(p => p.name),
+                    params: {
+                        ...task.job.params,
+                        [paramName]: value,
+                    },
+                }
+            })
             return updatedJobParams
         })
     }
@@ -59,29 +61,43 @@ const JobParameters = () => {
                 style={{ width: '100%' }}>
                 {
                     jobParams.map(param => (
-                        <Descriptions.Item 
-                            label={param.name} 
+                        <Descriptions.Item
+                            label={param.easyName || param.name}
                             key={param.id}>
-                          {
-                            param.type === 'string' ?
-                            <Input
-                                type="text"
-                                status={validateParam(task.job.params[param.name], param.validationMask) ? '' : 'error'}
-                                value={task?.job.params ? task.job.params[param.name] : ''}
-                                onChange={(e) => handleOnChangeValue(param.name, String(e.target.value))} />
-                            : param.type === 'number' ?
-                            <Input
-                                type="number"
-                                status={validateParam(task.job.params[param.name], param.validationMask) ? '' : 'error'}
-                                value={task?.job?.params ? task.job.params[param.name] : ''}
-                                onChange={(e) => handleOnChangeValue(param.name, Number(e.target.value))} />
-                            : param.type === 'boolean' ?
-                            <Input
-                                type="checkbox"
-                                checked={task?.job?.params ? task.job.params[param.name] : false}
-                                onChange={(e) => handleOnChangeValue(param.name, Boolean(e.target.checked))} />
-                            : <span>Tipo no soportado</span>
-                          }
+                            {
+                                param.type === 'string' ?
+                                    <Input
+                                        type="text"
+                                        status={validateParam(task.job.params[param.name], param.validationMask) ? '' : 'error'}
+                                        value={task?.job.params ? task.job.params[param.name] : ''}
+                                        onChange={(e) => handleOnChangeValue(param.name, String(e.target.value))} />
+                                    : param.type === 'number' ?
+                                        <Input
+                                            type="number"
+                                            status={validateParam(task.job.params[param.name], param.validationMask) ? '' : 'error'}
+                                            value={task?.job?.params ? task.job.params[param.name] : ''}
+                                            onChange={(e) => handleOnChangeValue(param.name, Number(e.target.value))} />
+                                        : param.type === 'boolean' ?
+                                            <Input
+                                                type="checkbox"
+                                                checked={task?.job?.params ? task.job.params[param.name] : false}
+                                                onChange={(e) => handleOnChangeValue(param.name, Boolean(e.target.checked))} />
+                                            : param.type === 'textBox' ?
+                                                <Input.TextArea
+                                                    value={task?.job.params ? task.job.params[param.name] : ''}
+                                                    onChange={(e) => handleOnChangeValue(param.name, String(e.target.value))} />
+                                                : param.type === 'password' ?
+                                                    <Input.Password
+                                                        type="password"
+                                                        value={task?.job.params ? task.job.params[param.name] : ''}
+                                                        onChange={(e) => handleOnChangeValue(param.name, String(e.target.value))} />
+                                                    : param.type === 'boolean' ?
+                                                        <Input
+                                                            type="checkbox"
+                                                            checked={task?.job?.params ? task.job.params[param.name] : false}
+                                                            onChange={(e) => handleOnChangeValue(param.name, Boolean(e.target.checked))} />
+                                                        : <span>Tipo no soportado</span>
+                            }
                         </Descriptions.Item>
                     ))
                 }

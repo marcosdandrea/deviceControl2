@@ -5,23 +5,19 @@ import { ServerManager } from '@src/services/server/serverManager';
 import logEvents from '@common/events/log.events';
 import { loadLastProject } from '@src/domain/useCases/project';
 import path from "path";
-import type { App } from "electron";
 
 const enableHeapSnapshoot = false
 const isHeadless = process.argv.includes('--headless') || process.argv.includes('--h') || process.env.HEADLESS === 'true'
 const isDevelopment = process.env.NODE_ENV === 'development' || process.argv.includes('--dev');
 
+
 const log = Log.createInstance('main', true);
 
-if (isDevelopment)
-  log.info('Running in development mode');
-else
-  log.info('Running in production mode');
+if (isDevelopment) log.info('Running in development mode');
+else log.info('Running in production mode');
 
-if (isHeadless)
-  log.info('Headless mode');
-else
-  log.info('GUI mode');
+if (isHeadless) log.info('Headless mode');
+else log.info('GUI mode');
 
 if (enableHeapSnapshoot)
   setInterval(async () => {
@@ -30,7 +26,7 @@ if (enableHeapSnapshoot)
     console.log('Snapshot guardado en:', file);
   }, 15000)
 
-let electronApp: App | undefined;
+let electronApp: Electron.App | null = null;
 
 const coreProcesses = async () => {
 
@@ -53,10 +49,8 @@ const coreProcesses = async () => {
     staticFilesPath = path.join(process.cwd(), "dist-react");
   } else if (isHeadless) {
     staticFilesPath = path.join(__dirname, "dist-react");
-  } else if (electronApp) {
-    staticFilesPath = path.join(electronApp.getAppPath(), "dist-react");
   } else {
-    staticFilesPath = path.join(process.cwd(), "dist-react");
+    staticFilesPath = path.join(__dirname, "..", "dist-react");
   }
 
   if (!isDevelopment)
@@ -86,7 +80,6 @@ const coreProcesses = async () => {
 
   if (isHeadless) {
     await coreProcesses();
-
   } else {
 
     const { app } = await import('electron');
@@ -100,7 +93,10 @@ const coreProcesses = async () => {
     });
 
     app.on('window-all-closed', async () => {
-      app.quit();
+      if (process.platform !== 'darwin') {
+        log.info('All windows closed, quitting app');
+        electronApp?.quit();
+      }
     });
 
     app.on('activate', async () => {

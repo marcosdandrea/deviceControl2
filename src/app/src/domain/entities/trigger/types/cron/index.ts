@@ -1,56 +1,60 @@
-import { TriggerType } from "@common/types/trigger.type";
+import { requiredTriggerParamType, TriggerType } from "@common/types/trigger.type";
 import { Trigger } from "../..";
 import { TriggerTypes } from "@common/types/trigger.type.js";
 import triggerEvents from "@common/events/trigger.events";
 
 interface cronTriggerType extends TriggerType {
-    day: number; // 0-6, where 0 is Sunday and 6 is Saturday
-    dayTime: number; // Time in milliseconds since midnight
+    day: { value: number }; // 0-6, where 0 is Sunday and 6 is Saturday
+    dayTime: { value: number }; // Time in milliseconds since midnight
 }
 
 export class CronTrigger extends Trigger {
 
     day: number;
-    dayTime: number;
+    time: number;
 
     timeoutTimer: NodeJS.Timeout | null = null;
+    rearmTimeout: NodeJS.Timeout | null = null;
+
     static easyName = "Por día y hora";
     static moduleDescription = "Se activa en un día y hora específicos de la semana.";
 
-    constructor(params: cronTriggerType) {
+    constructor(props: cronTriggerType) {
         super({
-            ...params,
+            ...props,
+            allowAutoRearming: true,
             type: TriggerTypes.cron
         });
 
         this.validateParams();
 
-        this.day = params.day;
-        this.dayTime = params.dayTime || 0;
+        this.day = props.params.day.value;
+        this.time = props.params.time.value || 0;
 
         this.on(triggerEvents.triggerArmed, this.#handleOnArm.bind(this));
         this.on(triggerEvents.triggerDisarmed, this.#handleOnDisarm.bind(this));
     }
 
-    requiredParams() {
-        return [
-            {
-                name: "day",
-                easyName: "Día de la semana (0-6)",
+    requiredParams(): Record<string, requiredTriggerParamType> {
+        return {
+            day: {
+                easyName: "Día de la semana",
+                options: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
                 type: "number",
                 validationMask: "^(0|1|2|3|4|5|6)$",
-                description: "Day of the week to trigger (0=Sunday, 6=Saturday)",
+                description: "Day of the week to trigger",
                 required: true
             },
-            {
-                name: "dayTime",
-                easyName: "Hora del día (ms desde medianoche)",
-                type: "number",
-                validationMask: "^(0|[1-9][0-9]{0,4}|[1-8][0-9]{5}|86[0-3][0-9]{3}|864[0-7][0-9]{2}|8648[0-2][0-9]|86483[0-5])$",
-                description: "Time of day in milliseconds since midnight (0-86399999)",
+            time: {
+                easyName: "Hora del día",
+                description: "Time of day to trigger (HH:MM in 24-hour format)",
+                defaultValue: "00:00",
+                type: "time",
+                validationMask: "^(?:\\d{1,7}|[1-7]\\d{7}|8[0-5]\\d{6}|86[0-3]\\d{5}|86400000)$",
                 required: true
             }
-        ];
+        }
+            ;
     }
 
     #millisToTime(millis: number): string {
@@ -66,7 +70,7 @@ export class CronTrigger extends Trigger {
             this.timeoutTimer = null;
             this.logger.info("Cron trigger armed, previous timeout cleared");
         } else {
-            this.logger.info(`Cron trigger armed for day ${this.day} at time ${this.#millisToTime(this.dayTime)}`);
+            this.logger.info(`Cron trigger armed for day ${this.day} at time ${this.#millisToTime(this.time)}`);
         }
         this.triggered = false
 
@@ -104,18 +108,26 @@ export class CronTrigger extends Trigger {
             const now = new Date();
             const targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
             targetDate.setDate(targetDate.getDate() + ((this.day + 7 - targetDate.getDay()) % 7));
-            targetDate.setMilliseconds(this.dayTime);
-            const timeToTrigger = targetDate.getTime() - now.getTime();
+            targetDate.setMilliseconds(this.time);
+            let timeToTrigger = targetDate.getTime() - now.getTime();
 
             if (timeToTrigger < 0) {
                 this.logger.warn("Cron trigger time is in the past, adjusting to next week");
                 targetDate.setDate(targetDate.getDate() + 7);
+                timeToTrigger = targetDate.getTime() - now.getTime();
             }
 
-            this.logger.info(`Cron trigger will fire at ${targetDate.toISOString()}`);
+            this.logger.info(`Cron trigger will fire at ${targetDate.toLocaleDateString()} ${targetDate.toLocaleTimeString()} (in ${Math.round(timeToTrigger / 1000)} seconds)`);
             this.timeoutTimer = setTimeout(() => {
+                if (this.rearmTimeout)
+                    clearTimeout(this.rearmTimeout);
                 this.trigger();
                 resolve();
+                if (this.reArmOnTrigger) {
+                    this.rearmTimeout = setTimeout(() => {
+                        this.arm();
+                    }, 60000);
+                }
             }, timeToTrigger);
         });
 

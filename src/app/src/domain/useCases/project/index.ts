@@ -206,7 +206,7 @@ export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promis
       await saveLastProject();
       log.info("Project file loaded successfully:", projectContent.name);
    } catch (error) {
-      log.error(`Failed to load project file:`, error);
+      log.error(`Failed to load project file: ${error.message}`);
       return null;
    }
 

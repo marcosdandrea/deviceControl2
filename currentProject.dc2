@@ -1,477 +1,139 @@
 {
-  "id": "epxzCNZ1-7",
-  "appVersion": "2.0.0",
-  "name": "Proyecto de Prueba 17-09",
+  "id": "IjAV2pWwTo",
+  "appVersion": "2.0.24",
+  "name": "Proyecto sin título",
   "description": "",
-  "createdAt": "2025-09-17T12:53:08.080Z",
-  "updatedAt": "2025-09-17T12:53:08.080Z",
+  "createdAt": "2025-09-20T19:18:13.342Z",
+  "updatedAt": "2025-09-20T19:18:13.342Z",
   "password": null,
   "routines": [
     {
-      "id": "VVnBlJ-F9v",
-      "name": "Rutina 1",
-      "description": "Envía UDP con intervalos de 5 segundos",
+      "id": "E3p-3b62IG",
+      "name": "asdasd",
+      "description": "",
       "status": "unknown",
       "enabled": true,
-      "runInSync": true,
       "continueOnError": true,
       "isRunning": false,
-      "routineTimeout": 20000,
+      "routineTimeout": 10000,
       "autoCheckConditionEveryMs": false,
       "triggersId": [
         {
-          "id": "VVnBlJ-F9v-trigger-1",
-          "triggerId": "ydtJn15O"
+          "id": "jM3J7Pr1",
+          "triggerId": "QmHS9lWT"
         },
         {
-          "id": "VVnBlJ-F9v-trigger-2",
-          "triggerId": "0DWlU13O"
+          "id": "dvyWyUEo",
+          "triggerId": "wPewtB9P"
+        },
+        {
+          "id": "mgzwNft-",
+          "triggerId": "sBrqk8bX"
         }
       ],
       "tasksId": [
         {
-          "id": "VVnBlJ-F9v-task-1",
-          "taskId": "l9HYU0Sj"
-        },
-        {
-          "taskId": "6Ff5GAer",
-          "id": "Et-DcYox"
-        },
-        {
-          "taskId": "BE9ynQMp",
-          "id": "7KdJVQ1r"
-        },
-        {
-          "taskId": "J8s4A2Em",
-          "id": "o_o8carc"
-        },
-        {
-          "id": "VVnBlJ-F9v-task-2",
-          "taskId": "k26-mVw4"
-        },
-        {
-          "id": "VVnBlJ-F9v-task-3",
-          "taskId": "vLiHOH6t"
-        },
-        {
-          "id": "VVnBlJ-F9v-task-4",
-          "taskId": "eR0b9MUh"
-        },
-        {
-          "id": "VVnBlJ-F9v-task-5",
-          "taskId": "vLiHOH6t"
-        },
-        {
-          "id": "VVnBlJ-F9v-task-6",
-          "taskId": "mgypBUEP"
-        }
-      ]
-    },
-    {
-      "id": "W3lioPt28w",
-      "name": "Rutina 2",
-      "description": "Rutina que se ejecuta cuando se completa la rutina 1",
-      "status": "unknown",
-      "enabled": true,
-      "runInSync": true,
-      "continueOnError": true,
-      "isRunning": false,
-      "routineTimeout": 60000,
-      "autoCheckConditionEveryMs": false,
-      "triggersId": [
-        {
-          "id": "W3lioPt28w-trigger-1",
-          "triggerId": "2n1SdvOd"
-        },
-        {
-          "id": "W3lioPt28w-trigger-2",
-          "triggerId": "Yn0vZSy9"
-        }
-      ],
-      "tasksId": [
-        {
-          "id": "W3lioPt28w-task-2",
-          "taskId": "sQa_ne1A"
-        },
-        {
-          "id": "W3lioPt28w-task-1",
-          "taskId": "WteROnKh"
-        },
-        {
-          "taskId": "-KyhLfeb",
-          "id": "O4aemGmE"
-        },
-        {
-          "taskId": "yNRJzR8g",
-          "id": "r6CrTtkU"
-        },
-        {
-          "id": "nVDwCBwa",
-          "taskId": "-KyhLfeb"
-        },
-        {
-          "taskId": "63Up4tVy",
-          "id": "VvHlHtFn"
-        },
-        {
-          "id": "Ysrw4Iko",
-          "taskId": "-KyhLfeb"
-        },
-        {
-          "taskId": "qrj1vo_m",
-          "id": "8zCHe_Yp"
+          "id": "O7HDMOOm",
+          "taskId": "8yuYyIlS"
         }
       ]
     }
   ],
   "triggers": [
     {
-      "id": "ydtJn15O",
-      "name": "disparador por API",
+      "id": "QmHS9lWT",
+      "name": "asdasdsdsa",
       "description": "",
       "armed": true,
       "triggered": false,
       "reArmOnTrigger": true,
       "disableRearming": false,
       "params": {
-        "endpoint": "/disparo1"
+        "day": {
+          "easyName": "Día de la semana",
+          "options": [
+            "Domingo",
+            "Lunes",
+            "Martes",
+            "Miércoles",
+            "Jueves",
+            "Viernes",
+            "Sábado"
+          ],
+          "type": "number",
+          "validationMask": "^(0|1|2|3|4|5|6)$",
+          "description": "Day of the week to trigger",
+          "required": true,
+          "value": 6
+        },
+        "time": {
+          "easyName": "Hora del día",
+          "description": "Time of day to trigger (HH:MM in 24-hour format)",
+          "defaultValue": "00:00",
+          "type": "time",
+          "validationMask": "^(?:\\d{1,7}|[1-7]\\d{7}|8[0-5]\\d{6}|86[0-3]\\d{5}|86400000)$",
+          "required": true,
+          "value": 59340000
+        }
+      },
+      "type": "cron"
+    },
+    {
+      "id": "wPewtB9P",
+      "name": "api",
+      "description": "",
+      "armed": true,
+      "triggered": false,
+      "reArmOnTrigger": true,
+      "disableRearming": false,
+      "params": {
+        "endpoint": {
+          "easyName": "Ruta",
+          "type": "string",
+          "validationMask": "^\\/([a-zA-Z0-9-_\\/]*)$",
+          "description": "API endpoint to listen for requests (e.g., /api/trigger)",
+          "required": true,
+          "value": "/hola"
+        }
       },
       "type": "api"
     },
     {
-      "id": "0DWlU13O",
-      "name": "al iniciar",
+      "id": "sBrqk8bX",
+      "name": "asfasffs",
       "description": "",
       "armed": true,
       "triggered": false,
       "reArmOnTrigger": false,
       "disableRearming": true,
       "params": {
-        "delay": "5000"
+        "delay": {
+          "easyName": "Retraso (ms)",
+          "type": "number",
+          "validationMask": "^(0|[1-9][0-9]*)$",
+          "description": "Delay in milliseconds before triggering after start (default 0)",
+          "required": false,
+          "value": "5500"
+        }
       },
       "type": "onStart"
-    },
-    {
-      "id": "2n1SdvOd",
-      "name": "al completar Rutina 1",
-      "description": "",
-      "armed": true,
-      "triggered": false,
-      "reArmOnTrigger": true,
-      "disableRearming": false,
-      "params": {
-        "routineId": "VVnBlJ-F9v",
-        "routineEvent": "completed"
-      },
-      "type": "onRoutineEvent"
-    },
-    {
-      "id": "Yn0vZSy9",
-      "name": "Disparo por API 2",
-      "description": "",
-      "armed": true,
-      "triggered": false,
-      "reArmOnTrigger": true,
-      "disableRearming": false,
-      "params": {
-        "endpoint": "/rutina2"
-      },
-      "type": "api"
     }
   ],
   "tasks": [
     {
-      "id": "l9HYU0Sj",
-      "name": "Canal 1 al 0%",
+      "id": "8yuYyIlS",
+      "name": "asdasd",
       "description": "",
       "job": {
-        "id": "f3fdfcce-956c-4133-909f-753511402f12",
-        "name": "f3fdfcce-956c-4133-909f-753511402f12",
-        "description": "",
-        "params": {
-          "channel": 1,
-          "universe": 1,
-          "value": 0
-        },
-        "type": "sendArtnetJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "6Ff5GAer",
-      "name": "Canal 2 al 0% ",
-      "description": "",
-      "job": {
-        "id": "f3fdfcce-956c-4133-909f-753511402f12",
-        "name": "f3fdfcce-956c-4133-909f-753511402f12",
-        "description": "",
-        "params": {
-          "channel": 2,
-          "universe": 1,
-          "value": 0
-        },
-        "type": "sendArtnetJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "BE9ynQMp",
-      "name": "Canal 3 al 0% ",
-      "description": "",
-      "job": {
-        "id": "f3fdfcce-956c-4133-909f-753511402f12",
-        "name": "f3fdfcce-956c-4133-909f-753511402f12",
-        "description": "",
-        "params": {
-          "channel": 3,
-          "universe": 1,
-          "value": 0
-        },
-        "type": "sendArtnetJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "J8s4A2Em",
-      "name": "Canal 4 al 0%",
-      "description": "",
-      "job": {
-        "id": "f3fdfcce-956c-4133-909f-753511402f12",
-        "name": "f3fdfcce-956c-4133-909f-753511402f12",
-        "description": "",
-        "params": {
-          "channel": 4,
-          "universe": 1,
-          "value": 0
-        },
-        "type": "sendArtnetJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "k26-mVw4",
-      "name": "Enviar UDP 1",
-      "description": "",
-      "job": {
-        "id": "1f8cf3fe-f90c-4913-8f15-e39f5581fc11",
-        "name": "1f8cf3fe-f90c-4913-8f15-e39f5581fc11",
+        "id": "b5b13ee1-5293-4c5a-8fa2-1a5400f75c04",
+        "name": "b5b13ee1-5293-4c5a-8fa2-1a5400f75c04",
         "description": "",
         "params": {
           "ipAddress": "192.168.1.20",
           "portNumber": 12345,
-          "message": "Mensaje 1"
+          "message": "Hola"
         },
         "type": "sendUDPJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "vLiHOH6t",
-      "name": "Espera de 5 segundos",
-      "description": "",
-      "job": {
-        "id": "902a35ed-b8d2-4a0f-ae00-04ee8961c330",
-        "name": "902a35ed-b8d2-4a0f-ae00-04ee8961c330",
-        "description": "",
-        "params": {
-          "time": 5000
-        },
-        "type": "waitJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "eR0b9MUh",
-      "name": "Enviar UDP 2",
-      "description": "",
-      "job": {
-        "id": "710ed761-f5c6-4113-8c34-4b0d5af48736",
-        "name": "710ed761-f5c6-4113-8c34-4b0d5af48736",
-        "description": "",
-        "params": {
-          "ipAddress": "192.168.1.20",
-          "portNumber": 12345,
-          "message": "Mensaje 2"
-        },
-        "type": "sendUDPJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "mgypBUEP",
-      "name": "Enviar UDP 3",
-      "description": "",
-      "job": {
-        "id": "01351c52-c444-45e4-956c-31384b9644e2",
-        "name": "01351c52-c444-45e4-956c-31384b9644e2",
-        "description": "",
-        "params": {
-          "ipAddress": "192.168.1.20",
-          "portNumber": 12345,
-          "message": "Mensaje 3"
-        },
-        "type": "sendUDPJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "sQa_ne1A",
-      "name": "Envía un TCP con respuesta",
-      "description": "Tarea con condicion",
-      "job": {
-        "id": "ab169bae-cf7c-4b30-8939-06424903b3e6",
-        "name": "ab169bae-cf7c-4b30-8939-06424903b3e6",
-        "description": "",
-        "params": {
-          "time": 1
-        },
-        "type": "waitJob"
-      },
-      "condition": {
-        "id": "79e784e4-e4a9-4972-9989-b2490f695483",
-        "name": "TCP Answer Condition",
-        "description": "Condition that waits for a TCP answer",
-        "type": "tcpAnswer",
-        "params": {
-          "ip": "192.168.1.20",
-          "port": 3051,
-          "message": "Hola",
-          "answer": "Chau"
-        }
-      },
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "WteROnKh",
-      "name": "Canal 1 al maximo",
-      "description": "",
-      "job": {
-        "id": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
-        "name": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
-        "description": "",
-        "params": {
-          "channel": 1,
-          "universe": 1,
-          "value": 253
-        },
-        "type": "sendArtnetJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "-KyhLfeb",
-      "name": "Espera de 1 segundo",
-      "description": "",
-      "job": {
-        "id": "902a35ed-b8d2-4a0f-ae00-04ee8961c330",
-        "name": "902a35ed-b8d2-4a0f-ae00-04ee8961c330",
-        "description": "",
-        "params": {
-          "time": 1000
-        },
-        "type": "waitJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "yNRJzR8g",
-      "name": "Canal 2 al maximo",
-      "description": "",
-      "job": {
-        "id": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
-        "name": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
-        "description": "",
-        "params": {
-          "channel": 2,
-          "universe": 1,
-          "value": 253
-        },
-        "type": "sendArtnetJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "63Up4tVy",
-      "name": "Canal 3 al maximo",
-      "description": "",
-      "job": {
-        "id": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
-        "name": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
-        "description": "",
-        "params": {
-          "channel": 3,
-          "universe": 1,
-          "value": 253
-        },
-        "type": "sendArtnetJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "qrj1vo_m",
-      "name": "Canal 4 al maximo",
-      "description": "",
-      "job": {
-        "id": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
-        "name": "db87442e-d29a-45a8-9c62-b3f6f2afe56f",
-        "description": "",
-        "params": {
-          "channel": 4,
-          "universe": 1,
-          "value": 253
-        },
-        "type": "sendArtnetJob"
       },
       "condition": null,
       "retries": 3,

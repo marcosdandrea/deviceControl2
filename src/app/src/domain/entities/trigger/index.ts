@@ -13,6 +13,7 @@ export class Trigger extends EventEmitter implements TriggerInterface {
     triggered: boolean = false;
     reArmOnTrigger: boolean = true;
     disableRearming: boolean = false;
+    allowAutoRearming: boolean = true;
     logger: Log;
     params?: TriggerInterface["params"];
 
@@ -37,7 +38,7 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         if (props.description && typeof props.description !== 'string')
             throw new Error("Trigger description must be a string");
         this.description = props.description || "";
-        
+
         this.logger = Log.createInstance(`Trigger "${this.name}"`, true);
         this.params = props.params || {};
 
@@ -52,22 +53,25 @@ export class Trigger extends EventEmitter implements TriggerInterface {
 
     validateParams() {
         const requiredParams = this.requiredParams();
-        
-        for (const param of requiredParams) {
-            const value = this.params ? this.params[param.name] : undefined;
+        if (!requiredParams || Object.keys(requiredParams).length === 0)
+            return;
+
+        for (const paramName in requiredParams) {
+            const param = requiredParams[paramName];
+            const value = this.params ? this.params[paramName].value : undefined;
             if (param.required && (value === undefined || value === null || value === "")) {
-                throw new Error(`Missing required parameter: ${param.name}`);
+                throw new Error(`Missing required parameter: ${paramName}`);
             }
             if (value && param.validationMask) {
                 const regex = new RegExp(param.validationMask);
                 if (!regex.test(value)) {
-                    throw new Error(`Parameter "${param.name}" is invalid. It must match the pattern: ${param.validationMask}`);
+                    throw new Error(`Parameter "${paramName}" is invalid. Value (${value}) must match the pattern: ${param.validationMask}`);
                 }
             }
         }
     }
 
-    requiredParams(): requiredTriggerParamType[] {
+    requiredParams(): Record<string, requiredTriggerParamType> {
         throw new Error("Required parameters must be implemented in subclasses.");
     }
 
@@ -85,10 +89,10 @@ export class Trigger extends EventEmitter implements TriggerInterface {
 
         this.logger.info("Triggering...");
 
-        const origin = { 
-            type: "trigger", 
-            id: this.id, name: 
-            this.name 
+        const origin = {
+            type: "trigger",
+            id: this.id, name:
+                this.name
         }
         const ctx = Context.createRootContext(origin);
 
@@ -102,6 +106,9 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         if (!this.reArmOnTrigger)
             return
 
+        if (!this.allowAutoRearming) 
+            return;
+        
         this.arm();
         ctx.log.info("Trigger rearmed automatically");
 

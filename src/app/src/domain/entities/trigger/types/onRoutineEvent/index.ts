@@ -1,5 +1,5 @@
 import { Trigger } from '../..';
-import { TriggerType, TriggerTypes } from '@common/types/trigger.type';
+import { requiredTriggerParamType, TriggerType, TriggerTypes } from '@common/types/trigger.type';
 import triggerEvents from '@common/events/trigger.events';
 import { EventManager } from '@src/services/eventManager';
 import { RoutineActions } from '@src/domain/entities/routine';
@@ -33,8 +33,8 @@ export class OnRoutineEventTrigger extends Trigger {
         */
         //if (!RoutineActions.includes(options.params.routineEvent))
         //    throw new Error(`routineEvent must be one of: ${RoutineActions.join(', ')}`);
-        this.routineEvent = options.params.routineEvent;
-        this.routineId = options.params.routineId;
+        this.routineEvent = options.params.routineEvent?.value;
+        this.routineId = options.params.routineId?.value;
 
         this.eventManager = new EventManager();
 
@@ -42,10 +42,9 @@ export class OnRoutineEventTrigger extends Trigger {
         this.on(triggerEvents.triggerDisarmed, this.destroy.bind(this));
     }
 
-    requiredParams() {
-        return [
-            {
-                name: 'routineId',
+    requiredParams(): Record<string, requiredTriggerParamType> {
+        return {
+            routineId: {
                 options: "routinesID",
                 easyName: 'Nombre de la Rutina',
                 type: 'string',
@@ -53,16 +52,15 @@ export class OnRoutineEventTrigger extends Trigger {
                 description: 'ID of the routine to listen for events',
                 required: true,
             },
-            {
-                name: 'routineEvent',
+            routineEvent: {
                 easyName: 'Evento de la Rutina',
-                options: ["running","checking","completed","failed","aborted","timeout","unknown"],                            
+                options: ["running", "checking", "completed", "failed", "aborted", "timeout", "unknown"],
                 type: 'string',
                 validationMask: '^(running|checking|completed|failed|aborted|timeout|unknown)$',
                 description: 'Event of the routine to listen for (running, checking, completed, failed, aborted, unknown)',
                 required: true,
-            },
-        ];
+            }
+        }
     }
 
     private init() {

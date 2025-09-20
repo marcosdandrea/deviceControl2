@@ -23,20 +23,21 @@ export class APITrigger extends Trigger {
         
         this.validateParams();        
 
-        this.endpoint = options.params?.endpoint || "";
+        this.endpoint = options.params?.endpoint?.value || "";
 
         this.#initListeners()
     }
 
-    requiredParams(): requiredTriggerParamType[] {
-        return [{
-            name: "endpoint",
-            easyName: "Ruta",
-            type: "string",
-            validationMask: "^\\/([a-zA-Z0-9-_\\/]*)$",
-            description: "API endpoint to listen for requests (e.g., /api/trigger)",
-            required: true
-        }];
+    requiredParams(): Record<string, requiredTriggerParamType> {
+        return {
+            endpoint: {
+                easyName: "Ruta",
+                type: "string",
+                validationMask: "^\\/([a-zA-Z0-9-_\\/]*)$",
+                description: "API endpoint to listen for requests (e.g., /api/trigger)",
+                required: true
+            }
+        };
     }
 
     #initListeners() {

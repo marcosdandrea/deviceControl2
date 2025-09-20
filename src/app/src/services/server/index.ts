@@ -112,10 +112,6 @@ export class Server {
           log.info(`Server started at http://${this.ip}:${this.port}`);
           resolve();
         });
-        /*this.serverListener = this.app.listen(this.port, this.ip, () => {
-          log.info(`Server started at http://${this.ip}:${this.port}`);
-          resolve();
-        });*/
       } catch (error) {
         log.error('Failed to start server:', error);
         reject(error);
@@ -219,7 +215,7 @@ export class Server {
    * Si el servidor está en '0.0.0.0', retorna todas las IPs locales.
    * Si está en una IP específica, retorna solo esa.
    */
-  getAddresses(): string[] {
+  getNetworkInterfaces(): string[] {
     if (this.ip === '0.0.0.0') {
       const interfaces = os.networkInterfaces();
       const addresses: string[] = [];

@@ -1,5 +1,5 @@
 import { Trigger } from '../..';
-import { TriggerType, TriggerTypes } from '@common/types/trigger.type';
+import { requiredTriggerParamType, TriggerType, TriggerTypes } from '@common/types/trigger.type';
 import triggerEvents from '@common/events/trigger.events';
 
 interface OnStartTriggerOptions extends TriggerType {
@@ -29,24 +29,23 @@ export class OnStartTrigger extends Trigger {
             throw new Error('delay must be a non-negative number');
         */
 
-        this.delay = Number(options.params?.delay) ?? 0;
+        this.delay = Number(options.params?.delay?.value) ?? 0;
 
         this.on(triggerEvents.triggerArmed, this.init.bind(this));
         this.on(triggerEvents.triggerDisarmed, this.destroy.bind(this));
         this.timeoutId = null;
     }
 
-    requiredParams() {
-        return [
-            {
-                name: 'delay',
+    requiredParams(): Record<string, requiredTriggerParamType> {
+        return {
+            delay: {
                 easyName: 'Retraso (ms)',
                 type: 'number',
                 validationMask: '^(0|[1-9][0-9]*)$',
                 description: 'Delay in milliseconds before triggering after start (default 0)',
                 required: false,
-            },
-        ];
+            }
+        }
     }
 
     private init() {

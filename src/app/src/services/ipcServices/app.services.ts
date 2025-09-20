@@ -1,6 +1,8 @@
 import { getConditionTypes } from "@src/domain/entities/conditions/types"
 import { getJobTypes } from "@src/domain/entities/job/types"
 import { getTriggerTypes } from "@src/domain/entities/trigger/types"
+import {Log} from "@src/utils/log"
+const log = new Log("AppServices", true)
 
 const getAvailableTriggers = async (_args: any, callback: Function) => {
     const triggerClasses = getTriggerTypes()
@@ -26,13 +28,17 @@ const getAvailableJobs = async (_args: any, callback: Function) => {
     let jobs: Record<string, any> = {}
 
     for (const [key, modulePromise] of Object.entries(jobClasses)) {
-        const module = await modulePromise
+        try {
+            const module = await modulePromise
             jobs[key] = {
                 name: module.default.name,
                 description: module.default.description || "",
                 params: module.default.prototype.requiredParams(),
             }
+        } catch (error) {
+            log.error(`Error loading job type ${key}: ${(error as Error).message}`)
         }
+    }
     callback?.(jobs)
     return jobs
 }
@@ -43,11 +49,11 @@ const getAvailableConditions = async (_args: any, callback: Function) => {
 
     for (const [key, modulePromise] of Object.entries(conditionClasses)) {
         const module = await modulePromise
-            conditions[key] = {
-                name: module.default.name,
-                description: module.default.description || "",
-                params: module.default.prototype.requiredParams(),
-            }
+        conditions[key] = {
+            name: module.default.name,
+            description: module.default.description || "",
+            params: module.default.prototype.requiredParams(),
+        }
     }
     callback?.(conditions)
     return conditions

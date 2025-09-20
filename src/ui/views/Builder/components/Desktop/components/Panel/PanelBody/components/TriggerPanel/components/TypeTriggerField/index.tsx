@@ -11,11 +11,10 @@ const TypeTriggerField = () => {
     const handleOnChangeSelect = (value: string) => {
         const selectedTrigger = availableTriggers[value]
         if (selectedTrigger) {
-            const params = selectedTrigger.params.reduce((acc, param) => {
-                acc[param.name] = undefined;
-                return acc;
-            }, {} as Record<string, string>);
-            setTrigger({ ...trigger, ...selectedTrigger, type: value, params });
+            setTrigger({ 
+                ...trigger, 
+                type: value,
+                ...selectedTrigger });
         }
     }
 

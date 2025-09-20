@@ -6,6 +6,8 @@ export type JobType = {
     name: name;
     description?: description;
     params?: Record<string, any>;
+    timeout?: number; // in milliseconds
+    enableTimoutWatcher?: boolean;
     type?: string; // Default type, can be overridden in subclasses
 }
 

@@ -15,7 +15,7 @@ export interface WakeOnLanJobType extends JobType {
 
 export class WakeOnLanJob extends Job {
     static type = jobTypes.wakeOnLanJob;
-    static name = "Wake-on-LAN Job";
+    static name = "Wake-on-LAN";
     static description = "Sends a Wake-on-LAN (WoL) magic packet to a specified MAC address to wake up a device.";
 
     constructor(options: WakeOnLanJobType) {

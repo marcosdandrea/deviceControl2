@@ -18,7 +18,7 @@ interface SendArtnetJobParams extends JobType {
 }
 
 export class SendArtnetJob extends Job {
-    static name = "Send Art-Net Job";
+    static name = "Controlar Art-Net";
     static description = "Sends an Art-Net DMX value to a specified channel and universe.";
     static type = jobTypes.sendArtnetJob;
 

@@ -10,6 +10,7 @@ import TypeTriggerField from "./components/TypeTriggerField";
 import TriggerParameters from "./components/TriggerParameters";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
+import useGetAvailableTriggers from "@views/Builder/hooks/useGetAvailableTriggers";
 
 export const triggerContext = createContext({ trigger: undefined, setTrigger: (trigger: TriggerType) => { }, defaultTrigger: undefined, setInvalidParams: (params: string[]) => { }, invalidParams: [] as string[], triggerInstanceId: undefined });
 
@@ -29,23 +30,60 @@ const TriggerPanel = () => {
     const [trigger, setTrigger] = useState<TriggerType | undefined>(undefined);
     const [invalidParams, setInvalidParams] = useState<string[]>([]);
     const triggerInstanceId = searchParams.get('instanceId') || undefined;
+    const { availableTriggers } = useGetAvailableTriggers()
+
 
     useEffect(() => {
+        if (Object.keys(availableTriggers).length === 0)
+            return
+
+        let trigger = undefined
+        let triggerType = undefined
+        let triggerParams = {}
+
+        if (triggerId !== "newTrigger") {
+
+            trigger = project.triggers.find(t => t.id === triggerId)
+            if (!trigger){
+                console.error(`El disparador con ID '${triggerId}' no fue encontrado.`)
+                return
+            }
+
+            triggerType = availableTriggers[trigger.type]
+            if (!triggerType) {
+                console.error(`El tipo de disparador '${trigger.type}' no es válido.`)
+                return
+            }
+
+            triggerParams = Object.keys(trigger.params).reduce((acc, paramKey) => {
+                acc[paramKey] = {
+                    ...triggerType.params[paramKey],
+                    value: trigger.params[paramKey]?.value
+                };
+                return acc;
+            }, {} as Record<string, { value: string }>);
+        }
+
         if (project && triggerId) {
-            const trigger = project.triggers.find(t => t.id === triggerId)
-            if (trigger)
-                setTrigger(trigger)
+            
+            if (trigger) {
+                setTrigger({
+                    ...trigger,
+                    params: triggerParams
+                })
+            }
             else
                 setTrigger(defaultTrigger)
         } else {
             setTrigger(defaultTrigger)
         }
-    }, [project, triggerId])
+        setInvalidParams([])
+    }, [project, triggerId, availableTriggers])
 
     return (
         <triggerContext.Provider value={{ trigger, setTrigger, defaultTrigger, setInvalidParams, invalidParams, triggerInstanceId }}>
             <div className={style.triggerPanel}>
-                    <Header />
+                <Header />
                 <div className={style.body} >
                     <TriggerNameField />
                     <Input.TextArea

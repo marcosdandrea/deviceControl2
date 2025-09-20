@@ -18,7 +18,7 @@ export interface SendUDPJobType extends JobType {
 
 export class SendUDPJob extends Job {
     static description = "Sends a UDP packet to a specified IP address and port.";
-    static name = "Send UDP Packet Job"
+    static name = "Enviar paquete UDP";
     static type = jobTypes.sendUDPJob;
 
     constructor(options: SendUDPJobType) {

@@ -6,7 +6,7 @@ import { Context } from "@src/domain/entities/context";
 
 export class WaitJob extends Job {
     static description = "Waits for a specified amount of time before completing.";
-    static name = "Wait Job";
+    static name = "Esperar";
     static type = jobTypes.waitJob;
     private timeoutTimer: NodeJS.Timeout | null = null;
 

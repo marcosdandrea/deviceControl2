@@ -5,7 +5,6 @@ import { triggerContext } from '../..';
 import useProject from '@hooks/useProject';
 import { useNavigate, useParams } from 'react-router-dom';
 import { nanoid } from 'nanoid';
-import { i } from 'node_modules/vite/dist/node/types.d-aGj9QkWt';
 
 const Footer = () => {
     const { trigger, invalidParams, triggerInstanceId } = useContext(triggerContext)
@@ -70,9 +69,20 @@ const Footer = () => {
                 ...prev,
                 triggers: [...prev.triggers, trigger]
             }))
+            console.log ("Disparador agregado al proyecto")
             message.success('Disparador creado correctamente.')
-            
+
+        } else {
+
+            //actualiza el trigger en el proyecto
+            setProject(prev => ({
+                ...prev,
+                triggers: prev.triggers.map(t => t.id === trigger.id ? trigger : t)
+            }))
+            console.log ("Disparador actualizado en el proyecto")
+            message.success('Disparador actualizado correctamente.')
         }
+
         //agrega el trigger a la rutina si es que no pertenece ya
         if (!routineId) return
         const routine = project.routines.find(r => r.id === routineId)
@@ -83,15 +93,15 @@ const Footer = () => {
         if (!belongsToRoutine) {
             instanceId = nanoid(8)
             routine.triggersId.push({ id: instanceId, triggerId: trigger.id })
-            message.success('Disparador agregado a la rutina correctamente.')
-        }else{
-            message.success('Disparador actualizado correctamente.')
-        }
-        //actualiza el proyecto
-        setProject(prev => ({
-            ...prev,
-            routines: prev.routines.map(r => r.id === routineId ? routine : r)
-        }))
+            setProject(prev => ({
+                ...prev,
+                routines: prev.routines.map(r => r.id === routineId ? routine : r)
+            }))
+            console.log ("Disparador agregado a la rutina")
+            message.success(`Disparador agregado a la rutina ${routine.name}.`)
+        } 
+        //actualiza la rutina en el proyecto
+
         navigate(`/builder/${routineId}/trigger/${trigger.id}?instanceId=${instanceId}`)
     }
 
@@ -133,6 +143,8 @@ const Footer = () => {
         navigate(-1)
     }
 
+    console.log ({invalidParams, trigger})
+
     return (
         <div className={style.footer}>
             <Button
@@ -140,10 +152,10 @@ const Footer = () => {
                 onClick={handleOnClickSaveAndAdd}
                 style={{ flex: 1 }}
                 type='primary'>
-                {isANewTrigger 
-                    ? "Guardar y agregar a la rutina" 
-                    : belongsToRoutine 
-                        ? "Actualizar" 
+                {isANewTrigger
+                    ? "Guardar y agregar a la rutina"
+                    : belongsToRoutine
+                        ? "Actualizar"
                         : "Agregar a la rutina"}
             </Button>
             <Popconfirm

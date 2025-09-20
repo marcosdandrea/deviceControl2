@@ -7,7 +7,7 @@ export class Log {
   verbose: boolean;
   static eventEmitter: EventEmitter;
 
-  constructor(source: string, verbose: boolean = false, eventEmitter: EventEmitter) {
+  constructor(source: string, verbose: boolean = false, eventEmitter?: EventEmitter) {
     this.source = source;
     this.verbose = verbose;
     Log.eventEmitter = eventEmitter || new EventEmitter();

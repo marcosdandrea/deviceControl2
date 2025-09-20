@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
 import Text from "@components/Text";
 import useSystemServerPorts from "@hooks/useSystemServerPorts";
+import useGetNetworkInterfaces from "@hooks/useGetNetworkInterfaces";
 
 const ServerPortDisplay = () => {
-    const { generalServerPort } = useSystemServerPorts()
+    const {networkInterfaces} = useGetNetworkInterfaces()
+    const {generalServerPort} = useSystemServerPorts()
     const [url, setUrl] = useState("")
 
     useEffect(() => {
-        if (!generalServerPort) return
-        const url = window.location.host.split(":")[0] + ':' + generalServerPort
-        setUrl(url)
-    }, [generalServerPort])
+        if (!networkInterfaces) return
+        const url = networkInterfaces[0] 
+        setUrl(`http://${url}:${generalServerPort}`)
+    }, [networkInterfaces, generalServerPort])
 
     return (
         <Text

@@ -38,7 +38,7 @@ export const createMainWindow = async () => {
     //setWebContents(win.webContents)
     const serverManager = await import('@src/services/server/serverManager.js');
     const mainServer = serverManager.ServerManager.getInstance("main")
-    const addresses = mainServer.getAddresses()
+    const addresses = mainServer.getNetworkInterfaces()
 
     if (isDev()) {
         win.loadURL('http://localhost:5123/control');

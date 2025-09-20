@@ -8,7 +8,7 @@ interface SendTCPJobParams extends JobType {
 
 export class SendTCPJob extends Job {
     static description = "Sends a TCP packet to a specified IP address and port.";
-    static name = "Send TCP Packet Job";
+    static name = "Enviar paquete TCP";
     static type = jobTypes.sendTCPJob;
     
     answer: string | null = null;
@@ -67,8 +67,6 @@ export class SendTCPJob extends Job {
                 client.connect(portNumber, ipAddress, () => {
                     client.write(message);
                     this.log.info(`TCP packet sent successfully to ${ipAddress}:${portNumber}`);
-
-                    console.log(this.answer)
 
                     if (this.answer !== null) {
                         this.log.info(`Waiting for response matching: ${this.answer}`);

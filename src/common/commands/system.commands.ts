@@ -5,4 +5,5 @@ export default {
     getServerPorts: "getServerPorts",
     checkUDPPortAvailability: "checkUDPPortAvailability",
     checkTCPPortAvailability: "checkTCPPortAvailability",
+    getNetworkInterfaces: "getNetworkInterfaces",
 } as const;

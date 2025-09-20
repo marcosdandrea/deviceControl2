@@ -1,7 +1,7 @@
 import dgram from 'dgram';
 import { Trigger } from '../..';
 import triggerEvents from '@common/events/trigger.events';
-import { TriggerType, TriggerTypes } from '@common/types/trigger.type';
+import { requiredTriggerParamType, TriggerType, TriggerTypes } from '@common/types/trigger.type';
 import systemCommands from '@common/commands/system.commands';
 
 interface UdpTriggerOptions extends TriggerType {
@@ -28,18 +28,17 @@ export class UdpTrigger extends Trigger {
 
         this.validateParams();
 
-        this.ip = options.params.ip || '0.0.0.0';
-        this.port = options.params.port;
-        this.expectedMessage = options.params.message;
+        this.ip = options.params.ip?.value || '0.0.0.0';
+        this.port = options.params.port?.value;
+        this.expectedMessage = options.params.message?.value;
 
         this.on(triggerEvents.triggerArmed, this.init.bind(this));
         this.on(triggerEvents.triggerDisarmed, this.destroy.bind(this));
     }
 
-    requiredParams() {
-        return [
-            {
-                name: 'port',
+    requiredParams(): Record<string, requiredTriggerParamType> {
+        return {
+            port: {
                 type: 'number',
                 easyName: 'Puerto',
                 testAction: systemCommands.checkUDPPortAvailability,
@@ -47,15 +46,14 @@ export class UdpTrigger extends Trigger {
                 description: 'Port number to listen on (1-65535)',
                 required: true,
             },
-            {
-                name: 'message',
+            message: {
                 type: 'string',
                 easyName: 'Mensaje',
                 validationMask: '^.+$',
                 description: 'Message to listen for',
                 required: true,
             },
-        ];
+        }
     }
 
     private init() {

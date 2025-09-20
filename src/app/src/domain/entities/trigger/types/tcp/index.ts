@@ -1,7 +1,7 @@
 import net from 'net';
 import { Trigger } from '../..';
 import triggerEvents from '@common/events/trigger.events';
-import { TriggerType, TriggerTypes } from '@common/types/trigger.type';
+import { requiredTriggerParamType, TriggerType, TriggerTypes } from '@common/types/trigger.type';
 import { test } from 'vitest';
 import systemCommands from '@common/commands/system.commands';
 
@@ -41,18 +41,17 @@ export class TcpTrigger extends Trigger {
         throw new Error('Message must be a string');
         */
 
-        this.port = options.params.port;
-        this.ip = options.params.ip || '0.0.0.0';
-        this.expectedMessage = options.params.message;
+        this.port = options.params.port?.value;
+        this.ip = options.params.ip?.value || '0.0.0.0';
+        this.expectedMessage = options.params.message?.value;
 
         this.on(triggerEvents.triggerArmed, this.init.bind(this));
         this.on(triggerEvents.triggerDisarmed, this.destroy.bind(this));
     }
 
-    requiredParams() {
-        return [
-            {
-                name: 'port',
+    requiredParams(): Record<string, requiredTriggerParamType> {
+        return {
+            port: {
                 easyName: 'Puerto',
                 type: 'number',
                 testAction: systemCommands.checkTCPPortAvailability,
@@ -60,15 +59,14 @@ export class TcpTrigger extends Trigger {
                 description: 'Port number to listen on (1-65535)',
                 required: true,
             },
-            {
-                name: 'message',
+            message: {
                 easyName: 'Mensaje',
                 type: 'string',
                 validationMask: '^.+$',
                 description: 'Message to listen for',
                 required: true,
             },
-        ];
+        };
     }
 
     private init() {

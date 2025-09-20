@@ -2,28 +2,23 @@ import React, { useContext, useState, useEffect } from "react";
 import style from './style.module.css'
 import { triggerContext } from "../..";
 import useGetAvailableTriggers from "@views/Builder/hooks/useGetAvailableTriggers";
-import { Input, Select } from "antd";
+import { Input, Select, TimePicker } from "antd";
 import { ProjectContext } from "@contexts/projectContextProvider";
 import WarningIcon from "@components/WarningIcon";
 import useCheckPortAvailability from "@hooks/useCheckPortAvailability";
 import systemCommands from "@common/commands/system.commands";
+import dayjs from "dayjs";
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 
 const TriggerParameters = () => {
     const { project } = useContext(ProjectContext)
     const { trigger, setTrigger, invalidParams, setInvalidParams } = useContext(triggerContext)
-    const { availableTriggers } = useGetAvailableTriggers()
     const { checkUDPPort, checkTCPPort } = useCheckPortAvailability();
 
-    // Nuevo estado local para los parámetros
-    const [params, setParams] = useState(trigger?.params || {});
-
-    // Sincroniza el estado local si el trigger cambia
-    useEffect(() => {
-        setParams(trigger?.params || {});
-    }, [trigger?.params]);
-
     const validateParam = async (paramName: string, value: any, testAction?: string) => {
-        const param = availableTriggers[trigger.type]?.params.find(p => p.name === paramName)
+        const param = trigger.params[paramName];
+        if (!param) return true;
 
         const updateInvalidParams = (isValid: boolean) => {
             let newInvalidParams = [...invalidParams];
@@ -40,7 +35,7 @@ const TriggerParameters = () => {
         const checkRegex = () => {
             if (param?.validationMask) {
                 const regex = new RegExp(param.validationMask);
-                const result =  regex.test(value);
+                const result = regex.test(value);
                 updateInvalidParams(result);
                 return result;
             }
@@ -49,7 +44,7 @@ const TriggerParameters = () => {
         }
 
         if (checkUDPPort && testAction === systemCommands.checkUDPPortAvailability) {
-            checkUDPPort(value).then(({isAvailable}) => {
+            checkUDPPort(value).then(({ isAvailable }) => {
                 if (!isAvailable) {
                     updateInvalidParams(false);
                     return false;
@@ -59,7 +54,7 @@ const TriggerParameters = () => {
         }
 
         if (checkTCPPort && testAction === systemCommands.checkTCPPortAvailability) {
-            checkTCPPort(value).then(({isAvailable}) => {
+            checkTCPPort(value).then(({ isAvailable }) => {
                 if (!isAvailable) {
                     updateInvalidParams(false);
                     return false;
@@ -71,34 +66,54 @@ const TriggerParameters = () => {
         return checkRegex();
     }
 
-    const handleOnChangeParam = (paramName: string, value: any) => {
-        validateParam(paramName, value, availableTriggers[trigger.type]?.params.find(p => p.name === paramName)?.testAction);
-        setParams(prev => ({ ...prev, [paramName]: value }));
-        // Si necesitas actualizar el trigger en el contexto, hazlo aquí
-        setTrigger({ ...trigger, params: { ...trigger?.params, [paramName]: value } });
 
+    const handleOnChangeParamValue = (paramName: string, value: any) => {
+        validateParam(paramName, value, trigger.params[paramName]?.testAction);
+        // Si necesitas actualizar el trigger en el contexto, hazlo aquí
+        setTrigger({
+            ...trigger,
+            params: {
+                ...trigger?.params,
+                [paramName]: { 
+                    ...trigger?.params[paramName],
+                    value: value
+                }
+            }
+        });
+
+
+        /*
         if (trigger) {
-            trigger.params = { ...params, [paramName]: value };
-        }
+            trigger.params = { ...trigger.params, [paramName]: value };
+        }*/
     }
 
-    if (!trigger || Object.keys(params).length === 0) return null
+    if (!trigger || Object.keys(trigger.params).length === 0) return null
+
+    console.log(trigger)
 
     return (
         <div className={style.triggerParameters}>
             {
-                Object.keys(params).map(paramName => {
-                    const options = availableTriggers[trigger.type]?.params.find(p => p.name === paramName)?.options
+                Object.keys(trigger.params).map(paramName => {
+
+                    const options = trigger.params[paramName]?.options
                     let optionsList: [label: string, value: string][] = []
                     if (options == "routinesID") {
                         optionsList = project?.routines?.map(r => [r.name, r.id]) || []
                     } else {
-                        optionsList = options?.map((opt: string) => [opt, opt]) || []
+                        optionsList = options?.map((opt: string, index: number) => [opt, index]) || []
                     }
 
-                    const param = availableTriggers[trigger.type]?.params.find(p => p.name === paramName)
-                    const easyName = param?.easyName
-                    const warning = param?.warning
+
+                    const value = trigger.params[paramName]?.value || undefined
+                    const defaultValue = trigger.params[paramName]?.defaultValue || ''
+                    const easyName = trigger.params[paramName]?.easyName || paramName
+                    const moduleDescription = trigger.params[paramName]?.moduleDescription || ''
+                    const type = trigger.params[paramName]?.type
+                    const warning = trigger.params[paramName]?.warning || false
+                    const invalidValue = invalidParams.includes(paramName)
+
 
                     if (optionsList.length > 0)
                         return (
@@ -113,26 +128,75 @@ const TriggerParameters = () => {
                                         pointerEvents: 'none',
                                         borderRight: 0,
                                     }}
-                                    value={`${easyName || paramName} ${invalidParams.includes(paramName) ? <WarningIcon message={"El puerto se encuentra en uso o ha ingresado un valor de puerto inválido."} blink={true}/> : ''}`}
+                                    value={`${easyName || paramName} ${invalidValue ? <WarningIcon message={"El valor ingresado no es válido."} blink={true} /> : ''}`}
                                     readOnly
                                     tabIndex={-1} />
                                 <Select
                                     style={{ width: `calc(100% - ${warning ? '150px' : '200px'})` }}
-                                    value={params[paramName] || availableTriggers[trigger.type]?.params.find(p => p.name === paramName)?.defaultValue || undefined}
-                                    onChange={(value) => handleOnChangeParam(paramName, value)}
-                                    options={optionsList.map(([label, value]) => ({ label, value }))}/>
-                            </Input.Group>)
+                                    value={trigger.params[paramName].value || defaultValue || undefined}
+                                    onChange={(value) => handleOnChangeParamValue(paramName, value)}
+                                    options={optionsList.map(([label, key]) => ({ label, value: key }))} />
+                            </Input.Group>
+                        )
 
-                    return <Input
-                        addonBefore={<div style={{ display: 'flex', alignItems: 'center', columnGap: '0.3rem' }}>
-                            {easyName || paramName } {invalidParams.includes(paramName) ? <WarningIcon message={"El puerto se encuentra en uso o ha ingresado un valor de puerto inválido."} blink={true}/> : ''}
-                        </div>}
-                        key={paramName}
-                        status={invalidParams.includes(paramName) ? 'error' : ''}
-                        placeholder={availableTriggers[trigger.type]?.params.find(p => p.name === paramName)?.moduleDescription || ""}
-                        value={params[paramName] || availableTriggers[trigger.type]?.params.find(p => p.name === paramName)?.defaultValue || ''}
-                        onChange={(e) => handleOnChangeParam(paramName, e.target.value)}
-                    />
+                    if (trigger.params[paramName]?.type === "string")
+                        return (
+                            <Input
+                                addonBefore={<div style={{ display: 'flex', alignItems: 'center', columnGap: '0.3rem' }}>
+                                    {easyName || paramName} {invalidValue ? <WarningIcon message={"El valor ingresado no es válido."} blink={true} /> : ''}
+                                </div>}
+                                key={paramName}
+                                status={invalidValue ? 'error' : ''}
+                                placeholder={trigger.description || ""}
+                                value={value || ''}
+                                onChange={(e) => handleOnChangeParamValue(paramName, e.target.value)} />
+                        )
+
+                    if (trigger.params[paramName]?.type === "number")
+                        return (
+                            <Input
+                                type="number"
+                                addonBefore={<div style={{ display: 'flex', alignItems: 'center', columnGap: '0.3rem' }}>
+                                    {easyName || paramName} {invalidValue ? <WarningIcon message={"El valor ingresado no es válido."} blink={true} /> : ''}
+                                </div>}
+                                key={paramName}
+                                status={invalidValue ? 'error' : ''}
+                                placeholder={moduleDescription || ""}
+                                value={trigger.params[paramName]?.value || defaultValue || ''}
+                                onChange={(e) => handleOnChangeParamValue(paramName, e.target.value)} />
+                        )
+
+                    if (trigger.params[paramName]?.type === "time")
+                        return (
+                            <Input.Group
+                                key={paramName}
+                                compact>
+                                <Input
+                                    style={{
+                                        width: `${warning ? '150px' : '200px'}`,
+                                        color: "var(--text-secondary)",
+                                        backgroundColor: "var(--component-interactive)",
+                                        pointerEvents: 'none',
+                                        borderRight: 0,
+                                    }}
+                                    value={`${easyName || paramName} ${invalidValue ? <WarningIcon message={"El valor ingresado no es válido."} blink={true} /> : ''}`}
+                                    readOnly
+                                    tabIndex={-1} />
+                                <TimePicker
+                                    style={{ width: `calc(100% - ${warning ? '150px' : '200px'})` }}
+                                    onChange={(time, timeString) => {
+                                        if (!time) return;
+                                        console.log(time, timeString);
+                                        const millis = time.hour() * 3600000 + time.minute() * 60000 + time.second() * 1000;
+                                        console.log ({ millis });
+                                        handleOnChangeParamValue(paramName, millis);
+                                    }}
+                                    defaultOpenValue={dayjs('00:00:00', 'HH:mm:ss')}
+                                    value={value !== undefined ? dayjs().startOf('day').add(value, 'millisecond') : undefined}
+                                    format={'HH:mm'}
+                                />
+                            </Input.Group>
+                        )
                 }
                 )
             }

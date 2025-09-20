@@ -90,7 +90,7 @@ const PlayRoutineButton = ({ event, enabled }: { event: { event: string, data: a
             throw new Error("General server port is not defined");
         if (event?.event !== routineEvents.routineRunning) {
             let baseUrl = window.location.origin.split(":").slice(0, 2).join(":");
-            const url = `${baseUrl}:${generalServerPort}${apiTrigger?.params?.endpoint || ""}`;
+            const url = `${baseUrl}:${generalServerPort}${apiTrigger?.params?.endpoint?.value || ""}`;
             fetch(url)
         } if (event?.event === routineEvents.routineRunning) {
             emit(routineCommands.abort, routine.id);

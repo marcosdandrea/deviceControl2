@@ -10,6 +10,14 @@ const log = Log.createInstance("checkIfPortIsInUse", true);
  */
 export function isTcpPortAvailable(port: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
+        if (!port || typeof port !== "number") {
+            reject("El número de puerto debe ser un número");
+            return;
+        }
+        if (port < 0 || port > 65535) {
+            reject("El número de puerto debe estar entre 0 y 65535");
+            return;
+        }
         const server = net.createServer();
         log.info(`Checking TCP port ${port} availability...`);
 
@@ -18,7 +26,7 @@ export function isTcpPortAvailable(port: number): Promise<boolean> {
                 log.info(`TCP port ${port} is in use.`);
                 resolve(false);
             } else {
-                log.error(`Error checking TCP port ${port}:`, error);
+                log.error(`Error checking TCP port ${port}: ${error?.message || error}`);
                 reject(error);
             }
         });
@@ -40,6 +48,12 @@ export function isTcpPortAvailable(port: number): Promise<boolean> {
  */
 export function isUdpPortAvailable(port: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
+        if (!port || typeof port !== "number") {
+            return reject("El número de puerto debe ser un número");
+        }
+        if (port < 0 || port > 65535) {
+            return reject("El número de puerto debe estar entre 0 y 65535");
+        }
         const socket = dgram.createSocket("udp4");
         log.info(`Checking UDP port ${port} availability...`);
 
@@ -48,7 +62,7 @@ export function isUdpPortAvailable(port: number): Promise<boolean> {
                 log.info(`UDP port ${port} is in use.`);
                 resolve(false);
             } else {
-                log.error(`Error checking UDP port ${port}:`, error);
+                log.error(`Error checking UDP port ${port}: ${error?.message || error}`);
                 reject(error);
             }
             socket.close();

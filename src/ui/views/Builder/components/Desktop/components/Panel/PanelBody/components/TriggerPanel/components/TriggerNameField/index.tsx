@@ -6,24 +6,27 @@ import useProject from "@hooks/useProject";
 import { nanoid } from "nanoid";
 import Text from "@components/Text";
 import { MdAdd, MdEdit, MdNewLabel } from "react-icons/md";
+import useGetAvailableTriggers from "@views/Builder/hooks/useGetAvailableTriggers";
 
 const TriggerNameField = () => {
 
-    const { trigger, setTrigger, defaultTrigger } = useContext(triggerContext)
+    const { trigger, setTrigger, defaultTrigger, setInvalidParams } = useContext(triggerContext)
     const { project, setProject } = useProject({ fetchProject: false })
     const [editNameMode, setEditNameMode] = useState(false)
     const [searchValue, setSearchValue] = useState("")
     const [triggerExists, setTriggerExists] = useState(false)
     const [searchingMode, setSearchingMode] = useState(false)
     const [existentTriggers, setExistentTriggers] = useState(project?.triggers || [])
+    const { availableTriggers } = useGetAvailableTriggers()
 
-    useEffect(()=>{
-        if (project){
+
+    useEffect(() => {
+        if (project) {
             setExistentTriggers(project.triggers)
         } else {
             setExistentTriggers([])
         }
-    },[project])
+    }, [project])
 
     useEffect(() => {
         if (trigger) {
@@ -70,11 +73,27 @@ const TriggerNameField = () => {
         const selectedTrigger = project?.triggers.find(t => t.id === value)
         setSearchValue(selectedTrigger.name)
         if (selectedTrigger) {
-            setTrigger(selectedTrigger)
+            
+            const triggerType = availableTriggers[selectedTrigger.type]
+            console.log({selectedTrigger, triggerType})
+
+            const triggerParams = Object.keys(triggerType.params).reduce((acc, paramKey) => {
+                acc[paramKey] = {
+                    ...triggerType.params[paramKey],
+                    value: selectedTrigger.params[paramKey]?.value
+                };
+                return acc;
+            }, {} as Record<string, { value: string }>);
+
+            setTrigger({
+                ...selectedTrigger,
+                params: triggerParams
+            })
             setTriggerExists(true)
         } else {
             setTrigger({ ...defaultTrigger, id: nanoid(8), name: '' })
         }
+        setInvalidParams([])
     }
 
     const handleOnSearchTrigger = (value: string) => {

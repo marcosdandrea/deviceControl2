@@ -14,7 +14,7 @@ interface SendSerialJobParams extends JobType {
 }
 
 export class SendSerialJob extends Job {
-    static name = "Send Serial Job"
+    static name = "Enviar comando serial";
     static description = "Sends a message over a specified serial port.";
     static type = jobTypes.sendSerialJob;
 

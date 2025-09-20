@@ -1,6 +1,7 @@
 import crypto from "crypto";
-import { BrowserWindow } from "electron";
+import { app, BrowserWindow } from "electron";
 import { Log } from "@src/utils/log.js";
+import path from "path";
 
 const log = Log.createInstance("windowManager", true);
 
@@ -25,12 +26,15 @@ export class WindowManager {
         return WindowManager.instance;
     }
 
-    createWindow(options: { name: string; [key: string]: any }): Promise<BrowserWindow> {
+    createWindow(options: { name: string; [key: string]: any, width?: number, height?: number }): Promise<BrowserWindow> {
         return new Promise((resolve, reject) => {
             try {
-                const {name} = options
+                const {name, width, height} = options
                 const id = crypto.randomUUID();
                 const window = new BrowserWindow({
+                    width: width || 800,
+                    height: height || 452,
+                    icon: path.join(app.getAppPath(), 'resources', "png", '48x48.png'),
                     show: false,
                     ...options,
                 });
