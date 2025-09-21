@@ -17,6 +17,7 @@ const COMMANDS = {
         command: "%1POWR 0",
         expectedResponse: "%1POWR=OK",
     },
+
 } as const;
 
 type CommandKey = keyof typeof COMMANDS;
