@@ -1,0 +1,180 @@
+import { JobType, requiredJobParamType } from "@common/types/job.type";
+import { Job } from "../..";
+import { jobTypes } from "..";
+import net from "net";
+import { Context } from "@src/domain/entities/context";
+
+const PJLINK_PORT = 4352;
+
+const COMMANDS = {
+    powerOn: {
+        label: "Encender proyector",
+        command: "%1POWR 1",
+        expectedResponse: "%1POWR=OK",
+    },
+    powerOff: {
+        label: "Apagar proyector",
+        command: "%1POWR 0",
+        expectedResponse: "%1POWR=OK",
+    },
+} as const;
+
+type CommandKey = keyof typeof COMMANDS;
+
+interface SendPJLinkJobParams extends JobType {
+    params: {
+        ipAddress: string;
+        command: CommandKey;
+    }
+}
+
+export class SendPJLinkJob extends Job {
+    static description = "Envía comandos PJLink 2.10 a un proyector.";
+    static name = "Enviar comando PJLink 2.10";
+    static type = jobTypes.sendPJLinkJob;
+
+    constructor(options: SendPJLinkJobParams) {
+        super({
+            ...options,
+            type: jobTypes.sendPJLinkJob,
+            timeout: 5000,
+            enableTimoutWatcher: true,
+        });
+
+        this.validateParams();
+    }
+
+    requiredParams(): requiredJobParamType[] {
+        const commandOptions = Object.entries(COMMANDS).map(([value, data]) => ({
+            label: `${data.label} (${data.command})`,
+            value,
+        }));
+
+        return [
+            {
+                name: "ipAddress",
+                type: "string",
+                validationMask: "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
+                description: "Dirección IP del dispositivo PJLink",
+                required: true,
+            },
+            {
+                name: "command",
+                type: "select",
+                validationMask: `^(${Object.keys(COMMANDS).join("|")})$`,
+                description: "Comando PJLink a ejecutar",
+                required: true,
+                options: commandOptions,
+            },
+        ];
+    }
+
+    async job(ctx: Context): Promise<void> {
+        this.failed = false;
+        const { signal: abortSignal } = this.abortController || {};
+        const { ipAddress, command } = this.params as SendPJLinkJobParams["params"];
+
+        const selectedCommand = COMMANDS[command as CommandKey];
+        if (!selectedCommand)
+            throw new Error(`Comando PJLink desconocido: ${command}`);
+
+        ctx.log.info(`Iniciando comando PJLink ${selectedCommand.command} hacia ${ipAddress}`);
+        this.log.info(`Iniciando comando PJLink ${selectedCommand.command} hacia ${ipAddress}`);
+
+        await new Promise<void>((resolve, reject) => {
+            const client = new net.Socket();
+            let buffer = "";
+            let handshakeCompleted = false;
+            let finished = false;
+
+            const cleanup = () => {
+                if (finished) return;
+                finished = true;
+                client.removeAllListeners();
+                client.destroy();
+                if (abortSignal)
+                    abortSignal.removeEventListener("abort", onAbort);
+                clearTimeout(timeoutId);
+            };
+
+            const safeResolve = () => {
+                cleanup();
+                resolve();
+            };
+
+            const safeReject = (error: Error) => {
+                cleanup();
+                reject(error);
+            };
+
+            const onAbort = () => {
+                safeReject(new Error(`Job "${this.name}" was aborted`));
+            };
+
+            if (abortSignal) {
+                if (abortSignal.aborted) {
+                    onAbort();
+                    return;
+                }
+                abortSignal.addEventListener("abort", onAbort, { once: true });
+            }
+
+            const timeoutId = setTimeout(() => {
+                safeReject(new Error("Tiempo de espera agotado al comunicarse con el dispositivo PJLink"));
+            }, 5000);
+
+            client.setEncoding("utf8");
+
+            client.on("error", (err) => {
+                this.failed = true;
+                safeReject(err);
+            });
+
+            client.on("data", (chunk: string | Buffer) => {
+                const piece = typeof chunk === "string" ? chunk : chunk.toString("utf8");
+                buffer += piece;
+                const visible = piece.replace(/\r/g, "\\r").replace(/\n/g, "\\n");
+                this.log.debug(`PJLink RX: "${visible}"`);
+
+                if (!handshakeCompleted) {
+                    if (buffer.includes("PJLINK 1")) {
+                        safeReject(new Error("El dispositivo requiere autenticación PJLink"));
+                        return;
+                    }
+
+                    if (buffer.includes("PJLINK 0")) {
+                        handshakeCompleted = true;
+                        buffer = "";
+                        const payload = `${selectedCommand.command}\r`;
+                        client.write(payload);
+                        this.log.info(`Comando enviado: ${selectedCommand.command}`);
+
+                        if (!selectedCommand.expectedResponse) {
+                            safeResolve();
+                        }
+                    }
+
+                    return;
+                }
+
+                const normalized = buffer.replace(/\r/g, "").replace(/\n/g, "").trim();
+
+                if (normalized.includes(selectedCommand.expectedResponse)) {
+                    safeResolve();
+                    return;
+                }
+
+                if (/^%\d?ERR\d/.test(normalized)) {
+                    safeReject(new Error(`Respuesta PJLink de error: ${normalized}`));
+                }
+            });
+
+            client.connect(PJLINK_PORT, ipAddress);
+        });
+
+        this.log.info(`Comando PJLink completado correctamente en ${ipAddress}`);
+        ctx.log.info(`Comando PJLink completado correctamente en ${ipAddress}`);
+    }
+}
+
+export default SendPJLinkJob;
