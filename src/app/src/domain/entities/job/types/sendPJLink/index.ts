@@ -15,6 +15,7 @@ const COMMANDS = {
         label: "Apagar dispositivo",
         command: "%1POWR 0",
     },
+
 } as const;
 
 type CommandKey = keyof typeof COMMANDS;
@@ -28,6 +29,7 @@ interface SendPJLinkJobParams extends JobType {
 
 export class SendPJLinkJob extends Job {
     static description = "Envía comandos PJLink 2.10 a un dispositivo.";
+
     static name = "Enviar comando PJLink 2.10";
     static type = jobTypes.sendPJLinkJob;
 
@@ -153,10 +155,12 @@ export class SendPJLinkJob extends Job {
                             this.log.info(`Comando enviado: ${selectedCommand.command}`);
                             safeResolve();
                         });
+
                     }
 
                     return;
                 }
+
             });
 
             client.connect(PJLINK_PORT, ipAddress);
