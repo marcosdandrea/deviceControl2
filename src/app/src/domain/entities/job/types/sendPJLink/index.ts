@@ -15,7 +15,7 @@ const COMMANDS = {
         label: "Apagar dispositivo",
         command: "%1POWR 0",
     },
-
+  
 } as const;
 
 type CommandKey = keyof typeof COMMANDS;
