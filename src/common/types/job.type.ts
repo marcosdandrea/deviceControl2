@@ -13,10 +13,11 @@ export type JobType = {
 
 export type requiredJobParamType = {
     name: string;
-    type: "string" | "number" | "boolean" | "object" | "array";
+    type: "string" | "number" | "boolean" | "object" | "array" | "select";
     validationMask?: string; // Regex pattern as string
     description: string;
     required: boolean;
+    options?: { label: string; value: string }[];
 }
 
 export interface JobInterface extends JobType {
