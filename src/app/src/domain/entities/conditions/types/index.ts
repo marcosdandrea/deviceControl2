@@ -4,6 +4,7 @@ export const conditionTypes = {
     ping: "ping",
     tcpAnswer: "tcpAnswer",
     udpAnswer: "udpAnswer",
+    pjLinkPower: "pjLinkPower",
 } as const;
 
 export const getConditionTypes = async () : Promise<Record<string, any>> => {
@@ -12,6 +13,7 @@ export const getConditionTypes = async () : Promise<Record<string, any>> => {
         ping: await import("./ping/index.js"),
         tcpAnswer: await import("./tcpAnswer/index.js"),
         udpAnswer: await import("./udpAnswer/index.js"),
+        pjLinkPower: await import("./pjLinkPower/index.js"),
     }
     return conditions
 }

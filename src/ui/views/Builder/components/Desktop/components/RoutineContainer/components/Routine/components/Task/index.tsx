@@ -49,6 +49,8 @@ const Task = ({ taskData }) => {
                 return <MdWatchLater />;
             case "sendArtnetJob":
                 return getTextIcon("Artnet");
+            case "sendPJLinkJob":
+                return getTextIcon("PJ");
             default:
                 return null;
         }
