@@ -11,10 +11,11 @@ export type ConditionType = {
 
 export type requiredConditionParamType = {
     name: string;
-    type: "string" | "number" | "boolean" | "object";
+    type: "string" | "number" | "boolean" | "object" | "select";
     validationMask?: string;
     description: string;
     required: boolean;
+    options?: { label: string; value: string }[];
 }
 
 export interface ConditionInterface extends ConditionType {

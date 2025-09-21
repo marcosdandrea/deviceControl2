@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import style from './style.module.css'
 import { taskContext } from '../../..';
-import { Descriptions, Input } from 'antd';
+import { Descriptions, Input, Select } from 'antd';
 import useGetAvailableConditions from '@views/Builder/hooks/useGetAvailableConditions';
 import Text from '@components/Text';
 import { MdInfo } from 'react-icons/md';
@@ -25,7 +25,7 @@ const ConditionParameters = () => {
         else{
             const params = thisCondition.params.map(param => ({
                 ...param,
-                isValid: task.condition.params ? validateParam(task.condition.params[param.name], param.validationMask) : false
+                isValid: task.condition.params ? validateParam(param, task.condition.params?.[param.name]) : false
             }))
             setConditionParams(params)
         }
@@ -47,7 +47,7 @@ const ConditionParameters = () => {
 
     const handleOnChangeValue = (paramName: string, value: any) => {
         const paramDef = conditionParams.find(p => p.name === paramName);
-        const isValid = validateParam(value, paramDef?.validationMask);
+        const isValid = validateParam(paramDef, value);
 
         // Actualiza el task primero
         setTask(prevTask => {
@@ -76,13 +76,24 @@ const ConditionParameters = () => {
         );
     }
 
-    const validateParam = (value: any, validationMask: string) => {
-        if (validationMask) {
-            const regex = new RegExp(validationMask)
-            const isValid = regex.test(value)
-            return isValid
+    const validateParam = (param: any, value: any) => {
+        if (!param)
+            return false
+
+        if ((value === undefined || value === null || value === '') && param.required === false) {
+            return true
         }
-        return true
+
+        if (param.options && Array.isArray(param.options)) {
+            return param.options.some(option => option.value === value)
+        }
+
+        if (param.validationMask) {
+            const regex = new RegExp(param.validationMask)
+            return regex.test(value)
+        }
+
+        return value !== undefined && value !== null && value !== ''
     }
 
     return (
@@ -101,20 +112,28 @@ const ConditionParameters = () => {
                             param.type === 'string' ?
                             <Input
                                 type="text"
-                                status={validateParam(task.condition.params[param.name], param.validationMask) ? '' : 'error'}
-                                value={task?.condition.params ? task.condition.params[param.name] : ''}
+                                status={validateParam(param, task?.condition?.params?.[param.name]) ? '' : 'error'}
+                                value={task?.condition?.params ? task.condition.params[param.name] : ''}
                                 onChange={(e) => handleOnChangeValue(param.name, String(e.target.value))} />
                             : param.type === 'number' ?
                             <Input
                                 type="number"
-                                status={validateParam(task.condition.params[param.name], param.validationMask) ? '' : 'error'}
-                                value={task?.condition.params ? task.condition.params[param.name] : ''}
+                                status={validateParam(param, task?.condition?.params?.[param.name]) ? '' : 'error'}
+                                value={task?.condition?.params ? task.condition.params[param.name] : ''}
                                 onChange={(e) => handleOnChangeValue(param.name, Number(e.target.value))} />
                             : param.type === 'boolean' ?
                             <Input
                                 type="checkbox"
                                 checked={task?.condition?.params ? task.condition.params[param.name] : false}
                                 onChange={(e) => handleOnChangeValue(param.name, e.target.checked)} />
+                            : param.type === 'select' ?
+                            <Select
+                                style={{ width: '100%' }}
+                                value={task?.condition?.params ? task.condition.params[param.name] : undefined}
+                                onChange={(value) => handleOnChangeValue(param.name, value)}
+                                status={validateParam(param, task?.condition?.params?.[param.name]) ? '' : 'error'}
+                                options={param.options || []}
+                            />
                             : <span>Tipo no soportado</span>
                           }
                         </Descriptions.Item>
