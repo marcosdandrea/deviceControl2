@@ -8,14 +8,12 @@ const PJLINK_PORT = 4352;
 
 const COMMANDS = {
     powerOn: {
-        label: "Encender proyector",
+        label: "Encender dispositivo",
         command: "%1POWR 1",
-        expectedResponse: "%1POWR=OK",
     },
     powerOff: {
-        label: "Apagar proyector",
+        label: "Apagar dispositivo",
         command: "%1POWR 0",
-        expectedResponse: "%1POWR=OK",
     },
 
 } as const;
@@ -30,7 +28,8 @@ interface SendPJLinkJobParams extends JobType {
 }
 
 export class SendPJLinkJob extends Job {
-    static description = "Envía comandos PJLink 2.10 a un proyector.";
+    static description = "Envía comandos PJLink 2.10 a un dispositivo.";
+
     static name = "Enviar comando PJLink 2.10";
     static type = jobTypes.sendPJLinkJob;
 
@@ -47,7 +46,7 @@ export class SendPJLinkJob extends Job {
 
     requiredParams(): requiredJobParamType[] {
         const commandOptions = Object.entries(COMMANDS).map(([value, data]) => ({
-            label: `${data.label} (${data.command})`,
+            label: data.label,
             value,
         }));
 
@@ -147,27 +146,21 @@ export class SendPJLinkJob extends Job {
                         handshakeCompleted = true;
                         buffer = "";
                         const payload = `${selectedCommand.command}\r`;
-                        client.write(payload);
-                        this.log.info(`Comando enviado: ${selectedCommand.command}`);
+                        client.write(payload, (error) => {
+                            if (error) {
+                                safeReject(error);
+                                return;
+                            }
 
-                        if (!selectedCommand.expectedResponse) {
+                            this.log.info(`Comando enviado: ${selectedCommand.command}`);
                             safeResolve();
-                        }
+                        });
+
                     }
 
                     return;
                 }
 
-                const normalized = buffer.replace(/\r/g, "").replace(/\n/g, "").trim();
-
-                if (normalized.includes(selectedCommand.expectedResponse)) {
-                    safeResolve();
-                    return;
-                }
-
-                if (/^%\d?ERR\d/.test(normalized)) {
-                    safeReject(new Error(`Respuesta PJLink de error: ${normalized}`));
-                }
             });
 
             client.connect(PJLINK_PORT, ipAddress);
