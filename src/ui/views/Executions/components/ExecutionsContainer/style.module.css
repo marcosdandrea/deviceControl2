@@ -1,0 +1,11 @@
+.executionsContainer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    box-sizing: border-box;
+    border-radius: 5px;
+    column-gap: 0.5rem;
+    overflow: hidden;
+}

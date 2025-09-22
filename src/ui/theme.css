@@ -18,8 +18,17 @@
     --error: #ff4d4f;
     --warning: #faad14;
     --info: #1890ff;
+    --success: #52c41a;
+
+    --white: #ffffff;
 
     --accent-color: rgba(247, 163, 37, 0.452);
 
+
+    --routine: #0085ad;
+    --task: #03a189;
+    --trigger: #9e14fa;
+    --job: #ffaa18;
+    --condition: #13c2c2;
 }
 

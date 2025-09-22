@@ -2,7 +2,7 @@ import useProject from "@hooks/useProject";
 import { useEffect, useState } from "react";
 
 const useRoutines = () => {
-    const { project } = useProject();
+    const { project } = useProject({fetchProject: false});
     const [routines, updateRoutines] = useState(project?.routines || []);
 
     useEffect(()=>{

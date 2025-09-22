@@ -85,7 +85,7 @@ export class ConditionPJLinkPower extends Condition {
                 client.removeAllListeners();
                 client.destroy();
                 abortSignal.removeEventListener("abort", onAbort);
-                clearTimeout(timeoutId);
+                if (timeoutId) clearTimeout(timeoutId);
             };
 
             const safeResolve = () => {

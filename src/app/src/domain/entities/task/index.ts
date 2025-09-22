@@ -139,14 +139,13 @@ export class Task extends EventEmitter implements TaskInterface {
             };
 
             abortSignal.addEventListener("abort", onAbort, { once: true });
-            
+
             try {
                 this.failed = false;
                 await Promise.race([
                     this.jobsAndConditions({ abortSignal: abortJobsAndConditionsController.signal, childCtx }),
                     this.timeoutController.start(abortSignal)
                 ]);
-                childCtx.log.info(`Task "${this.name}" completed successfully`);
                 this.#dispatchEvent(taskEvents.taskCompleted, { taskId: this.id, taskName: this.name, duration: Date.now() - (this.startTime ?? Date.now()) });
                 resolve();
             } catch (error) {
@@ -167,7 +166,7 @@ export class Task extends EventEmitter implements TaskInterface {
                     this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
                     childCtx.log.error(`Task ${this.name} failed: ${error instanceof Error ? error.message : String(error)}`);
                     reject(error);
-                } 
+                }
             } finally {
                 this.timeoutController.clear();
             }
@@ -177,121 +176,126 @@ export class Task extends EventEmitter implements TaskInterface {
 
     async jobsAndConditions({ abortSignal, childCtx }: { abortSignal: AbortSignal, childCtx: Context }): Promise<void> {
 
-        this.totalRetries = 0;
-        this.failed = false;
-        this.aborted = false;
-
-        if (!this.job || typeof this.job.execute !== 'function')
-            throw new Error(`No valid job set for task "${this.name}"`);
-
-        const checkAbort = () => {
-            if (!abortSignal?.aborted) return
-            this.aborted = true;
-            throw new Error(`Task "${this.name}" aborted`);
-        }
-
-        const onTaskCompleted = () => {
+        return new Promise<void>(async (resolve, reject) => {
+            this.totalRetries = 0;
             this.failed = false;
-            const duration = Date.now() - (this.startTime ?? Date.now());
-            childCtx.log.info(`Task "${this.name}" completed successfully in ${duration}ms`);
-        }
+            this.aborted = false;
 
-        const checkCondition = async (): Promise<boolean> => {
+            if (!this.job || typeof this.job.execute !== 'function')
+                throw new Error(`No valid job set for task "${this.name}"`);
 
-            try {
-                await this.condition!.evaluate({ abortSignal, ctx: childCtx })
-                childCtx.log.info(`Condition met for task ${this.name}, finishing task execution.`);
-                onTaskCompleted();
-                return true
-            } catch (error) {
-                this.log.warn(`Condition not met for task ${this.name}`);
-                return false
+            const checkAbort = () => {
+                if (!abortSignal?.aborted) return
+                this.aborted = true;
+                throw new Error(`Task "${this.name}" aborted`);
             }
 
-        };
+            const onTaskCompleted = () => {
+                this.failed = false;
+                const duration = Date.now() - (this.startTime ?? Date.now());
+                childCtx.log.info(`Task "${this.name}" completed successfully in ${duration}ms`);
+            }
 
+            const checkCondition = async (): Promise<boolean> => {
 
-        while (this.totalRetries < this.retries) {
-            try {
-                checkAbort();
-
-                // Si hay condición y se debe chequear antes de ejecutar el job
-                if (this.condition && this.checkConditionBeforeExecution) {
-                    this.log.info(childCtx.log.info(`Checking condition before executing task ${this.name}.`));
-                    const conditionMet = await checkCondition();
-                    this.log.info(`Condition before execution for task ${this.name} evaluated to ${conditionMet}`);
-                    if (conditionMet) {
-                        // Solo termina si la condición indica que no es necesario ejecutar el job
-                        return Promise.resolve();
-                    }
-                }
-
-                this.log.info(childCtx.log.info(`Executing job for task ${this.name}, attempt ${this.totalRetries + 1} of ${this.retries}.`));
-                await this.job.execute({ abortSignal, ctx: childCtx });
-
-                // Si no hay condición, termina después de ejecutar el job
-                if (!this.condition) {
-                    this.log.info(childCtx.log.info(`No condition set for task ${this.name}, finishing task execution.`))
+                try {
+                    await this.condition!.evaluate({ abortSignal, ctx: childCtx })
+                    childCtx.log.info(`Condition met for task ${this.name}, finishing task execution.`);
                     onTaskCompleted();
-                    return Promise.resolve();
+                    return true
+                } catch (error) {
+                    this.log.warn(`Condition not met for task ${this.name}`);
+                    return false
                 }
 
-                // Si hay condición, evalúa después de ejecutar el job
-                const conditionMetAfterJob = await checkCondition();
-                if (conditionMetAfterJob) {
-                    return Promise.resolve();
+            };
+
+
+            while (this.totalRetries < this.retries) {
+                try {
+                    checkAbort();
+
+                    // Si hay condición y se debe chequear antes de ejecutar el job
+                    if (this.condition && this.checkConditionBeforeExecution) {
+                        this.log.info(childCtx.log.info(`Checking condition before executing task ${this.name}.`));
+                        const conditionMet = await checkCondition();
+                        this.log.info(`Condition before execution for task ${this.name} evaluated to ${conditionMet}`);
+                        if (conditionMet) {
+                            // Solo termina si la condición indica que no es necesario ejecutar el job
+                            resolve()
+                            return 
+                        }
+                    }
+
+                    this.log.info(childCtx.log.info(`Executing job for task ${this.name}, attempt ${this.totalRetries + 1} of ${this.retries}.`));
+                    await this.job.execute({ abortSignal, ctx: childCtx });
+
+                    // Si no hay condición, termina después de ejecutar el job
+                    if (!this.condition) {
+                        this.log.info(childCtx.log.info(`No condition set for task ${this.name}, finishing task execution.`))
+                        onTaskCompleted();
+                        resolve()
+                        return
+                    }
+
+                    // Si hay condición, evalúa después de ejecutar el job
+                    const conditionMetAfterJob = await checkCondition();
+                    if (conditionMetAfterJob) {
+                        resolve();
+                        return;
+                    }
+
+                    this.log.info(childCtx.log.info(`Condition not met after job execution, will retry.`));
+
+                } catch (error) {
+
+                    if (this.aborted) {
+                        this.timeoutController.clear();
+                        this.log.info(childCtx.log.info(`Task ${this.name} aborted, not continuing.`));
+                        throw error
+                    }
+
+                    this.log.error(childCtx.log.info(`Error in task ${this.name}: ${error instanceof Error ? error.message : String(error)}`), error);
+
+                    if (!this.continueOnError) {
+                        this.timeoutController.clear();
+                        this.log.info(childCtx.log.info(`Task ${this.name} failed and will not continue due to continueOnError being false.`));
+                        return reject(`Task ${this.name} failed and will not continue due to continueOnError being false.`);
+                    }
+
                 }
 
-                this.log.info(childCtx.log.info(`Condition not met after job execution, will retry.`));
+                this.totalRetries++;
 
-            } catch (error) {
-
-                if (this.aborted) {
+                if (this.totalRetries >= this.retries) {
                     this.timeoutController.clear();
-                    this.log.info(childCtx.log.info(`Task ${this.name} aborted, not continuing.`));
-                    throw error
+                    this.log.info(childCtx.log.info(`Max retries reached for task ${this.name}.`));
+                    this.failed = true;
+                    return reject(`Max retries reached for task ${this.name}`);
                 }
 
-                this.log.error(childCtx.log.info(`Error in task ${this.name}: ${error instanceof Error ? error.message : String(error)}`), error);
+                this.log.info(childCtx.log.info(`Retrying task ${this.name} in ${this.waitBeforeRetry}ms.`));
 
-                if (!this.continueOnError) {
-                    this.timeoutController.clear();
-                    this.log.info(childCtx.log.info(`Task ${this.name} failed and will not continue due to continueOnError being false.`));
-                    return Promise.reject(`Task ${this.name} failed and will not continue due to continueOnError being false.`);
-                }
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        abortSignal.removeEventListener('abort', onAbort);
+                        return resolve(undefined);
+                    }, this.waitBeforeRetry);
 
+                    const onAbort = () => {
+                        clearTimeout(timeout);
+                        abortSignal.removeEventListener('abort', onAbort);
+                        reject(new Error(`Task ${this.name} aborted during retry wait`));
+                    };
+
+                    if (abortSignal) {
+                        abortSignal.addEventListener('abort', onAbort);
+                    }
+                });
+
+                this.#dispatchEvent(taskEvents.taskRetrying, { taskId: this.id, taskName: this.name, attempt: this.retries, totalRetries: this.totalRetries });
             }
-
-            this.totalRetries++;
-
-            if (this.totalRetries >= this.retries) {
-                this.timeoutController.clear();
-                this.log.info(childCtx.log.info(`Max retries reached for task ${this.name}.`));
-                this.failed = true;
-                return Promise.reject(`Max retries reached for task ${this.name}`);
-            }
-
-            this.log.info(childCtx.log.info(`Retrying task ${this.name} in ${this.waitBeforeRetry}ms.`));
-
-            await new Promise((resolve, reject) => {
-                const timeout = setTimeout(() => {
-                    abortSignal.removeEventListener('abort', onAbort);
-                    return resolve(undefined);
-                }, this.waitBeforeRetry);
-
-                const onAbort = () => {
-                    clearTimeout(timeout);
-                    abortSignal.removeEventListener('abort', onAbort);
-                    reject(new Error(`Task ${this.name} aborted during retry wait`));
-                };
-
-                if (abortSignal) {
-                    abortSignal.addEventListener('abort', onAbort);
-                }
-            });
-
-            this.#dispatchEvent(taskEvents.taskRetrying, { taskId: this.id, taskName: this.name, attempt: this.retries, totalRetries: this.totalRetries });
-        }
+        })
     }
 
     #dispatchEvent(eventName: string, ...args: any[]) {

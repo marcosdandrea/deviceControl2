@@ -4,7 +4,6 @@ import Desktop from './components/Desktop';
 import StatusBar from './components/StatusBar';
 import Toolbar from './components/Toolbar';
 import { ConfigProvider, theme } from 'antd';
-import ProjectContextProvider from '@contexts/projectContextProvider';
 import LoadProjectButton from './components/Toolbar/components/LoadProjectButton';
 import DownloadProjectButton from './components/Toolbar/components/DownloadProjectButton';
 import UploadAndApplyButton from './components/Toolbar/components/UploadAndApplyButton';
@@ -15,11 +14,11 @@ import ProjectName from './components/Toolbar/components/ProjectName';
 import NewProjectButton from './components/Toolbar/components/NewProjectButton';
 import Divider from './components/Toolbar/components/Divider';
 import OpenConfigButton from './components/Toolbar/components/OpenConfigButton';
+import ExecutionsTimelineButton from './components/Toolbar/components/ExecutionsTimelineButton';
 
 const Builder = () => {
 
     return (
-        <ProjectContextProvider>
             <ConfigProvider
                 theme={{
                     algorithm: theme.darkAlgorithm,
@@ -41,13 +40,13 @@ const Builder = () => {
                         <div className={styles.toolbarRight} >
                             <OpenConfigButton />
                             <OpenControlView />
+                            <ExecutionsTimelineButton />
                             <OpenTerminalView />
                         </div>
                     </Toolbar>
                     <Desktop />
                 </div>
             </ConfigProvider >
-        </ProjectContextProvider>
     );
 }
 

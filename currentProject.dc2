@@ -1,86 +1,49 @@
 {
-  "id": "IjAV2pWwTo",
-  "appVersion": "2.0.24",
+  "id": "L379nFhyoM",
+  "appVersion": "2.0.25",
   "name": "Proyecto sin título",
   "description": "",
-  "createdAt": "2025-09-20T19:18:13.342Z",
-  "updatedAt": "2025-09-20T19:18:13.342Z",
+  "createdAt": "2025-09-21T15:25:53.170Z",
+  "updatedAt": "2025-09-21T15:25:53.170Z",
   "password": null,
   "routines": [
     {
-      "id": "E3p-3b62IG",
-      "name": "asdasd",
+      "id": "3wmnrUEYhE",
+      "name": "Rutina 1",
       "description": "",
       "status": "unknown",
       "enabled": true,
+      "runInSync": true,
       "continueOnError": true,
       "isRunning": false,
-      "routineTimeout": 10000,
+      "routineTimeout": 120000,
       "autoCheckConditionEveryMs": false,
       "triggersId": [
         {
-          "id": "jM3J7Pr1",
-          "triggerId": "QmHS9lWT"
-        },
-        {
-          "id": "dvyWyUEo",
-          "triggerId": "wPewtB9P"
-        },
-        {
-          "id": "mgzwNft-",
-          "triggerId": "sBrqk8bX"
+          "id": "EV8hXqhi",
+          "triggerId": "X4MVBo9g"
         }
       ],
       "tasksId": [
         {
-          "id": "O7HDMOOm",
-          "taskId": "8yuYyIlS"
+          "id": "XNcAXKq2",
+          "taskId": "HTRNC4N_"
+        },
+        {
+          "id": "AA7i1_Xp",
+          "taskId": "w9Qnsisy"
+        },
+        {
+          "id": "DcMAx9e9",
+          "taskId": "HTRNC4N_"
         }
       ]
     }
   ],
   "triggers": [
     {
-      "id": "QmHS9lWT",
-      "name": "asdasdsdsa",
-      "description": "",
-      "armed": true,
-      "triggered": false,
-      "reArmOnTrigger": true,
-      "disableRearming": false,
-      "params": {
-        "day": {
-          "easyName": "Día de la semana",
-          "options": [
-            "Domingo",
-            "Lunes",
-            "Martes",
-            "Miércoles",
-            "Jueves",
-            "Viernes",
-            "Sábado"
-          ],
-          "type": "number",
-          "validationMask": "^(0|1|2|3|4|5|6)$",
-          "description": "Day of the week to trigger",
-          "required": true,
-          "value": 6
-        },
-        "time": {
-          "easyName": "Hora del día",
-          "description": "Time of day to trigger (HH:MM in 24-hour format)",
-          "defaultValue": "00:00",
-          "type": "time",
-          "validationMask": "^(?:\\d{1,7}|[1-7]\\d{7}|8[0-5]\\d{6}|86[0-3]\\d{5}|86400000)$",
-          "required": true,
-          "value": 59340000
-        }
-      },
-      "type": "cron"
-    },
-    {
-      "id": "wPewtB9P",
-      "name": "api",
+      "id": "X4MVBo9g",
+      "name": "Boton",
       "description": "",
       "armed": true,
       "triggered": false,
@@ -93,44 +56,43 @@
           "validationMask": "^\\/([a-zA-Z0-9-_\\/]*)$",
           "description": "API endpoint to listen for requests (e.g., /api/trigger)",
           "required": true,
-          "value": "/hola"
+          "value": "/disparo"
         }
       },
       "type": "api"
-    },
-    {
-      "id": "sBrqk8bX",
-      "name": "asfasffs",
-      "description": "",
-      "armed": true,
-      "triggered": false,
-      "reArmOnTrigger": false,
-      "disableRearming": true,
-      "params": {
-        "delay": {
-          "easyName": "Retraso (ms)",
-          "type": "number",
-          "validationMask": "^(0|[1-9][0-9]*)$",
-          "description": "Delay in milliseconds before triggering after start (default 0)",
-          "required": false,
-          "value": "5500"
-        }
-      },
-      "type": "onStart"
     }
   ],
   "tasks": [
     {
-      "id": "8yuYyIlS",
-      "name": "asdasd",
+      "id": "HTRNC4N_",
+      "name": "Espera 5 segundos",
       "description": "",
       "job": {
-        "id": "b5b13ee1-5293-4c5a-8fa2-1a5400f75c04",
-        "name": "b5b13ee1-5293-4c5a-8fa2-1a5400f75c04",
+        "id": "31af676a-46a2-4ca3-aba4-4145f10c1374",
+        "name": "31af676a-46a2-4ca3-aba4-4145f10c1374",
         "description": "",
         "params": {
-          "ipAddress": "192.168.1.20",
-          "portNumber": 12345,
+          "time": 5000
+        },
+        "type": "waitJob"
+      },
+      "condition": null,
+      "retries": 3,
+      "timeout": 15000,
+      "waitBeforeRetry": 15000,
+      "continueOnError": true
+    },
+    {
+      "id": "w9Qnsisy",
+      "name": "Enviar UDP",
+      "description": "",
+      "job": {
+        "id": "269243cc-e544-4782-9222-3b92d68c58c2",
+        "name": "269243cc-e544-4782-9222-3b92d68c58c2",
+        "description": "",
+        "params": {
+          "ipAddress": "192.168.1.51",
+          "portNumber": 3002,
           "message": "Hola"
         },
         "type": "sendUDPJob"

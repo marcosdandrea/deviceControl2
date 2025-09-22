@@ -9,6 +9,7 @@ import appServices from './app.services';
 import systemCommands from '@common/commands/system.commands';
 import routineCommands from '@common/commands/routine.commands';
 import appCommands from '@common/commands/app.commands';
+import executionsServices from './executions.services';
 
 const log = Log.createInstance('IPC Services', false);
 
@@ -37,6 +38,11 @@ const init = (io: import('socket.io').Server) => {
         socket.on(projectCommands.loadProjectFile, projectServices.loadProjectFile);
         socket.on(projectCommands.close, projectsServices.closeProject);
         socket.on(projectCommands.getProjectFile, projectsServices.getProjectFile);
+
+        //executions
+        socket.on(projectCommands.getExecutions, executionsServices.getExecutionsList);
+        socket.on(projectCommands.getExecution, executionsServices.getExecution);
+        socket.on(projectCommands.deleteExecution, executionsServices.deleteExecution);
 
         //routines
         socket.on(routineCommands.abort, routineServeices.abortRoutine);

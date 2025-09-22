@@ -383,6 +383,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
             throw new Error(`Invalid context provided`);
         }
 
+        const routineStartTime = Date.now();
+
         this.abortController = new AbortController();
         const { signal: userAbortSignal } = this.abortController;        
         
@@ -519,7 +521,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
                         ]);
 
                 this.#setStatus("completed")
-                this.logger.info(childCtx.log.info("Routine completed successfully"));
+                this.logger.info(childCtx.log.info(`Routine completed successfully in ${Date.now() - routineStartTime}ms`));
                 this.#eventDispatcher(routineEvents.routineCompleted);
 
                 resolve();

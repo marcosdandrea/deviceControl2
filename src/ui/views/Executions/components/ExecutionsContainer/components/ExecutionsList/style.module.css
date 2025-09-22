@@ -1,0 +1,50 @@
+.executionsList {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.5rem;
+    border: 1px solid var(--component-border);
+    background-color: var(--component-background);
+    border-radius: 5px;
+}
+
+.executionListItem {
+    padding: 0.25rem;
+    box-sizing: border-box;
+    background-color: var(--component-interactive);
+    cursor: pointer;
+    border-bottom: 1px solid var(--component-border);
+    display: flex;
+    column-gap: 0.5rem;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.executionListItem:hover {
+    background-color: var(--component-active);
+}
+
+.executionListItem:active {
+    background-color: var(--component-border);
+}
+
+.tag {
+    background-color: var(--info);
+    padding: 0 0.25rem;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.deleteButton {
+    height: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: saturate(0)
+}
+
+.deleteButton:hover {
+    filter: none;
+}
