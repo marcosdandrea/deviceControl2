@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { Log } from '@src/utils/log';
-import { projectType } from '@common/types/project.types';
 import path from "path"
+import e from 'cors';
 const log = Log.createInstance('FileSystemService');
 
 export const writeFile = async (filePath: string, content: string): Promise<void> => {
@@ -49,6 +49,18 @@ export const readDirectory = async (dirPath: string): Promise<string[]> => {
         return files;
     } catch (error) {
         log.error(`Error reading directory ${dirPath}:`, error);
+        throw error;
+    }
+}
+
+export const clearDirectory = async (dirPath: string): Promise<void> => {
+    log.info(`Clearing directory: ${dirPath}`);
+    try {
+        await fs.rm(dirPath, { recursive: true, force: true });
+        await fs.mkdir(dirPath, { recursive: true });
+        log.info(`Directory cleared successfully: ${dirPath}`);
+    } catch (error) {
+        log.error(`Error clearing directory ${dirPath}:`, error);
         throw error;
     }
 }

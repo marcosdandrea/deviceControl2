@@ -5,12 +5,14 @@ import { Task } from "@src/domain/entities/task";
 import { Trigger } from "@src/domain/entities/trigger";
 import { createNewTriggerByType } from "@src/domain/entities/trigger/types";
 import { Log } from "@src/utils/log";
-import { readFile, writeFile } from "@src/services/fileSystem"
+import { clearDirectory, readFile, writeFile } from "@src/services/fileSystem"
 import { setMainWindowTitle } from "../windowManager/mainWindowTitleManager";
 import { EventManager } from "@src/services/eventManager";
 import projectEvents from "@common/events/project.events";
 import { createRoutine } from "../routine";
 import { broadcastToClients } from "@src/services/ipcServices";
+import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
+import path from "path";
 
 const log = Log.createInstance("projectUseCases", true);
 const eventManager = new EventManager();
@@ -91,6 +93,16 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
       project = Project.getInstance();
       if (!project)
          throw new Error("No project instance found. Creating a new one.");
+
+      const projectId = project.id;
+      const newProjectId = projectData.id;
+
+      if (projectId !== newProjectId) {
+         log.warn("Removing log files from previous project instance.");
+         await clearDirectory(path.join(__dirname, "../logs")).catch(err => {
+            log.error("Failed to clear logs:", err);
+         });
+      }
 
       log.warn("Closing the current project before loading a new one.");
       Project.close();
@@ -219,6 +231,9 @@ export const closeProject = (): void => {
 
    broadcastToClients(projectEvents.closed, { projectData: {} });
    eventManager.emit(projectEvents.closed);
+   clearDirectory(path.join(__dirname, "../logs")).catch(err => {
+      log.error(`Failed to clear logs on project close: ${err}`);
+   });
    log.info("Project closed successfully");
 }
 

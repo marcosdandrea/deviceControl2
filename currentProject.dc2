@@ -1,107 +1,26 @@
 {
-  "id": "L379nFhyoM",
+  "id": "AyKCuJfbUj",
   "appVersion": "2.0.25",
   "name": "Proyecto sin título",
   "description": "",
-  "createdAt": "2025-09-21T15:25:53.170Z",
-  "updatedAt": "2025-09-21T15:25:53.170Z",
+  "createdAt": "2025-09-22T17:08:11.454Z",
+  "updatedAt": "2025-09-22T17:08:11.454Z",
   "password": null,
   "routines": [
     {
-      "id": "3wmnrUEYhE",
-      "name": "Rutina 1",
+      "id": "Peme7JbiTL",
+      "name": "adasdasd",
       "description": "",
       "status": "unknown",
       "enabled": true,
-      "runInSync": true,
       "continueOnError": true,
       "isRunning": false,
-      "routineTimeout": 120000,
+      "routineTimeout": 10000,
       "autoCheckConditionEveryMs": false,
-      "triggersId": [
-        {
-          "id": "EV8hXqhi",
-          "triggerId": "X4MVBo9g"
-        }
-      ],
-      "tasksId": [
-        {
-          "id": "XNcAXKq2",
-          "taskId": "HTRNC4N_"
-        },
-        {
-          "id": "AA7i1_Xp",
-          "taskId": "w9Qnsisy"
-        },
-        {
-          "id": "DcMAx9e9",
-          "taskId": "HTRNC4N_"
-        }
-      ]
+      "triggersId": [],
+      "tasksId": []
     }
   ],
-  "triggers": [
-    {
-      "id": "X4MVBo9g",
-      "name": "Boton",
-      "description": "",
-      "armed": true,
-      "triggered": false,
-      "reArmOnTrigger": true,
-      "disableRearming": false,
-      "params": {
-        "endpoint": {
-          "easyName": "Ruta",
-          "type": "string",
-          "validationMask": "^\\/([a-zA-Z0-9-_\\/]*)$",
-          "description": "API endpoint to listen for requests (e.g., /api/trigger)",
-          "required": true,
-          "value": "/disparo"
-        }
-      },
-      "type": "api"
-    }
-  ],
-  "tasks": [
-    {
-      "id": "HTRNC4N_",
-      "name": "Espera 5 segundos",
-      "description": "",
-      "job": {
-        "id": "31af676a-46a2-4ca3-aba4-4145f10c1374",
-        "name": "31af676a-46a2-4ca3-aba4-4145f10c1374",
-        "description": "",
-        "params": {
-          "time": 5000
-        },
-        "type": "waitJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "w9Qnsisy",
-      "name": "Enviar UDP",
-      "description": "",
-      "job": {
-        "id": "269243cc-e544-4782-9222-3b92d68c58c2",
-        "name": "269243cc-e544-4782-9222-3b92d68c58c2",
-        "description": "",
-        "params": {
-          "ipAddress": "192.168.1.51",
-          "portNumber": 3002,
-          "message": "Hola"
-        },
-        "type": "sendUDPJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    }
-  ]
+  "triggers": [],
+  "tasks": []
 }
