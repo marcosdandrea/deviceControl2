@@ -170,6 +170,7 @@ export const createRoutine = async (routineData, projectData): Promise<Routine> 
       await writeFile(`./logs/routines/${id}/${executionId}.json`, JSON.stringify(data));
       await enforceExecutionLogDepthForRoutine(id);
       await broadcastToClients(projectEvents.executionsUpdated, { routineId: id });
+
     } catch (error) {
       log.error(`Failed to persist execution log for routine ${id}:`, error);
     }

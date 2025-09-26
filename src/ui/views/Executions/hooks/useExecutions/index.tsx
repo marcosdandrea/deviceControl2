@@ -19,6 +19,7 @@ const useExecutions = (
   const normalizedRoutineId = routineId || "";
 
   const getExecutionsList = useCallback(() => {
+
     if (!normalizedRoutineId) {
       setExecutionList([]);
       return;
@@ -33,6 +34,7 @@ const useExecutions = (
   }, [emit, normalizedRoutineId]);
 
   const getExecution = useCallback(() => {
+
     if (!normalizedRoutineId || !executionId) {
       setExecutionData(null);
       return;
@@ -41,6 +43,7 @@ const useExecutions = (
       projectCommands.getExecution,
       { routineId: normalizedRoutineId, executionId },
       (payload) => {
+
         if (payload?.error) {
           console.error(payload.error);
           return;
@@ -84,6 +87,7 @@ const useExecutions = (
       socket.off(projectEvents.executionsUpdated, handleExecutionsUpdated);
     };
   }, [socket, normalizedRoutineId, getExecutionsList]);
+
 
   const deleteExecution = (executionId: string) => {
     return new Promise((resolve, reject) => {

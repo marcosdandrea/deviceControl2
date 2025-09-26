@@ -182,6 +182,107 @@ const deleteAllExecutions = async (
     }
 }
 
+const downloadExecutions = async (
+    { routineId, executionIds }: { routineId: string; executionIds: string[] },
+    callback: Function,
+) => {
+    try {
+        if (!routineId) {
+            callback({ error: "Routine ID is required to download executions." });
+            return;
+        }
+        if (!executionIds || executionIds.length === 0) {
+            callback({ error: "No executions provided to download." });
+            return;
+        }
+
+        const routineLogPath = path.join(__dirname, "..", logDirectory, "routines", routineId);
+        const zip = new JSZip();
+
+        await Promise.all(executionIds.map(async executionId => {
+            const filePath = path.join(routineLogPath, `${executionId}.json`);
+            const content = await fs.readFile(filePath);
+            zip.file(`${executionId}.json`, content);
+        }));
+
+        const archive = await zip.generateAsync({ type: "nodebuffer" });
+
+        callback({
+            success: true,
+            data: archive.toString("base64"),
+            fileName: `${routineId}-executions.zip`,
+        });
+    } catch (error) {
+        console.error("Error downloading executions:", error);
+        callback({ error });
+    }
+}
+
+const deleteExecutions = async (
+    { routineId, executionIds }: { routineId: string; executionIds: string[] },
+    callback: Function,
+) => {
+    try {
+        if (!routineId) {
+            callback({ error: "Routine ID is required to delete executions." });
+            return;
+        }
+        if (!executionIds || executionIds.length === 0) {
+            callback({ error: "No executions provided to delete." });
+            return;
+        }
+
+        const routineLogPath = path.join(__dirname, "..", logDirectory, "routines", routineId);
+
+        await Promise.all(executionIds.map(async executionId => {
+            const filePath = path.join(routineLogPath, `${executionId}.json`);
+            await fileSystem.deleteFile(filePath);
+        }));
+
+        callback({ success: true });
+    } catch (error) {
+        console.error("Error deleting executions:", error);
+        callback({ error });
+    }
+}
+
+const deleteAllExecutions = async (
+    { routineId }: { routineId: string },
+    callback: Function,
+) => {
+    try {
+        if (!routineId) {
+            callback({ error: "Routine ID is required to delete executions." });
+            return;
+        }
+
+        const routineLogPath = path.join(__dirname, "..", logDirectory, "routines", routineId);
+
+        let files: string[] = [];
+        try {
+            files = await readDir(routineLogPath);
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+                callback({ success: true });
+                return;
+            }
+            throw error;
+        }
+
+        const jsonFiles = files.filter(file => file.endsWith(".json"));
+
+        await Promise.all(jsonFiles.map(async file => {
+            const filePath = path.join(routineLogPath, file);
+            await removeFile(filePath);
+        }));
+
+        callback({ success: true });
+    } catch (error) {
+        console.error("Error deleting all executions:", error);
+        callback({ error });
+    }
+}
+
 export default {
     getExecutionsList,
     getExecution,
