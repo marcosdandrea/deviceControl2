@@ -45,6 +45,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
     triggerInstances: TriggerInstance[] = [];
 
     private _anyListeners: Function[];
+    private _autoCheckTimeoutId: NodeJS.Timeout | null = null;
 
     logger: Log;
     abortController: AbortController | null;
@@ -77,7 +78,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.abortController = null
 
         this.on(routineEvents.routineEnabled, () => {
-            if (this.autoCheckConditionEveryMs != false)
+            if (this.autoCheckConditionEveryMs !== false && typeof this.autoCheckConditionEveryMs === 'number')
                 this.#autoCheckConditions();
         });
 
@@ -93,24 +94,29 @@ export class Routine extends EventEmitter implements RoutineInterface {
     }
 
     stopAutoCheckingConditions() {
-        if (this.autoCheckConditionEveryMs !== false) {
-            clearTimeout(this.autoCheckConditionEveryMs);
-            this.autoCheckConditionEveryMs = false;
+        if (this._autoCheckTimeoutId !== null) {
+            clearTimeout(this._autoCheckTimeoutId);
+            this._autoCheckTimeoutId = null;
             this.logger.info("Stopped auto checking conditions");
         }
     }
 
     async #suspendAutoCheckingConditions() {
         this.suspendAutoCheckConditions = true;
+        if (this._autoCheckTimeoutId !== null) {
+            clearTimeout(this._autoCheckTimeoutId);
+            this._autoCheckTimeoutId = null;
+        }
         this.logger.info("Suspended auto checking conditions");
     }
 
     async #resumeAutoCheckingConditions() {
-        if (this.autoCheckConditionEveryMs) {
+        this.suspendAutoCheckConditions = false;
+        if (this.autoCheckConditionEveryMs && typeof this.autoCheckConditionEveryMs === 'number') {
             this.logger.info("Resumed auto checking conditions");
-            setTimeout(() => {
-                this.#autoCheckConditions()
-            }, this.autoCheckConditionEveryMs)
+            this._autoCheckTimeoutId = setTimeout(() => {
+                this.#autoCheckConditions();
+            }, this.autoCheckConditionEveryMs);
         }
     }
 
@@ -123,7 +129,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
             return;
         }
 
-        this.suspendAutoCheckConditions = false;
+        if (this.suspendAutoCheckConditions) return;
 
         try {
             if (this.suspendAutoCheckConditions) return
@@ -151,7 +157,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
             if (this.suspendAutoCheckConditions) return
             if (typeof this.autoCheckConditionEveryMs !== "number") return;
             this.logger.info(`Auto checking conditions in ${this.autoCheckConditionEveryMs}ms`);
-            setTimeout(() => {
+            this._autoCheckTimeoutId = setTimeout(() => {
                 this.#autoCheckConditions();
             }, this.autoCheckConditionEveryMs);
         }
@@ -560,6 +566,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
     disable(): void {
         this.enabled = false;
+        this.stopAutoCheckingConditions();
         this.#eventDispatcher(routineEvents.routineDisabled);
     }
 

@@ -1,9 +1,9 @@
 import React from "react";
-import style from './style.module.css';
+import styles from './style.module.css';
 
-const Toolbar = ({children}) => {
+const Toolbar = ({children, style}: {children: React.ReactNode, style?: React.CSSProperties}) => {
     return (
-        <div className={style.toolbar} >
+        <div className={styles.toolbar} style={style}>
             {children}
         </div>
     );

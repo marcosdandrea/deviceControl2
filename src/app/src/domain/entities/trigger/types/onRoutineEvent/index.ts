@@ -4,10 +4,14 @@ import triggerEvents from '@common/events/trigger.events';
 import { EventManager } from '@src/services/eventManager';
 import { RoutineActions } from '@src/domain/entities/routine';
 
+type routineEvents = "running" | "checking" | "completed" | "failed" | "aborted" | "timeout" | "unknown";
+
 interface OnRoutineEventTriggerOptions extends TriggerType {
     routineId: string;
-    routineEvent: RoutineActions;
+    routineEvent: routineEvents;
 }
+
+const rutineEventsEnum = ["running", "checking", "completed", "failed", "aborted", "timeout", "unknown"] as unknown as routineEvents
 
 export class OnRoutineEventTrigger extends Trigger {
     static type = 'onRoutineEvent';
@@ -33,7 +37,7 @@ export class OnRoutineEventTrigger extends Trigger {
         */
         //if (!RoutineActions.includes(options.params.routineEvent))
         //    throw new Error(`routineEvent must be one of: ${RoutineActions.join(', ')}`);
-        this.routineEvent = options.params.routineEvent?.value;
+        this.routineEvent = rutineEventsEnum[options.params.routineEvent?.value];
         this.routineId = options.params.routineId?.value;
 
         this.eventManager = new EventManager();
@@ -56,7 +60,7 @@ export class OnRoutineEventTrigger extends Trigger {
                 easyName: 'Evento de la Rutina',
                 options: ["running", "checking", "completed", "failed", "aborted", "timeout", "unknown"],
                 type: 'string',
-                validationMask: '^(running|checking|completed|failed|aborted|timeout|unknown)$',
+                validationMask: '^(0|1|2|3|4|5|6)$',
                 description: 'Event of the routine to listen for (running, checking, completed, failed, aborted, unknown)',
                 required: true,
             }

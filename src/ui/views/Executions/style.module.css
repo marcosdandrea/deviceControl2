@@ -8,3 +8,20 @@
     flex-direction: column;
     row-gap: 0.5rem;
 }
+
+.toolbarLeft {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 1rem;
+    padding: 0.5rem;
+    column-gap: 0.5rem;
+}
+
+.toolbarRight {
+    flex: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

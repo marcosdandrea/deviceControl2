@@ -8,7 +8,7 @@ import useProject from "@hooks/useProject";
 const RoutineSelector = () => {
   useProject({ fetchProject: true });
 
-  const { selectedRoutineId, setSelectedRoutineId } = useContext(executionContext);
+  const { selectedRoutineId, setSelectedRoutineId, setSelectedExecutions } = useContext(executionContext);
   const { routines } = useRoutines();
   const [options, setOptions] = useState([]);
 
@@ -22,6 +22,11 @@ const RoutineSelector = () => {
     );
   }, [routines]);
 
+  const handleOnSelectionChange = (value: string) => {
+    setSelectedRoutineId(value);
+    setSelectedExecutions([]);
+  }
+
   return (
     <div className={styles.routineSelector}>
       <Select
@@ -29,7 +34,7 @@ const RoutineSelector = () => {
         placeholder="Seleccione una rutina"
         options={options}
         value={selectedRoutineId}
-        onChange={setSelectedRoutineId}
+        onChange={handleOnSelectionChange}
       />
     </div>
   );

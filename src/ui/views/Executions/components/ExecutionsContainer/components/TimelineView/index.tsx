@@ -10,11 +10,8 @@ import {
 } from "@common/types/execution.type";
 import Text from "@components/Text";
 
-type TimelineLogItem = {
-  ms: number;
-  level: "info" | "warn" | "error";
-  message: string;
-  data?: any;
+type TimelineLogItem = LogEntry & {
+  ms: string;
   source: string;
   type: "routine" | "task";
 };
@@ -40,12 +37,10 @@ const TimelineView = () => {
       children: `Rutina iniciada por "${executionData.triggeredBy.name}"`,
     });
 
-    console.log(executionData);
-    let logs = [];
+    let logs: TimelineLogItem[] = [];
     //recorrer executionData.log.entries y agregar a logs, incluyendo sub-entries
     const processLogEntry = (entry: ExecutionLog) => {
       logs = logs.concat(
-        ...logs,
         entry.logs.map((log) => ({
           ...log,
           source: entry.name,
@@ -86,7 +81,7 @@ const TimelineView = () => {
     //elimina los duplicados de logs
     Object.keys(timelineDataRaw).forEach((ts) => {
       const uniqueLogs = Array.from(
-        new Set(timelineDataRaw[ts].map((log: LogEntry) => JSON.stringify(log)))
+        new Set(timelineDataRaw[ts].map((log: TimelineLogItem) => JSON.stringify(log)))
       ).map((logStr: string) => JSON.parse(logStr));
       timelineDataRaw[ts] = uniqueLogs;
     });
@@ -104,16 +99,16 @@ const TimelineView = () => {
       );
       return {
         color: timelineDataRaw[ts].some(
-          (log: LogEntry) => log.level === "error"
+          (log: TimelineLogItem) => log.level === "error"
         )
           ? "var(--error)"
-          : timelineDataRaw[ts].some((log: LogEntry) => log.level === "warn")
+          : timelineDataRaw[ts].some((log: TimelineLogItem) => log.level === "warn")
           ? "var(--warning)"
           : "var(--success)",
         label: truncatedDate.toLocaleString(),
         children: (
           <div className={style.logEntryTsGroup} title={new Date(ts).toLocaleString()}>
-            {timelineDataRaw[ts].map((log: LogEntry, index: number) => (
+            {timelineDataRaw[ts].map((log: TimelineLogItem, index: number) => (
               <div key={index} className={style.logEntry}>
                 <div className={style.logEntryInner}>
                   <div className={style.logMS}>{log.ms}</div>
@@ -158,8 +153,6 @@ const TimelineView = () => {
     });
 
     setTimelineData(timelineData);
-
-    console.log(logs);
   }, [executionData]);
 
   if (!timelineData)
