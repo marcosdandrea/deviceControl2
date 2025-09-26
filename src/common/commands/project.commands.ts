@@ -6,4 +6,7 @@ export default {
     getExecutions: "project:getExecutions",
     getExecution: "project:getExecution",
     deleteExecution: "project:deleteExecution",
+    downloadExecutions: "project:downloadExecutions",
+    deleteExecutions: "project:deleteExecutions",
+    deleteAllExecutions: "project:deleteAllExecutions",
 } as const;

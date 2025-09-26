@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { createContext, Dispatch, SetStateAction, useState } from "react";
 import style from "./style.module.css";
-import { createContext } from "react";
 import RoutineSelector from "./components/RoutineSelector";
 import ExecutionsContainer from "./components/ExecutionsContainer";
 import { ConfigProvider, theme } from "antd";
@@ -16,7 +15,9 @@ type ExecutionContextType = {
   selectedRoutineId?: string | null;
   setSelectedRoutineId?: (id: string | null) => void;
   selectedExecutions: string[];
-  setSelectedExecutions: (ids: string[]) => void;
+  setSelectedExecutions: Dispatch<SetStateAction<string[]>>;
+  triggerExecutionsRefresh: () => void;
+  executionsRefreshToken: number;
 };
 
 export const executionContext = createContext<ExecutionContextType>({
@@ -25,7 +26,9 @@ export const executionContext = createContext<ExecutionContextType>({
   selectedRoutineId: null,
   setSelectedRoutineId: () => {},
   selectedExecutions: [],
-  setSelectedExecutions: () => {},
+  setSelectedExecutions: (() => undefined) as Dispatch<SetStateAction<string[]>>,
+  triggerExecutionsRefresh: () => {},
+  executionsRefreshToken: 0,
 
 });
 
@@ -33,6 +36,10 @@ const Executions = () => {
   const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null);
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
   const [selectedExecutions, setSelectedExecutions] = useState<string[]>([]);
+  const [executionsRefreshToken, setExecutionsRefreshToken] = useState(0);
+
+  const triggerExecutionsRefresh = () =>
+    setExecutionsRefreshToken((previousToken) => previousToken + 1);
 
   return (
     <ConfigProvider
@@ -48,6 +55,8 @@ const Executions = () => {
           setSelectedRoutineId,
           selectedExecutions,
           setSelectedExecutions,
+          triggerExecutionsRefresh,
+          executionsRefreshToken,
         }}
       >
         <div className={style.executionsView}>

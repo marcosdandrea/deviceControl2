@@ -8,5 +8,6 @@ export default {
     routineRemoved: "project:routineRemoved",
     nameChanged: "project:nameChanged",
     unsavedChanges: "project:unsavedChanges",
-    error: "project:error"
+    error: "project:error",
+    executionsUpdated: "project:executionsUpdated",
 } as const;
