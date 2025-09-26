@@ -43,6 +43,9 @@ const init = (io: import('socket.io').Server) => {
         socket.on(projectCommands.getExecutions, executionsServices.getExecutionsList);
         socket.on(projectCommands.getExecution, executionsServices.getExecution);
         socket.on(projectCommands.deleteExecution, executionsServices.deleteExecution);
+        socket.on(projectCommands.downloadExecutions, executionsServices.downloadExecutions);
+        socket.on(projectCommands.deleteExecutions, executionsServices.deleteExecutions);
+        socket.on(projectCommands.deleteAllExecutions, executionsServices.deleteAllExecutions);
 
         //routines
         socket.on(routineCommands.abort, routineServeices.abortRoutine);

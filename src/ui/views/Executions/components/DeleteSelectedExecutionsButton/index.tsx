@@ -1,15 +1,28 @@
 import React, { useContext } from "react";
 import ToolbarButton from "@views/Builder/components/Toolbar/components/ToolbarButton";
-import { MdDelete, MdDeleteForever } from "react-icons/md";
+import { MdDelete } from "react-icons/md";
 import { executionContext } from "@views/Executions";
-import { Popconfirm } from "antd";
+import { message, Popconfirm } from "antd";
+import useExecutions from "@views/Executions/hooks/useExecutions";
 
 const DeleteSelectedExecutionsButton = () => {
 
-    const { selectedExecutions } = useContext(executionContext);
+    const { selectedExecutions, selectedRoutineId, setSelectedExecutions } = useContext(executionContext);
+    const { deleteExecutions } = useExecutions(selectedRoutineId, undefined, { fetchOnMount: false });
 
-    const handleDeleteSelected = () => {
-        // Logic to delete all executions
+    const handleDeleteSelected = async () => {
+        if (!selectedRoutineId || selectedExecutions.length === 0) {
+            return;
+        }
+
+        try {
+            await deleteExecutions(selectedExecutions);
+            setSelectedExecutions([]);
+            message.success("Ejecuciones seleccionadas eliminadas correctamente.");
+        } catch (error) {
+            console.error(error);
+            message.error("No se pudieron eliminar las ejecuciones seleccionadas.");
+        }
     };
 
     return (
@@ -19,7 +32,7 @@ const DeleteSelectedExecutionsButton = () => {
             okText="Sí"
             cancelText="No">
             <ToolbarButton
-                disabled={selectedExecutions.length === 0}
+                disabled={selectedExecutions.length === 0 || !selectedRoutineId}
                 icon={<MdDelete size={18} />}
                 onClick={() => {}}/>
         </Popconfirm>
