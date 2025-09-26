@@ -3,6 +3,7 @@ import { Routine } from '@src/domain/entities/routine';
 import { Log } from '@src/utils/log';
 import { EventManager } from '@src/services/eventManager';
 import routineEvents from '@common/events/routine.events';
+import projectEvents from '@common/events/project.events';
 import { broadcastToClients } from '@src/services/ipcServices';
 import { writeFile, deleteFile as removeFile } from '@src/services/fileSystem';
 import { Task } from '@src/domain/entities/task';
@@ -168,6 +169,8 @@ export const createRoutine = async (routineData, projectData): Promise<Routine> 
 
       await writeFile(`./logs/routines/${id}/${executionId}.json`, JSON.stringify(data));
       await enforceExecutionLogDepthForRoutine(id);
+      await broadcastToClients(projectEvents.executionsUpdated, { routineId: id });
+
     } catch (error) {
       log.error(`Failed to persist execution log for routine ${id}:`, error);
     }

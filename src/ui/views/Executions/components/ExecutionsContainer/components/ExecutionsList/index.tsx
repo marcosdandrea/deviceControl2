@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import style from "./style.module.css";
-import { Input, List, message, Popconfirm } from "antd";
+import { Input, List, message } from "antd";
 import { executionContext } from "@views/Executions";
 import useExecutions from "@views/Executions/hooks/useExecutions";
 import Text from "@components/Text";
@@ -58,8 +58,16 @@ const ExecutionListItem = (data: {
 };
 
 const ExecutionsList = () => {
-  const { selectedRoutineId, setSelectedExecutionId, setSelectedExecutions, selectedExecutions } = useContext(executionContext);
-  const { executionList, deleteExecution } = useExecutions(selectedRoutineId);
+  const {
+    selectedRoutineId,
+    setSelectedExecutionId,
+    setSelectedExecutions,
+    selectedExecutions,
+    executionsRefreshToken,
+  } = useContext(executionContext);
+  const { executionList, deleteExecution, refreshExecutions } = useExecutions(
+    selectedRoutineId
+  );
   const [executionsData, setExecutionsData] = useState(executionList);
 
   console.log("Selected Executions: ", selectedExecutions);
@@ -67,7 +75,18 @@ const ExecutionsList = () => {
   useEffect(() => {
     setExecutionsData(executionList);
     setSelectedExecutionId(null);
-  }, [executionList]);
+    setSelectedExecutions((previousSelection) =>
+      previousSelection.filter((id) =>
+        executionList.some((execution) => execution.executionId === id)
+      )
+    );
+  }, [executionList, setSelectedExecutionId, setSelectedExecutions]);
+
+  useEffect(() => {
+    if (executionsRefreshToken > 0) {
+      refreshExecutions();
+    }
+  }, [executionsRefreshToken, refreshExecutions]);
 
   const handleDeleteExecution = (executionId: string) => {
     if (deleteExecution) {

@@ -1,19 +1,25 @@
 import projectCommands from "@common/commands/project.commands";
+import projectEvents from "@common/events/project.events";
 import { SocketIOContext } from "@components/SocketIOProvider";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 type UseExecutionsOptions = {
   fetchOnMount?: boolean;
 };
 
-const useExecutions = (routineId?: string | null, executionId?: string, options: UseExecutionsOptions = {}) => {
-  const { emit } = useContext(SocketIOContext);
+const useExecutions = (
+  routineId?: string | null,
+  executionId?: string,
+  options: UseExecutionsOptions = {}
+) => {
+  const { emit, socket } = useContext(SocketIOContext);
   const [executionList, setExecutionList] = useState([]);
-  const [executionData, setExecutionData] = useState([]);
+  const [executionData, setExecutionData] = useState<any>(null);
   const { fetchOnMount = true } = options;
   const normalizedRoutineId = routineId || "";
 
-  const getExecutionsList = () => {
+  const getExecutionsList = useCallback(() => {
+
     if (!normalizedRoutineId) {
       setExecutionList([]);
       return;
@@ -25,21 +31,27 @@ const useExecutions = (routineId?: string | null, executionId?: string, options:
       }
       setExecutionList(payload);
     });
-  };
+  }, [emit, normalizedRoutineId]);
 
-  const getExecution = () => {
+  const getExecution = useCallback(() => {
+
     if (!normalizedRoutineId || !executionId) {
       setExecutionData(null);
       return;
     }
-      emit(projectCommands.getExecution, { routineId: normalizedRoutineId, executionId }, (payload) => {
+    emit(
+      projectCommands.getExecution,
+      { routineId: normalizedRoutineId, executionId },
+      (payload) => {
+
         if (payload?.error) {
           console.error(payload.error);
           return;
         }
         setExecutionData(payload);
-      });
-  };
+      }
+    );
+  }, [emit, executionId, normalizedRoutineId]);
 
   useEffect(() => {
     if (!normalizedRoutineId) {
@@ -56,7 +68,26 @@ const useExecutions = (routineId?: string | null, executionId?: string, options:
         setExecutionData(null);
       }
     }
-  }, [normalizedRoutineId, executionId, fetchOnMount]);
+  }, [normalizedRoutineId, executionId, fetchOnMount, getExecutionsList, getExecution]);
+
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+
+    const handleExecutionsUpdated = (payload: { routineId?: string }) => {
+      if (payload?.routineId === normalizedRoutineId) {
+        getExecutionsList();
+      }
+    };
+
+    socket.on(projectEvents.executionsUpdated, handleExecutionsUpdated);
+
+    return () => {
+      socket.off(projectEvents.executionsUpdated, handleExecutionsUpdated);
+    };
+  }, [socket, normalizedRoutineId, getExecutionsList]);
+
 
   const deleteExecution = (executionId: string) => {
     return new Promise((resolve, reject) => {
