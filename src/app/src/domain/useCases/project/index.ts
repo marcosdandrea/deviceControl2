@@ -91,6 +91,13 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
       if (!projectData || !projectData.id) 
          throw new Error("Invalid project data provided.");
 
+      // check that major and minor version match
+      const [major, minor] = projectData.appVersion.split(".").map(Number);
+      if (major !== 2 || minor !== 0) {
+         log.error(`Incompatible project version: ${projectData.appVersion}. Expected version 2.x`);
+         throw new Error(`Incompatible project version: ${projectData.appVersion}. Expected version 2.x`);
+      }
+
       log.info("Checking for existing project instance...");
 
       project = Project.getInstance();
