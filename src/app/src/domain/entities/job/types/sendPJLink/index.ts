@@ -111,6 +111,7 @@ export class SendPJLinkJob extends Job {
 
             const onAbort = () => {
                 safeReject(new Error(dictionary("app.domain.entities.job.aborted", displayName)));
+
             };
 
             if (abortSignal) {

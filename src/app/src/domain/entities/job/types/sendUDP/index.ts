@@ -62,6 +62,7 @@ export class SendUDPJob extends Job {
         this.failed = false;
         const { signal: abortSignal } = this.abortController || {};
         const displayName = this.getDisplayName();
+
         ctx.log.info(dictionary("app.domain.entities.job.sendUdp.starting", displayName));
         this.log.info(dictionary("app.domain.entities.job.sendUdp.starting", displayName));
 
@@ -137,6 +138,7 @@ export class SendUDPJob extends Job {
             if (abortSignal) {
                 abortSignal.addEventListener("abort", () => {
                     safeReject(new Error(dictionary("app.domain.entities.job.aborted", displayName)));
+
                 });
             }
         }).finally(() => {

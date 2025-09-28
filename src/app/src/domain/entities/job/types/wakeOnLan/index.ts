@@ -56,6 +56,7 @@ export class WakeOnLanJob extends Job {
         this.failed = false;
         const { signal: abortSignal } = this.abortController || {};
         const displayName = this.getDisplayName();
+
         ctx.log.info(dictionary("app.domain.entities.job.wakeOnLan.starting", displayName));
         this.log.info(dictionary("app.domain.entities.job.wakeOnLan.starting", displayName));
 
@@ -126,6 +127,7 @@ export class WakeOnLanJob extends Job {
             if (abortSignal) {
                 abortSignal.addEventListener("abort", () => {
                     safeReject(new Error(dictionary("app.domain.entities.job.aborted", displayName)));
+
                 });
             }
         }).finally(() => {

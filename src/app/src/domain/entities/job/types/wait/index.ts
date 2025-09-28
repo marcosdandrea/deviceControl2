@@ -41,6 +41,7 @@ export class WaitJob extends Job {
                return reject(new Error(dictionary("app.domain.entities.job.abortSignalRequired", displayName)));
 
             const { time } = this.params;
+            const displayName = this.name || this.id;
             if (typeof time !== "number" || time < 0 || time > 2147483647) {
                 ctx.log.error(dictionary("app.domain.entities.job.wait.invalidTimeParameter", displayName, time));
                 this.failed = true;

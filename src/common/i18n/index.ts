@@ -15,6 +15,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
     es: {
         "app.domain.entities.job.executed": "Se ejecutó el trabajo '{1}'",
         "app.domain.entities.job.aborted": "La ejecución del trabajo '{1}' fue abortada.",
+
         "app.domain.entities.job.abortedByUser": "La ejecución del trabajo '{1}' fue abortada por el usuario.",
         "app.domain.entities.job.failed": "La ejecución del trabajo falló: {1}",
         "app.domain.entities.job.finished": "La ejecución del trabajo ha finalizado exitosamente en {1} ms.",
@@ -22,6 +23,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
         "app.domain.entities.job.wait.invalidTimeParameter": "Parámetro 'time' inválido para el trabajo '{1}': {2}",
         "app.domain.entities.job.contextRequired": "Se requiere un contexto para ejecutar el trabajo '{1}'",
         "app.domain.entities.job.abortSignalRequired": "Se requiere un AbortSignal para ejecutar el trabajo '{1}'",
+
         "app.domain.entities.job.wait.aborted": "Se abortó el trabajo '{1}'",
         "app.domain.entities.job.wait.completed": "El trabajo '{1}' se completó correctamente",
 
@@ -33,7 +35,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
 
         "app.domain.entities.job.sendTcp.failed": "Error al enviar el paquete TCP: {1}",
         "app.domain.entities.job.sendTcp.sent": "Paquete TCP enviado a {1}:{2}",
-
         "app.domain.entities.job.wakeOnLan.starting": "Iniciando el trabajo '{1}'",
         "app.domain.entities.job.wakeOnLan.failed": "Error al enviar el paquete UDP: {1}",
         "app.domain.entities.job.wakeOnLan.sent": "Paquete UDP para despertar el dispositivo con MAC '{1}' enviado al puerto {2}",
@@ -61,6 +62,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
         "app.domain.entities.routine.invalidTrigger": "La rutina '{1}' no tiene un disparador válido",
         "app.domain.entities.routine.alreadyRunning": "La rutina '{1}' ya se está ejecutando",
         "app.domain.entities.routine.invalidContext": "Se proporcionó un contexto inválido para la rutina '{1}'",
+
         "app.domain.entities.routine.autoCheckingConditions": "Autoverificando condiciones para {1} tareas",
         "app.domain.entities.routine.checkingConditionForTask": "Verificando condición para la tarea '{1}'",
         "app.domain.entities.routine.started": "La rutina '{1}' inició",
@@ -83,6 +85,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
         "app.domain.entities.routine.breakOnErrorDisabled": "La tarea falló. Se detiene la ejecución porque 'continuar en error' está deshabilitado.",
         "app.domain.entities.routine.tasksFailedDetails": "Algunas tareas fallaron. Verifica los registros para más detalles.",
         "app.domain.entities.routine.abortSignal": "Señal de aborto recibida",
+
 
         "app.domain.entities.task.starting": "Iniciando la tarea '{1}'",
         "app.domain.entities.task.aborted": "La tarea '{1}' fue abortada",
@@ -108,6 +111,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
     en: {
         "app.domain.entities.job.executed": "Job '{1}' executed",
         "app.domain.entities.job.aborted": "Job '{1}' execution was aborted.",
+
         "app.domain.entities.job.abortedByUser": "Job '{1}' execution was aborted by the user.",
         "app.domain.entities.job.failed": "Job execution failed: {1}",
         "app.domain.entities.job.finished": "Job execution finished successfully in {1} ms.",
@@ -115,6 +119,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
         "app.domain.entities.job.wait.invalidTimeParameter": "Invalid 'time' parameter for job '{1}': {2}",
         "app.domain.entities.job.contextRequired": "Context is required to execute job '{1}'",
         "app.domain.entities.job.abortSignalRequired": "AbortSignal is required to execute job '{1}'",
+
         "app.domain.entities.job.wait.aborted": "Job '{1}' was aborted",
         "app.domain.entities.job.wait.completed": "Job '{1}' completed successfully",
 
@@ -126,7 +131,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
 
         "app.domain.entities.job.sendTcp.failed": "Failed to send TCP packet: {1}",
         "app.domain.entities.job.sendTcp.sent": "TCP packet sent to {1}:{2}",
-
         "app.domain.entities.job.wakeOnLan.starting": "Starting job '{1}'",
         "app.domain.entities.job.wakeOnLan.failed": "Failed to send UDP packet: {1}",
         "app.domain.entities.job.wakeOnLan.sent": "UDP packet to wake device with MAC '{1}' sent to port {2}",
@@ -154,6 +158,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
         "app.domain.entities.routine.invalidTrigger": "Routine '{1}' is not triggered by a valid trigger",
         "app.domain.entities.routine.alreadyRunning": "Routine '{1}' is already running",
         "app.domain.entities.routine.invalidContext": "An invalid context was provided for routine '{1}'",
+
         "app.domain.entities.routine.autoCheckingConditions": "Autochecking conditions for {1} tasks",
         "app.domain.entities.routine.checkingConditionForTask": "Checking condition for task '{1}'",
         "app.domain.entities.routine.started": "Routine '{1}' started",
@@ -176,6 +181,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
         "app.domain.entities.routine.breakOnErrorDisabled": "Task failed. Breaking execution because 'Continue on error' is disabled.",
         "app.domain.entities.routine.tasksFailedDetails": "Some tasks failed. Check logs for details.",
         "app.domain.entities.routine.abortSignal": "Abort signal received",
+
 
         "app.domain.entities.task.starting": "Starting task '{1}'",
         "app.domain.entities.task.aborted": "Task '{1}' aborted",

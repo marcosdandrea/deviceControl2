@@ -424,6 +424,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
         const childCtx = ctx.createChildContext(ctxNode);
         childCtx.log.info(dictionary("app.domain.entities.routine.started", displayName));
 
+
         childCtx.onFinish((data) => {
             this.#eventDispatcher(routineEvents.routineFinished, data);
         });

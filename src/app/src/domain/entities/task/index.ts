@@ -155,10 +155,12 @@ export class Task extends EventEmitter implements TaskInterface {
                     this.aborted = true;
                     this.timeoutController.clear();
                     childCtx.log.info(dictionary("app.domain.entities.task.aborted", displayName));
+
                     this.#dispatchEvent(taskEvents.taskAborted, { taskId: this.id, taskName: this.name });
                     reject(new Error(dictionary("app.domain.entities.task.aborted", displayName)));
                 } else if (this.timeoutController.timedout) {
                     childCtx.log.error(dictionary("app.domain.entities.task.timedOut", displayName));
+
                     abortJobsAndConditionsController.abort();
                     this.failed = true;
                     this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
@@ -220,6 +222,7 @@ export class Task extends EventEmitter implements TaskInterface {
                     // Si hay condición y se debe chequear antes de ejecutar el job
                     if (this.condition && this.checkConditionBeforeExecution) {
             this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.checkingConditionBefore", this.getDisplayName())));
+
                         const conditionMet = await checkCondition();
                         this.log.info(`Condition before execution for task ${this.name} evaluated to ${conditionMet}`);
                         if (conditionMet) {
@@ -263,6 +266,7 @@ export class Task extends EventEmitter implements TaskInterface {
                         this.timeoutController.clear();
                         this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.failedNoContinue", this.getDisplayName())));
                         return reject(new Error(dictionary("app.domain.entities.task.failedNoContinue", this.getDisplayName())));
+
                     }
 
                 }
