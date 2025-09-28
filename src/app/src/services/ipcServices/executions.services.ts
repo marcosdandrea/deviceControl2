@@ -43,6 +43,7 @@ const getExecutionsList = async ({ routineId }: { routineId: string }, callback:
 
         if (routineId) {
             executions = await getRoutineExecutions(routineId);
+            executions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
             callback(executions);
         } else {
             callback({ error: "Routine ID is required to fetch executions." });
