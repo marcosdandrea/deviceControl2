@@ -13,6 +13,8 @@ export const dictionary = (key: string, ...params: Array<string | number>): stri
 
 const translations: { [key: string]: { [key: string]: string } } = {
     es: {
+        "app.domain.useCases.project.newProject": "Nuevo proyecto",
+
         "app.domain.entities.job.executed": "Se ejecutó el trabajo '{1}'",
         "app.domain.entities.job.aborted": "La ejecución del trabajo '{1}' fue abortada.",
 
@@ -109,6 +111,8 @@ const translations: { [key: string]: { [key: string]: string } } = {
         "app.domain.entities.condition.notMet": "La condición '{1}' no se cumplió.",
     },
     en: {
+        "app.domain.useCases.project.newProject": "New Project",
+
         "app.domain.entities.job.executed": "Job '{1}' executed",
         "app.domain.entities.job.aborted": "Job '{1}' execution was aborted.",
 

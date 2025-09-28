@@ -79,6 +79,26 @@ const useProject = (params: { fetchProject?: boolean }) => {
 
     }, [socket]);
 
+    const createNewProject = async () => {
+        if (!socket) return;
+
+        return new Promise<void>((resolve, reject) => {
+
+            emit(projectCommands.create, null, (response: { success?: boolean; error?: string, projectData?: projectType }) => {
+                if (response.error) {
+                    reject(new Error(response.error));
+                    Logger.error("Error creating new project:", response.error);
+                } else {
+                    if (response.projectData) {
+                        setProject(response.projectData);
+                        setUnsavedChanges(false);
+                    }
+                    resolve();
+                }
+            })
+        });
+    }
+
     const loadProjectFile = async (fileData: ArrayBuffer | String) => {
         if (!socket) return;
 
@@ -130,7 +150,7 @@ const useProject = (params: { fetchProject?: boolean }) => {
         })
     }
 
-    return ({ project, setProject, loadProjectFile, unloadProject, getProjectFile, unsavedChanges });
+    return ({ project, setProject, loadProjectFile, unloadProject, getProjectFile, createNewProject, unsavedChanges });
 }
 
 export default useProject;

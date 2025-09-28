@@ -1,5 +1,5 @@
 import { projectType } from "@common/types/project.types";
-import { Project } from "@src/domain/entities/project"
+import { Project, ProjectConstructor } from "@src/domain/entities/project"
 import { Routine } from "@src/domain/entities/routine";
 import { Task } from "@src/domain/entities/task";
 import { Trigger } from "@src/domain/entities/trigger";
@@ -12,13 +12,32 @@ import projectEvents from "@common/events/project.events";
 import { createRoutine } from "../routine";
 import { broadcastToClients } from "@src/services/ipcServices";
 import { clearProjectContext } from "../context";
+import { nanoid } from "nanoid";
+import { version as appVersion } from '../../../../../../package.json';
+import dictionary from "@common/i18n";
+import os, { version } from "os";
+import systemEvents from "@common/events/system.events";
 
 const log = Log.createInstance("projectUseCases", true);
 const eventManager = new EventManager();
 
 let lastOpenedProjectId = undefined
 
-export const createNewProject = async (projectData?: projectType): Promise<Project> => {
+const defaultProject = {
+   id: nanoid(10),
+   appVersion,
+   name: dictionary("app.domain.useCases.project.newProject"),
+   description: "",
+   createdBy: os.userInfo().username,
+   createdAt: new Date().toISOString(),
+   updatedAt: new Date().toISOString(),
+   password: null,
+   routines: [],
+   triggers: [],
+   tasks: []
+} as unknown as ProjectConstructor;
+
+export const createNewProject = async (): Promise<Project> => {
    let project = Project.getInstance()
 
    if (project) {
@@ -28,16 +47,13 @@ export const createNewProject = async (projectData?: projectType): Promise<Proje
          Project.close();
    }
 
-   project = Project.createInstance({
-      ...projectData,
-      routines: [],
-      triggers: [],
-      tasks: []
-   })
+   project = Project.createInstance(defaultProject)
 
    lastOpenedProjectId = project.id;
+   await saveLastProject();
 
    log.info("New project created successfully");
+   broadcastToClients(systemEvents.appLogInfo, { message: `Nuevo proyecto creado con éxito.` });
    eventManager.emit(projectEvents.created, project);
    return project
 
@@ -63,6 +79,7 @@ export const saveProject = async (filePath: string, projectName: string): Promis
    try {
       await writeFile(filePath, JSON.stringify(projectData, null, 2))
       log.info(`Project saved successfully to ${filePath}`);
+      broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto "${project.name}" guardado con éxito.` });
       eventManager.emit(projectEvents.saved, project);
    } catch (error) {
       log.error(`Failed to save project to ${filePath}:`, error);
@@ -86,17 +103,21 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
 
    log.info("Loading project data...");
 
+         // check that major and minor version match
+      const [major, minor] = projectData.appVersion.split(".").map(Number);
+      const [appMajor, appMinor] = appVersion.split(".").map(Number);
+      if (major !== appMajor) {
+         //broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el proyecto con la versión ${projectData.appVersion}. Se esperaba al menos la versión ${appVersion}.x` });
+         throw new Error(`Versión del proyecto ${projectData.appVersion}. Se esperaba al menos la versión ${appVersion}.x`);
+      } else if (minor > appMinor) {
+         log.warn(`Version de proyecto: ${projectData.appVersion}. Versión del sistema: ${appVersion}.${appMinor}. Puede que el proyecto contenga errores.`);
+         broadcastToClients(systemEvents.appLogError, { message: `El proyecto ha sido creado con una versión de Device Control más reciente (${projectData.appVersion}). Se intentará cargar el proyecto pero podría contener errores.` });
+      } 
+
    try {
 
-      if (!projectData || !projectData.id) 
+      if (!projectData || !projectData.id)
          throw new Error("Invalid project data provided.");
-
-      // check that major and minor version match
-      const [major, minor] = projectData.appVersion.split(".").map(Number);
-      if (major !== 2 || minor !== 0) {
-         log.error(`Incompatible project version: ${projectData.appVersion}. Expected version 2.x`);
-         throw new Error(`Incompatible project version: ${projectData.appVersion}. Expected version 2.x`);
-      }
 
       log.info("Checking for existing project instance...");
 
@@ -127,6 +148,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
          const newTrigger = await createNewTriggerByType(triggerData.type, triggerData);
 
          if (!newTrigger) {
+            broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el trigger ${triggerData.name} (${triggerData.id}) de tipo ${triggerData.type}` });
             log.error(`Failed to create trigger of type ${triggerData.type}`);
             continue;
          }
@@ -150,7 +172,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
             const newRoutine = await createRoutine(routineData, projectData);
             routines[routineData.id] = newRoutine;
          } catch (error) {
-            broadcastToClients(projectEvents.error, { message: `Failed to load routine with ID ${routineData.id}: ${error.message}` });
+            broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar la rutina ${routineData.name} (${routineData.id}): ${error.message}` });
             log.error(`Failed to create routine with ID ${routineData.id}: ${error.message}`);
             continue;
          }
@@ -159,14 +181,14 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
    }
 
    await createTriggers();
-   
+
    project = Project.createInstance({
       ...projectData,
       routines: [],
       triggers: Object.values(triggers),
       tasks: Object.values(tasks)
    })
-   
+
    await createRoutines();
    project.routines = Object.values(routines);
    project.onAny(broadcastToClients)
@@ -176,6 +198,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
    setMainWindowTitle(project.name);
 
    broadcastToClients(projectEvents.loaded, { projectData: project.toJson() });
+   //broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto "${project.name}" cargado.` });
    eventManager.emit(projectEvents.loaded, project);
    return Promise.resolve(project)
 
@@ -222,13 +245,15 @@ export const loadLastProject = async (): Promise<projectType> => {
 export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promise<Project | string> => {
 
    try {
-      const {decryptData} = await import('@src/services/cryptography/index.js');
+      const { decryptData } = await import('@src/services/cryptography/index.js');
       const projectRawData = await decryptData(fileContent) as string;
       const projectContent = JSON.parse(projectRawData);
       await loadProject(projectContent);
       await saveLastProject();
       log.info("Project file loaded successfully:", projectContent.name);
+      broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto "${projectContent.name}" cargado.` });
    } catch (error) {
+      broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el archivo del proyecto: ${error.message}` });
       log.error(`Failed to load project file: ${error.message}`);
       return null;
    }
@@ -241,7 +266,7 @@ export const closeProject = (): void => {
    setMainWindowTitle(null);
    broadcastToClients(projectEvents.closed, { projectData: {} });
    eventManager.emit(projectEvents.closed);
-   
+   broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto cerrado` });
    log.info("Project closed successfully");
 }
 

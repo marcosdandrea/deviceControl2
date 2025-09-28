@@ -1,8 +1,11 @@
 import React from "react";
 import ToolbarButton from "../ToolbarButton";
 import { FaTimeline } from "react-icons/fa6";
+import useProject from "@hooks/useProject";
 
 const ExecutionsTimelineButton = () => {
+
+    const {project} = useProject({fetchProject: false});
 
     const handleOnClick = () => {   
         const windowWidth = window.innerWidth;
@@ -20,6 +23,7 @@ const ExecutionsTimelineButton = () => {
 
     return ( 
     <ToolbarButton
+        disabled={!project}
         onClick={handleOnClick}
         icon={<FaTimeline style={{ rotate: '90deg' }} size={20}/>}/>
    );

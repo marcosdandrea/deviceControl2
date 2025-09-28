@@ -34,6 +34,7 @@ const init = (io: import('socket.io').Server) => {
         socket.on(appCommands.getJobTypes, appServices.getAvailableJobs);
 
         //project
+        socket.on(projectCommands.create, projectServices.createNewProject);
         socket.on(projectCommands.getCurrent, projectServices.getCurrentProject);
         socket.on(projectCommands.loadProjectFile, projectServices.loadProjectFile);
         socket.on(projectCommands.close, projectsServices.closeProject);

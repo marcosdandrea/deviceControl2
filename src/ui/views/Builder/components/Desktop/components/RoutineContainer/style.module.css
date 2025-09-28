@@ -1,13 +1,13 @@
 .routineContainer{
-    position: relative;
+    position: absolute;
     height: 100%;
     width: 100%;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    background-color: var(--app-background);
     box-sizing: border-box;
     overflow: hidden;
+    z-index: 1;
 }
 
 .routineArranger{

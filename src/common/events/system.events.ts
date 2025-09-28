@@ -1,3 +1,6 @@
 export default {
-    getSystemTime: "getSystemTime",
+    appLogInfo: "appLogInfo",
+    appLogError: "appLogError",
+    appLogWarning: "appLogWarning",
+    //getSystemTime: "getSystemTime",
 }

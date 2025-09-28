@@ -1,4 +1,5 @@
 export default {
+    create: "project:create",
     loadProjectFile: "project:load",
     getProjectFile: "project:getFile",
     close: "project:unload",

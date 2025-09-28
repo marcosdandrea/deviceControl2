@@ -1,0 +1,16 @@
+.noProjectOpened {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.img{
+    width: 30%;
+    filter: saturate(0.2) brightness(0.7);
+}

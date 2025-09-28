@@ -22,15 +22,15 @@ const defaultProject = {
 
 const NewProjectButton = () => {
 
-    const { unloadProject, setProject, project, unsavedChanges } = useProject({ fetchProject: false });
+    const { unloadProject, project, unsavedChanges, createNewProject } = useProject({ fetchProject: false });
     const navigate = useNavigate()
 
-    const handleOnCloseProject = async () => {
+    const handleOnCreateNewProject = async () => {
         try {
             // Load a new default project
             await unloadProject();
             navigate("/builder")
-            setProject(defaultProject);
+            await createNewProject()
         } catch (error) {
             console.error("Error closing project:", error);
         }
@@ -39,13 +39,13 @@ const NewProjectButton = () => {
     return (
         <Popconfirm
             disabled={!project}
-            onConfirm={handleOnCloseProject}
+            onConfirm={handleOnCreateNewProject}
             title={project && unsavedChanges
                 ? "Tienes cambios sin guardar. ¿Estás seguro de que quieres cerrar el proyecto?"
                 : "¿Estás seguro de que quieres cerrar el proyecto?"}>
             <ToolbarButton
             icon={<HiDocument size={20}/>}
-            onClick={!project ? handleOnCloseProject : undefined} />
+            onClick={!project ? handleOnCreateNewProject : undefined} />
             </Popconfirm >
     );
 }

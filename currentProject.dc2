@@ -1,55 +1,16 @@
 {
-  "id": "AbqLTTl6-H",
+  "id": "GmSZzVLNsU",
   "appVersion": "2.0.25",
-  "name": "Proyecto de prueba",
+  "name": "Nuevo proyecto",
   "description": "",
-  "createdAt": "2025-09-22T22:26:42.615Z",
-  "updatedAt": "2025-09-22T22:26:42.615Z",
+  "createdBy": "marcosdandrea",
+  "createdAt": "2025-09-28T16:42:55.888Z",
+  "updatedAt": "2025-09-28T16:42:55.888Z",
   "password": null,
   "routines": [
     {
-      "id": "WfaqImBpYb",
+      "id": "83vZG98aHk",
       "name": "Rutina 1",
-      "description": "",
-      "status": "unknown",
-      "enabled": true,
-      "runInSync": true,
-      "continueOnError": false,
-      "isRunning": false,
-      "routineTimeout": 60000,
-      "autoCheckConditionEveryMs": false,
-      "triggersId": [
-        {
-          "id": "CHzh-fvd",
-          "triggerId": "7FjpwCCL"
-        }
-      ],
-      "tasksId": [
-        {
-          "id": "3xT0FIvi",
-          "taskId": "WSfz4IrF"
-        },
-        {
-          "id": "3quJop6O",
-          "taskId": "lJrYW9u9"
-        },
-        {
-          "taskId": "vwQ-ozHK",
-          "id": "XRa12tAY"
-        },
-        {
-          "id": "CXMxCoMI",
-          "taskId": "lJrYW9u9"
-        },
-        {
-          "id": "-yhXwq__",
-          "taskId": "TJ462TaS"
-        }
-      ]
-    },
-    {
-      "id": "84XbVbp4gF",
-      "name": "Rutina 2",
       "description": "",
       "status": "unknown",
       "enabled": true,
@@ -59,26 +20,22 @@
       "autoCheckConditionEveryMs": false,
       "triggersId": [
         {
-          "id": "2d2UN31n",
-          "triggerId": "B-sBfls5"
+          "id": "T7h4Bgd1",
+          "triggerId": "wf1NkY0k"
         }
       ],
       "tasksId": [
         {
-          "id": "gAWMnttQ",
-          "taskId": "lJrYW9u9"
-        },
-        {
-          "id": "OQN4kFX7",
-          "taskId": "1-HAQEWi"
+          "id": "HcKdGeZd",
+          "taskId": "4CPKwDZj"
         }
       ]
     }
   ],
   "triggers": [
     {
-      "id": "7FjpwCCL",
-      "name": "disparo por endpoint 1",
+      "id": "wf1NkY0k",
+      "name": "Disparador 1",
       "description": "",
       "armed": true,
       "triggered": false,
@@ -91,79 +48,20 @@
           "validationMask": "^\\/([a-zA-Z0-9-_\\/]*)$",
           "description": "API endpoint to listen for requests (e.g., /api/trigger)",
           "required": true,
-          "value": "/endpoint1"
+          "value": "/endpoint"
         }
       },
       "type": "api"
-    },
-    {
-      "id": "B-sBfls5",
-      "name": "cuando la rutina 1 completa",
-      "description": "",
-      "armed": true,
-      "triggered": false,
-      "reArmOnTrigger": true,
-      "disableRearming": false,
-      "params": {
-        "routineId": {
-          "options": "routinesID",
-          "easyName": "Nombre de la Rutina",
-          "type": "string",
-          "validationMask": "^[a-zA-Z0-9-_]+$",
-          "description": "ID of the routine to listen for events",
-          "required": true,
-          "value": "WfaqImBpYb"
-        },
-        "routineEvent": {
-          "easyName": "Evento de la Rutina",
-          "options": [
-            "running",
-            "checking",
-            "completed",
-            "failed",
-            "aborted",
-            "timeout",
-            "unknown"
-          ],
-          "type": "string",
-          "validationMask": "^(0|1|2|3|4|5|6)$",
-          "description": "Event of the routine to listen for (running, checking, completed, failed, aborted, unknown)",
-          "required": true,
-          "value": 2
-        }
-      },
-      "type": "onRoutineEvent"
     }
   ],
   "tasks": [
     {
-      "id": "WSfz4IrF",
-      "name": "Enviar UDP \"Hola\"",
+      "id": "4CPKwDZj",
+      "name": "Nueva Tarea",
       "description": "",
       "job": {
-        "id": "78f88d94-2787-4610-82d6-c50a00a03622",
-        "name": "78f88d94-2787-4610-82d6-c50a00a03622",
-        "description": "",
-        "params": {
-          "ipAddress": "192.168.1.51",
-          "portNumber": 3002,
-          "message": "Hola"
-        },
-        "type": "sendUDPJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "lJrYW9u9",
-      "name": "Esperar 5 segundos",
-      "description": "",
-      "job": {
-        "id": "029cd153-49cd-4e6e-9ccd-5c6b7aceaeaa",
-        "name": "029cd153-49cd-4e6e-9ccd-5c6b7aceaeaa",
+        "id": "8966ed24-a40b-4e49-aef5-950b672ff3fa",
+        "name": "8966ed24-a40b-4e49-aef5-950b672ff3fa",
         "description": "",
         "params": {
           "time": 5000
@@ -171,76 +69,6 @@
         "type": "waitJob"
       },
       "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "vwQ-ozHK",
-      "name": "Enviar UDP \"Chau\"",
-      "description": "",
-      "job": {
-        "id": "65e46389-21b8-4a16-90ba-d257a8cedb51",
-        "name": "65e46389-21b8-4a16-90ba-d257a8cedb51",
-        "description": "",
-        "params": {
-          "ipAddress": "192.168.1.51",
-          "portNumber": 3002,
-          "message": "Chau"
-        },
-        "type": "sendUDPJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "TJ462TaS",
-      "name": "Enviar TCP \"Hola Mundo\"",
-      "description": "",
-      "job": {
-        "id": "f224babd-f16e-49bf-85ae-48c6275d6d14",
-        "name": "f224babd-f16e-49bf-85ae-48c6275d6d14",
-        "description": "",
-        "params": {
-          "ipAddress": "192.168.1.51",
-          "portNumber": 51541,
-          "message": "Hola Mundo"
-        },
-        "type": "sendTCPJob"
-      },
-      "condition": null,
-      "retries": 3,
-      "timeout": 15000,
-      "waitBeforeRetry": 15000,
-      "continueOnError": true
-    },
-    {
-      "id": "1-HAQEWi",
-      "name": "Encender computadora",
-      "description": "",
-      "job": {
-        "id": "337e370d-bc72-4444-ab36-fd1e80217bc8",
-        "name": "337e370d-bc72-4444-ab36-fd1e80217bc8",
-        "description": "",
-        "params": {
-          "macAddress": "11:11:11:11:11:11",
-          "portNumber": 9
-        },
-        "type": "wakeOnLanJob"
-      },
-      "condition": {
-        "id": "a92d1fa2-8d80-4fc7-a46b-1e57894d5506",
-        "name": "Ping Condition",
-        "description": "Condition that pings an IP",
-        "type": "ping",
-        "params": {
-          "ipAddress": "192.168.1.51"
-        }
-      },
       "retries": 3,
       "timeout": 15000,
       "waitBeforeRetry": 15000,

@@ -1,0 +1,6 @@
+.passwordField {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+    row-gap: 0.25rem;
+}

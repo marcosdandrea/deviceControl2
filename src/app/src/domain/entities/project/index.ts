@@ -13,10 +13,12 @@ import { ServerManager } from "@src/services/server/serverManager";
 import {removeRoutine} from "@useCases/routine"
 
 
-interface ProjectConstructor {
+export interface ProjectConstructor {
+    appVersion?: string;
     id?: string; // Unique identifier for the project
     name?: string;
     description?: string;
+    createdBy?: string;
     createdAt?: Date; // Timestamp when the project was created
     updatedAt?: Date; // Timestamp when the project was last updated
     routines?: Routine[];
@@ -30,6 +32,7 @@ export class Project extends EventEmitter implements ProjectInterface {
 
     id: string;
     appVersion: string;
+    createdBy: string;
     name: string;
     description: string;
     createdAt: Date;
@@ -61,6 +64,8 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.name = props?.name || "New Project";
         this.filePath = props?.filePath || null; // Optional file path for the project
         this.description = props?.description || "";
+        this.appVersion = props?.appVersion || Project.appVersion;
+        this.createdBy = props?.createdBy || "Unknown";
         this.createdAt = props?.createdAt || new Date();
         this.updatedAt = props?.updatedAt || new Date();
         this.routines = props.routines || [];
@@ -253,6 +258,7 @@ export class Project extends EventEmitter implements ProjectInterface {
             appVersion: Project.appVersion,
             name: this.name,
             description: this.description,
+            createdBy: this.createdBy,
             createdAt: this.createdAt,
             updatedAt: this.updatedAt,
             password: this.password,

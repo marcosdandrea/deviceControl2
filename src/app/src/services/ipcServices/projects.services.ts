@@ -5,6 +5,20 @@ import { ServerManager } from '../server/serverManager';
 
 const log = Log.createInstance('IPC Project Services', true);
 
+export const createNewProject = async (_payload: null, callback: Function) => {
+    log.info('Client requested to create a new project');
+    const { createNewProject } = await import('@src/domain/useCases/project/index.js');
+    try {
+        const project = await createNewProject();
+        const createdProjectData = project.toJson();
+        callback({ projectData: createdProjectData });
+        log.info('New project created successfully and sent to client');
+    } catch (error) {
+        log.error(`Error creating new project: ${error.message}`);
+        callback({ error: error.message });
+    }
+};
+
 export const getCurrentProject = async (_payload: null, callback: Function) => {
     log.info('Client requested current project');
     const { getCurrentProject } = await import('@src/domain/useCases/project/index.js');
@@ -67,6 +81,7 @@ export const loadProjectFile = async (payload: ArrayBuffer | string, callback: F
 
 
 export default {
+    createNewProject,
     getCurrentProject,
     loadProjectFile,
     closeProject,
