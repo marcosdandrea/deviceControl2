@@ -124,9 +124,9 @@ export class Job extends EventEmitter implements JobInterface {
 
             } catch (error) {
                 if (abortSignal.aborted) {
-                    this.log.warn(ctx.log.warn(dictionary("app.domain.entities.job.abortedByUser", displayName)));
+                    this.log.warn(ctx.log.warn(dictionary("app.domain.entities.job.aborted", displayName)));
                     this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
-                    reject(new Error(dictionary("app.domain.entities.job.abortedByUser", displayName)));
+                    reject(new Error(dictionary("app.domain.entities.job.aborted", displayName)));
                 } else {
                     this.log.error(ctx.log.error(dictionary("app.domain.entities.job.failed", error?.message || "Unknown error")));
                     this.failed = true;
