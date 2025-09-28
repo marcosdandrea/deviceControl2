@@ -3,6 +3,8 @@ import { requiredTriggerParamType, TriggerInterface, TriggerType } from "@common
 import { Log } from "@src/utils/log";
 import triggerEvents from "@common/events/trigger.events";
 import { Context } from "../context";
+import dictionary from "@common/i18n";
+import crypto from "crypto";
 
 export class Trigger extends EventEmitter implements TriggerInterface {
     id: TriggerInterface["id"];
@@ -91,26 +93,26 @@ export class Trigger extends EventEmitter implements TriggerInterface {
 
         const origin = {
             type: "trigger",
-            id: this.id, name:
-                this.name
+            id: this.id,
+            name: this.name
         }
         const ctx = Context.createRootContext(origin);
 
         this.triggered = true;
         this.dispatchEvent(triggerEvents.triggered, { ctx });
         this.logger.info(`${this.type.charAt(0).toUpperCase() + this.type.slice(1).toLowerCase()} trigger triggered [ctx: ${ctx.id}]`);
-        ctx.log.info("Trigger activated");
+        ctx.log.info(dictionary("app.domain.entities.trigger.activated", this.getDisplayName()));
         this.disarm();
-        ctx.log.info("Trigger disarmed");
+        ctx.log.info(dictionary("app.domain.entities.trigger.disarmed", this.getDisplayName()));
 
         if (!this.reArmOnTrigger)
             return
 
-        if (!this.allowAutoRearming) 
+        if (!this.allowAutoRearming)
             return;
-        
+
         this.arm();
-        ctx.log.info("Trigger rearmed automatically");
+        ctx.log.info(dictionary("app.domain.entities.trigger.rearmed", this.getDisplayName()));
 
     }
 
@@ -148,6 +150,10 @@ export class Trigger extends EventEmitter implements TriggerInterface {
             params: this.params,
             type: this.type
         };
+    }
+
+    private getDisplayName(): string {
+        return this.name || this.id;
     }
 
 }
