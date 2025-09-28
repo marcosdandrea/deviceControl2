@@ -121,6 +121,7 @@ export class Task extends EventEmitter implements TaskInterface {
     async run({ abortSignal, runCtx }: { abortSignal: AbortSignal, runCtx: Context }): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             this.startTime = Date.now();
+            const displayName = this.getDisplayName();
 
             const ctxNode = {
                 type: 'task',
@@ -128,7 +129,7 @@ export class Task extends EventEmitter implements TaskInterface {
                 name: this.name
             };
             const childCtx = runCtx.createChildContext(ctxNode);
-            childCtx.log.info(dictionary("app.domain.entities.task.starting", this.getDisplayName()));
+            childCtx.log.info(dictionary("app.domain.entities.task.starting", displayName));
 
             this.#dispatchEvent(taskEvents.taskRunning, { taskId: this.id, taskName: this.name });
 
@@ -153,19 +154,21 @@ export class Task extends EventEmitter implements TaskInterface {
                 if (abortSignal.aborted) {
                     this.aborted = true;
                     this.timeoutController.clear();
-                    childCtx.log.info(dictionary("app.domain.entities.task.aborted", this.getDisplayName()));
+                    childCtx.log.info(dictionary("app.domain.entities.task.aborted", displayName));
+
                     this.#dispatchEvent(taskEvents.taskAborted, { taskId: this.id, taskName: this.name });
-                    reject(`Task "${this.name}" aborted`);
+                    reject(new Error(dictionary("app.domain.entities.task.aborted", displayName)));
                 } else if (this.timeoutController.timedout) {
-                    childCtx.log.error(dictionary("app.domain.entities.task.timedOut", this.getDisplayName()));
+                    childCtx.log.error(dictionary("app.domain.entities.task.timedOut", displayName));
+
                     abortJobsAndConditionsController.abort();
                     this.failed = true;
                     this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
-                    reject(`Task ${this.name} timed out.`);
+                    reject(new Error(dictionary("app.domain.entities.task.timedOut", displayName)));
                 } else {
                     this.failed = true;
                     this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
-                    childCtx.log.error(dictionary("app.domain.entities.task.failed", this.getDisplayName(), error instanceof Error ? error.message : String(error)));
+                    childCtx.log.error(dictionary("app.domain.entities.task.failed", displayName, error instanceof Error ? error.message : String(error)));
                     reject(error);
                 }
             } finally {
@@ -183,12 +186,12 @@ export class Task extends EventEmitter implements TaskInterface {
             this.aborted = false;
 
             if (!this.job || typeof this.job.execute !== 'function')
-                throw new Error(`No valid job set for task "${this.name}"`);
+                throw new Error(dictionary("app.domain.entities.task.noJobConfigured", this.getDisplayName()));
 
             const checkAbort = () => {
                 if (!abortSignal?.aborted) return
                 this.aborted = true;
-                throw new Error(`Task "${this.name}" aborted`);
+                throw new Error(dictionary("app.domain.entities.task.aborted", this.getDisplayName()));
             }
 
             const onTaskCompleted = () => {
@@ -218,7 +221,8 @@ export class Task extends EventEmitter implements TaskInterface {
 
                     // Si hay condición y se debe chequear antes de ejecutar el job
                     if (this.condition && this.checkConditionBeforeExecution) {
-                        this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.checkingConditionBefore", this.getDisplayName())));
+            this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.checkingConditionBefore", this.getDisplayName())));
+
                         const conditionMet = await checkCondition();
                         this.log.info(`Condition before execution for task ${this.name} evaluated to ${conditionMet}`);
                         if (conditionMet) {
@@ -261,7 +265,8 @@ export class Task extends EventEmitter implements TaskInterface {
                     if (!this.continueOnError) {
                         this.timeoutController.clear();
                         this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.failedNoContinue", this.getDisplayName())));
-                        return reject(`Task ${this.name} failed and will not continue due to continueOnError being false.`);
+                        return reject(new Error(dictionary("app.domain.entities.task.failedNoContinue", this.getDisplayName())));
+
                     }
 
                 }
@@ -272,7 +277,7 @@ export class Task extends EventEmitter implements TaskInterface {
                     this.timeoutController.clear();
                     this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.maxRetries", this.getDisplayName())));
                     this.failed = true;
-                    return reject(`Max retries reached for task ${this.name}`);
+                    return reject(new Error(dictionary("app.domain.entities.task.maxRetries", this.getDisplayName())));
                 }
 
                 this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.retrying", this.getDisplayName(), this.waitBeforeRetry)));
@@ -286,7 +291,7 @@ export class Task extends EventEmitter implements TaskInterface {
                     const onAbort = () => {
                         clearTimeout(timeout);
                         abortSignal.removeEventListener('abort', onAbort);
-                        reject(new Error(`Task ${this.name} aborted during retry wait`));
+                        reject(new Error(dictionary("app.domain.entities.task.abortedDuringRetryWait", this.getDisplayName())));
                     };
 
                     if (abortSignal) {

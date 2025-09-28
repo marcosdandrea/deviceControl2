@@ -385,17 +385,19 @@ export class Routine extends EventEmitter implements RoutineInterface {
     }
 
     async run(triggeredBy: TriggerInterface, ctx: Context): Promise<void> {
+        const displayName = this.getDisplayName();
+
         if (!this.enabled)
-            throw new Error(`Routine ${this.name} is not enabled`);
+            throw new Error(dictionary("app.domain.entities.routine.notEnabled", displayName));
 
         if (!triggeredBy?.id)
-            throw new Error(`Routine ${this.name} is not triggered by a valid trigger`);
+            throw new Error(dictionary("app.domain.entities.routine.invalidTrigger", displayName));
 
         if (this.isRunning)
-            throw new Error(`Routine ${this.name} is already running`);
+            throw new Error(dictionary("app.domain.entities.routine.alreadyRunning", displayName));
 
         if (!(ctx instanceof Context)) {
-            throw new Error(`Invalid context provided`);
+            throw new Error(dictionary("app.domain.entities.routine.invalidContext", displayName));
         }
 
         const routineStartTime = Date.now();
@@ -420,7 +422,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
             name: this.name
         };
         const childCtx = ctx.createChildContext(ctxNode);
-        childCtx.log.info(dictionary("app.domain.entities.routine.started", this.getDisplayName()));
+        childCtx.log.info(dictionary("app.domain.entities.routine.started", displayName));
+
 
         childCtx.onFinish((data) => {
             this.#eventDispatcher(routineEvents.routineFinished, data);
@@ -440,14 +443,14 @@ export class Routine extends EventEmitter implements RoutineInterface {
                         if (abortSignal.aborted) {
                             childCtx.log.warn(dictionary("app.domain.entities.routine.taskAborted", this.getTaskDisplayName(task), String(abortSignal.reason)));
                             this.#setStatus("aborted");
-                            throw new Error(`Routine aborted: ${abortSignal.reason}`);
+                            throw new Error(dictionary("app.domain.entities.routine.aborted", String(abortSignal.reason ?? "")));
                         }
                         if (this.continueOnError) {
                             childCtx.log.warn(dictionary("app.domain.entities.routine.taskFailed", this.getTaskDisplayName(task), e?.message || String(e)));
                             this.#setStatus("failed");
                         } else {
                             this.#setStatus("failed");
-                            throw new Error("Task failed. Breaking execution 'Continue on error' is disabled");
+                            throw new Error(dictionary("app.domain.entities.routine.breakOnErrorDisabled"));
                         }
                     }
                 }
@@ -466,7 +469,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
                         if (abortSignal.aborted) {
                             childCtx.log.warn(dictionary("app.domain.entities.routine.tasksAborted", String(abortSignal.reason)));
                             this.#setStatus("aborted");
-                            return reject(new Error(`Routine aborted: ${abortSignal.reason}`));
+                            return reject(new Error(dictionary("app.domain.entities.routine.aborted", String(abortSignal.reason ?? ""))));
                         }
                         this.#setStatus("failed");
                         return reject(e);
@@ -495,7 +498,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
                             }
                         }
                         this.#setStatus("failed");
-                        reject("Some tasks failed. Check logs for details")
+                        reject(new Error(dictionary("app.domain.entities.routine.tasksFailedDetails")))
                     }
                 })
             }
@@ -511,7 +514,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
             //handler to abort tasks when routine is aborted or timeout occurs
             const handleOnAbortExecution = () => {
-                abortTasksController.abort("Routine aborted");
+                abortTasksController.abort(dictionary("app.domain.entities.routine.abortSignal"));
             }
 
             userAbortSignal.addEventListener("abort", handleOnAbortExecution);

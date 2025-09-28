@@ -32,11 +32,13 @@ export class WaitJob extends Job {
 
     async job(ctx: Context, abortSignal: AbortSignal): Promise<void> {
         return new Promise<void>((resolve, reject) => {
+            const displayName = this.getDisplayName();
+
             if (ctx == null)
-                return reject(new Error("Context is required for job execution"));
+                return reject(new Error(dictionary("app.domain.entities.job.contextRequired", displayName)));
 
             if (abortSignal == null)
-               return reject(new Error("AbortSignal is required for job execution"));
+               return reject(new Error(dictionary("app.domain.entities.job.abortSignalRequired", displayName)));
 
             const { time } = this.params;
             const displayName = this.name || this.id;
@@ -44,7 +46,7 @@ export class WaitJob extends Job {
                 ctx.log.error(dictionary("app.domain.entities.job.wait.invalidTimeParameter", displayName, time));
                 this.failed = true;
                 this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error: "Invalid time parameter" });
-                return reject(new Error("Invalid time parameter. Must be between 0 and 2147483647."));
+                return reject(new Error(dictionary("app.domain.entities.job.wait.invalidTimeParameter", displayName, time)));
             }
 
             this.failed = false;
@@ -67,7 +69,7 @@ export class WaitJob extends Job {
                 cleanup();
                 ctx.log.warn(dictionary("app.domain.entities.job.wait.aborted", displayName));
                 this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
-                reject(new Error("Job aborted"));
+                reject(new Error(dictionary("app.domain.entities.job.aborted", displayName)));
             };
 
             abortSignal.addEventListener("abort", abortListener);

@@ -1,7 +1,7 @@
-import { S } from "vitest/dist/chunks/config.Cy0C388Z.js";
 import { conditionTypes } from "..";
 import { Condition } from "../..";
 import { ConditionType, requiredConditionParamType } from "@common/types/condition.type";
+import dictionary from "@common/i18n";
 
 interface ConditionDayTimeParams extends Partial<ConditionType> {
     day?: number;
@@ -63,8 +63,9 @@ export class ConditionDayTime extends Condition {
 
     protected async doEvaluation({ abortSignal }: { abortSignal: AbortSignal }): Promise<boolean> {
         return new Promise((resolve, reject) => {
+            const displayName = this.name || this.id;
             if (abortSignal.aborted) {
-                return reject(new Error("Condition evaluation aborted"));
+                return reject(new Error(dictionary("app.domain.entities.condition.evaluationAborted", displayName)));
             }
             const now = new Date();
             const dayMatch = this.day === undefined || now.getDay() === this.day;
@@ -74,7 +75,7 @@ export class ConditionDayTime extends Condition {
             if (dayMatch && hourMatch && minuteMatch) {
                 resolve(true);
             } else {
-                reject(new Error("Condition not met"));
+                reject(new Error(dictionary("app.domain.entities.condition.notMet", displayName)));
             }
         });
     }

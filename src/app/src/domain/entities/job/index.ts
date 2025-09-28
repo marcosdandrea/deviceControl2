@@ -95,7 +95,8 @@ export class Job extends EventEmitter implements JobInterface {
             if (!(ctx instanceof Context))
                 throw new Error("ctx must be an instance of Context");
 
-            this.log.info(ctx.log.info(dictionary("app.domain.entities.job.executed", this.name)));
+            const displayName = this.getDisplayName();
+            this.log.info(ctx.log.info(dictionary("app.domain.entities.job.executed", displayName)));
             this.dispatchEvent(jobEvents.jobRunning, { jobId: this.id, jobName: this.name });
 
             let handleOnAbort: (() => void) | null = null;
@@ -103,9 +104,9 @@ export class Job extends EventEmitter implements JobInterface {
             // Promise to handle abortion when abortSignal is triggered
             const abortPromise = new Promise<void>((_, reject) => {
                 handleOnAbort = () => {
-                    this.log.warn(ctx.log.warn(dictionary("app.domain.entities.job.aborted")));
+                    this.log.warn(ctx.log.warn(dictionary("app.domain.entities.job.aborted", displayName)));
                     this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
-                    reject(new Error(`Job "${this.name}" was aborted`));
+                    reject(new Error(dictionary("app.domain.entities.job.aborted", displayName)));
                 };
 
                 abortSignal.addEventListener("abort", handleOnAbort, { once: true });
@@ -123,9 +124,9 @@ export class Job extends EventEmitter implements JobInterface {
 
             } catch (error) {
                 if (abortSignal.aborted) {
-                    this.log.warn(ctx.log.warn(dictionary("app.domain.entities.job.abortedByUser", this.name)));
+                    this.log.warn(ctx.log.warn(dictionary("app.domain.entities.job.abortedByUser", displayName)));
                     this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
-                    reject(new Error(dictionary("app.domain.entities.job.abortedByUser", this.name)));
+                    reject(new Error(dictionary("app.domain.entities.job.abortedByUser", displayName)));
                 } else {
                     this.log.error(ctx.log.error(dictionary("app.domain.entities.job.failed", error?.message || "Unknown error")));
                     this.failed = true;
@@ -155,5 +156,9 @@ export class Job extends EventEmitter implements JobInterface {
             params: this.params,
             type: this.type,
         };
+    }
+
+    protected getDisplayName(): string {
+        return this.name || this.id;
     }
 }

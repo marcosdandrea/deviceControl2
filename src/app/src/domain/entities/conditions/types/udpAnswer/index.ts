@@ -2,6 +2,7 @@ import { Condition } from "../..";
 import { ConditionType, requiredConditionParamType } from "@common/types/condition.type";
 import dgram from 'dgram';
 import { conditionTypes } from "..";
+import dictionary from "@common/i18n";
 
 interface ConditionUDPAnswerParams extends Partial<ConditionType> {
     ip: string;
@@ -84,14 +85,15 @@ export class ConditionUDPAnswer extends Condition {
         return new Promise((resolve, reject) => {
 
             const socket = dgram.createSocket('udp4');
-            
+
 
             let finished = false;
+            const displayName = this.name || this.id;
             const onAbort = () => {
                 if (!finished) {
                     finished = true;
                     socket.close();
-                    reject(new Error("Condition evaluation aborted"));
+                    reject(new Error(dictionary("app.domain.entities.condition.evaluationAborted", displayName)));
                 }
             };
 

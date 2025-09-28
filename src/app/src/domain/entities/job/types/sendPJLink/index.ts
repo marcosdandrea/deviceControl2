@@ -74,11 +74,11 @@ export class SendPJLinkJob extends Job {
         this.failed = false;
         const { signal: abortSignal } = this.abortController || {};
         const { ipAddress, command } = this.params as SendPJLinkJobParams["params"];
-        const displayName = this.name || this.id;
+        const displayName = this.getDisplayName();
 
         const selectedCommand = COMMANDS[command as CommandKey];
         if (!selectedCommand)
-            throw new Error(`Comando PJLink desconocido: ${command}`);
+            throw new Error(dictionary("app.domain.entities.job.sendPjLink.unknownCommand", command));
 
         ctx.log.info(dictionary("app.domain.entities.job.sendPjLink.starting", selectedCommand.command, ipAddress));
         this.log.info(dictionary("app.domain.entities.job.sendPjLink.starting", selectedCommand.command, ipAddress));
@@ -110,7 +110,8 @@ export class SendPJLinkJob extends Job {
             };
 
             const onAbort = () => {
-                safeReject(new Error(`Job "${displayName}" was aborted`));
+                safeReject(new Error(dictionary("app.domain.entities.job.aborted", displayName)));
+
             };
 
             if (abortSignal) {
@@ -122,7 +123,7 @@ export class SendPJLinkJob extends Job {
             }
 
             const timeoutId = setTimeout(() => {
-                safeReject(new Error("Tiempo de espera agotado al comunicarse con el dispositivo PJLink"));
+                safeReject(new Error(dictionary("app.domain.entities.job.sendPjLink.timeout")));
             }, 5000);
 
             client.setEncoding("utf8");
@@ -140,7 +141,7 @@ export class SendPJLinkJob extends Job {
 
                 if (!handshakeCompleted) {
                     if (buffer.includes("PJLINK 1")) {
-                        safeReject(new Error("El dispositivo requiere autenticación PJLink"));
+                        safeReject(new Error(dictionary("app.domain.entities.job.sendPjLink.authRequired")));
                         return;
                     }
 
