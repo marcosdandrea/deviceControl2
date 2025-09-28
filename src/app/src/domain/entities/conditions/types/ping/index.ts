@@ -2,6 +2,7 @@ import { Condition } from "../..";
 import { ConditionType, requiredConditionParamType } from "@common/types/condition.type";
 import * as ping from "ping";
 import { conditionTypes } from "..";
+import dictionary from "@common/i18n";
 
 interface ConditionPingParams extends Partial<ConditionType> {
     ipAddress: string;
@@ -52,8 +53,9 @@ export class ConditionPing extends Condition {
     }
 
     protected async doEvaluation({ abortSignal }: { abortSignal: AbortSignal }): Promise<boolean> {
+        const displayName = this.name || this.id;
         if (abortSignal.aborted) {
-            return Promise.reject(new Error("Condition evaluation aborted"));
+            return Promise.reject(new Error(dictionary("app.domain.entities.condition.evaluationAborted", displayName)));
         }
 
         return new Promise((resolve, reject) => {
@@ -62,7 +64,7 @@ export class ConditionPing extends Condition {
 
             abortSignal.addEventListener("abort", () => {
                 aborted = true;
-                reject(new Error("Condition evaluation aborted"));
+                reject(new Error(dictionary("app.domain.entities.condition.evaluationAborted", displayName)));
             });
 
             pingPromise.then((res: any) => {
@@ -71,7 +73,7 @@ export class ConditionPing extends Condition {
                 if (result) {
                     resolve(true);
                 } else {
-                    reject(new Error("Ping failed: destination unreachable"));
+                    reject(new Error(dictionary("app.domain.entities.condition.pingFailed", displayName)));
                 }
             }).catch(reject);
         });

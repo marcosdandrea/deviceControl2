@@ -1,6 +1,7 @@
 import { JobType, requiredJobParamType } from "@common/types/job.type";
 import { Job } from "../..";
 import { jobTypes } from "..";
+import dictionary from "@common/i18n";
 
 interface SendTCPJobParams extends JobType {
     answer?: string | null; // Optional answer to check against the response
@@ -53,8 +54,8 @@ export class SendTCPJob extends Job {
 
     protected async job(): Promise<void> {
         this.failed = false;
-        const { signal: abortSignal } = this.abortController || {};
-        this.log.info(`Starting job "${this.name}" with ID ${this.id}`);
+        const displayName = this.getDisplayName();
+        this.log.info(dictionary("app.domain.entities.job.sendUdp.starting", displayName));
 
         try {
             let { ipAddress, portNumber, message } = this.params;
@@ -66,7 +67,7 @@ export class SendTCPJob extends Job {
 
                 client.connect(portNumber, ipAddress, () => {
                     client.write(message);
-                    this.log.info(`TCP packet sent successfully to ${ipAddress}:${portNumber}`);
+                    this.log.info(dictionary("app.domain.entities.job.sendTcp.sent", ipAddress, portNumber));
 
                     if (this.answer !== null) {
                         this.log.info(`Waiting for response matching: ${this.answer}`);
@@ -78,7 +79,8 @@ export class SendTCPJob extends Job {
                 })
 
                 client.on('error', (err) => {
-                    this.log.error(`Failed to send TCP packet: ${err.message}`);
+                    const errorMessage = dictionary("app.domain.entities.job.sendTcp.failed", err.message);
+                    this.log.error(errorMessage);
                     reject(err);
                 });
 
@@ -101,8 +103,10 @@ export class SendTCPJob extends Job {
             return Promise.resolve();
 
         } catch (error) {
-            this.log.error(`Error in job "${this.name}": ${error.message}`);
-            return Promise.reject(`Failed to send TCP packet: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const localizedError = dictionary("app.domain.entities.job.sendTcp.failed", errorMessage);
+            this.log.error(localizedError);
+            return Promise.reject(new Error(localizedError));
         }
     }
 

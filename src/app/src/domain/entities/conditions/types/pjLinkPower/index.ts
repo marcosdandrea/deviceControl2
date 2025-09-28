@@ -2,6 +2,7 @@ import { Condition } from "../..";
 import { ConditionType, requiredConditionParamType } from "@common/types/condition.type";
 import net from "net";
 import { conditionTypes } from "..";
+import dictionary from "@common/i18n";
 
 const PJLINK_PORT = 4352;
 const STATUS_OPTIONS = {
@@ -68,7 +69,7 @@ export class ConditionPJLinkPower extends Condition {
         const expected = STATUS_OPTIONS[status as StatusKey];
 
         if (!expected) {
-            throw new Error(`Estado PJLink desconocido: ${status}`);
+            throw new Error(dictionary("app.domain.entities.condition.pjlinkUnknownStatus", status));
         }
 
         this.logger.info(`Comprobando estado PJLink (${expected.label}) en ${ip}`);
@@ -78,6 +79,7 @@ export class ConditionPJLinkPower extends Condition {
             let buffer = "";
             let handshakeCompleted = false;
             let finished = false;
+            const displayName = this.name || this.id;
 
             const cleanup = () => {
                 if (finished) return;
@@ -99,7 +101,7 @@ export class ConditionPJLinkPower extends Condition {
             };
 
             const onAbort = () => {
-                safeReject(new Error("Condition evaluation aborted"));
+                safeReject(new Error(dictionary("app.domain.entities.condition.evaluationAborted", displayName)));
             };
 
             if (abortSignal.aborted) {
@@ -110,7 +112,7 @@ export class ConditionPJLinkPower extends Condition {
             abortSignal.addEventListener("abort", onAbort, { once: true });
 
             const timeoutId = setTimeout(() => {
-                safeReject(new Error("Timeout esperando respuesta del dispositivo PJLink"));
+                safeReject(new Error(dictionary("app.domain.entities.condition.pjlinkTimeout")));
             }, 5000);
 
             client.setEncoding("utf8");
@@ -127,7 +129,7 @@ export class ConditionPJLinkPower extends Condition {
 
                 if (!handshakeCompleted) {
                     if (buffer.includes("PJLINK 1")) {
-                        safeReject(new Error("El dispositivo requiere autenticación PJLink"));
+                        safeReject(new Error(dictionary("app.domain.entities.condition.pjlinkAuthRequired")));
                         return;
                     }
 
@@ -149,7 +151,7 @@ export class ConditionPJLinkPower extends Condition {
                 }
 
                 if (/^%\d?ERR\d/.test(normalized)) {
-                    safeReject(new Error(`Respuesta PJLink de error: ${normalized}`));
+                    safeReject(new Error(dictionary("app.domain.entities.condition.pjlinkErrorResponse", normalized)));
                 }
             });
 

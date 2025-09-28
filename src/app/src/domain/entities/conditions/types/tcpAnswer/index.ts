@@ -2,6 +2,7 @@ import { Condition } from "../..";
 import { ConditionType, requiredConditionParamType } from "@common/types/condition.type";
 import net from 'net';
 import { conditionTypes } from "..";
+import dictionary from "@common/i18n";
 
 interface ConditionTCPAnswerParams extends Partial<ConditionType> {
     ip: string;
@@ -76,10 +77,11 @@ export class ConditionTCPAnswer extends Condition {
             const client = new net.Socket();
             let buf = "";                             // acumulador
             const expected = this.answer;
+            const displayName = this.name || this.id;
 
             const onAbort = () => {
                 client.destroy();
-                reject(new Error("Condition evaluation aborted"));
+                reject(new Error(dictionary("app.domain.entities.condition.evaluationAborted", displayName)));
             };
 
             if (abortSignal.aborted) return onAbort();

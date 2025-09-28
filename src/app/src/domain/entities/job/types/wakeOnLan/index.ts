@@ -4,6 +4,7 @@ import jobEvents from "@common/events/job.events";
 import dgram from 'dgram';
 import { jobTypes } from "..";
 import { Context } from "@src/domain/entities/context";
+import dictionary from "@common/i18n";
 
 export interface WakeOnLanJobType extends JobType {
     params: {
@@ -54,8 +55,9 @@ export class WakeOnLanJob extends Job {
     async job(ctx: Context): Promise<void> {
         this.failed = false;
         const { signal: abortSignal } = this.abortController || {};
-        ctx.log.info(`Starting job "${this.name}" with ID ${this.id}`);
-        this.log.info(`Starting job "${this.name}" with ID ${this.id}`);
+        const displayName = this.getDisplayName();
+        ctx.log.info(dictionary("app.domain.entities.job.wakeOnLan.starting", displayName));
+        this.log.info(dictionary("app.domain.entities.job.wakeOnLan.starting", displayName));
 
         let macAddress, portNumber
 
@@ -113,23 +115,23 @@ export class WakeOnLanJob extends Job {
             const messageBuffer = buildMagicPacket(macAddress);
             client.send(messageBuffer, 0, messageBuffer.length, portNumber, "255.255.255.255", (err) => {
                 if (err) {
-                    this.log.error(`Failed to send UDP packet: ${err.message}`);
-                    ctx.log.error(`Failed to send UDP packet: ${err.message}`);
+                    this.log.error(dictionary("app.domain.entities.job.wakeOnLan.failed", err.message));
+                    ctx.log.error(dictionary("app.domain.entities.job.wakeOnLan.failed", err.message));
                     return safeReject(err);
                 }
-                ctx.log.info(`UDP packet to wake device with MAC "${macAddress}" sent to port ${portNumber}`);
+                ctx.log.info(dictionary("app.domain.entities.job.wakeOnLan.sent", macAddress, portNumber));
                 safeResolve();
             });
 
             if (abortSignal) {
                 abortSignal.addEventListener("abort", () => {
-                    safeReject(new Error(`Job "${this.name}" was aborted`));
+                    safeReject(new Error(dictionary("app.domain.entities.job.aborted", displayName)));
                 });
             }
         }).finally(() => {
             if (!this.abortedByUser) {
-                this.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
-                ctx.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
+                this.log.info(dictionary("app.domain.entities.job.wakeOnLan.finished", displayName));
+                ctx.log.info(dictionary("app.domain.entities.job.wakeOnLan.finished", displayName));
                 this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id, failed: this.failed });
             }
         });

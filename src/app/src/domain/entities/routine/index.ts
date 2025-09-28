@@ -19,6 +19,7 @@ import { Trigger } from "../trigger";
 import { Context } from "../context";
 import { TimeoutController } from "@src/controllers/Timeout";
 import timeoutEvents from "@common/events/timeout.events";
+import dictionary from "@common/i18n";
 
 export const RoutineActions = ["enable", "disable", "run", "stop"] as const;
 export type RoutineActions = typeof RoutineActions[number];
@@ -328,6 +329,14 @@ export class Routine extends EventEmitter implements RoutineInterface {
         return [...this.triggers];
     }
 
+    private getDisplayName(): string {
+        return this.name || this.id;
+    }
+
+    private getTaskDisplayName(task: TaskInterface): string {
+        return task?.name || task?.id || "";
+    }
+
     #eventDispatcher(event: string, ...args: any[]): void {
         const newArgs = {
             routineId: this.id,
@@ -360,15 +369,15 @@ export class Routine extends EventEmitter implements RoutineInterface {
         const tasksWithConditions = this.tasks.filter(t => t.condition);
         if (tasksWithConditions.length === 0) return true;
 
-        const ctx = Context.createRootContext({ type: "routine", id: this.id });
+        const ctx = Context.createRootContext({ type: "routine", id: this.id, name: this.name });
 
-        ctx.log.info(`Autochecking conditions for ${tasksWithConditions.length} tasks`);
+        ctx.log.info(dictionary("app.domain.entities.routine.autoCheckingConditions", tasksWithConditions.length));
 
         const abortController = new AbortController();
         const { signal: abortSignal } = abortController;
         const results = await Promise.all(tasksWithConditions.map(task => {
 
-            ctx.log.info(`Checking condition for task ${task.name}`, [this.id]);
+            ctx.log.info(dictionary("app.domain.entities.routine.checkingConditionForTask", this.getTaskDisplayName(task)), [this.id]);
 
             return task.condition!.evaluate({ abortSignal, ctx });
         }));
@@ -376,17 +385,19 @@ export class Routine extends EventEmitter implements RoutineInterface {
     }
 
     async run(triggeredBy: TriggerInterface, ctx: Context): Promise<void> {
+        const displayName = this.getDisplayName();
+
         if (!this.enabled)
-            throw new Error(`Routine ${this.name} is not enabled`);
+            throw new Error(dictionary("app.domain.entities.routine.notEnabled", displayName));
 
         if (!triggeredBy?.id)
-            throw new Error(`Routine ${this.name} is not triggered by a valid trigger`);
+            throw new Error(dictionary("app.domain.entities.routine.invalidTrigger", displayName));
 
         if (this.isRunning)
-            throw new Error(`Routine ${this.name} is already running`);
+            throw new Error(dictionary("app.domain.entities.routine.alreadyRunning", displayName));
 
         if (!(ctx instanceof Context)) {
-            throw new Error(`Invalid context provided`);
+            throw new Error(dictionary("app.domain.entities.routine.invalidContext", displayName));
         }
 
         const routineStartTime = Date.now();
@@ -411,7 +422,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
             name: this.name
         };
         const childCtx = ctx.createChildContext(ctxNode);
-        childCtx.log.info(`Routine ${this.name} started`);
+        childCtx.log.info(dictionary("app.domain.entities.routine.started", displayName));
 
         childCtx.onFinish((data) => {
             this.#eventDispatcher(routineEvents.routineFinished, data);
@@ -420,25 +431,25 @@ export class Routine extends EventEmitter implements RoutineInterface {
         return new Promise(async (resolve, reject) => {
 
             const runInSync = async (abortSignal: AbortSignal) => {
-                this.logger.info(childCtx.log.info("Running tasks in sync..."));
+                this.logger.info(childCtx.log.info(dictionary("app.domain.entities.routine.runningTasksInSync")));
 
                 for (const task of this.tasks) {
                     try {
-                        childCtx.log.info(`Running task ${task.name}...`);
+                        childCtx.log.info(dictionary("app.domain.entities.routine.runningTask", this.getTaskDisplayName(task)));
                         await task.run({ abortSignal, runCtx: childCtx });
-                        childCtx.log.info(`Task ${task.name} completed`);
+                        childCtx.log.info(dictionary("app.domain.entities.routine.taskCompleted", this.getTaskDisplayName(task)));
                     } catch (e) {
                         if (abortSignal.aborted) {
-                            childCtx.log.warn(`Task ${task.name} aborted: ${abortSignal.reason}`);
+                            childCtx.log.warn(dictionary("app.domain.entities.routine.taskAborted", this.getTaskDisplayName(task), String(abortSignal.reason)));
                             this.#setStatus("aborted");
-                            throw new Error(`Routine aborted: ${abortSignal.reason}`);
+                            throw new Error(dictionary("app.domain.entities.routine.aborted", String(abortSignal.reason ?? "")));
                         }
                         if (this.continueOnError) {
-                            childCtx.log.warn(`Task failed: ${e?.message || e}`);
+                            childCtx.log.warn(dictionary("app.domain.entities.routine.taskFailed", this.getTaskDisplayName(task), e?.message || String(e)));
                             this.#setStatus("failed");
                         } else {
                             this.#setStatus("failed");
-                            throw new Error("Task failed. Breaking execution 'Continue on error' is disabled");
+                            throw new Error(dictionary("app.domain.entities.routine.breakOnErrorDisabled"));
                         }
                     }
                 }
@@ -448,16 +459,16 @@ export class Routine extends EventEmitter implements RoutineInterface {
             const runInParallelBreakOnError = async (abortSignal: AbortSignal) => {
                 return new Promise<void>(async (resolve, reject) => {
 
-                    this.logger.info(childCtx.log.info("Running tasks in parallel without continueOnError..."));
+                    this.logger.info(childCtx.log.info(dictionary("app.domain.entities.routine.runningTasksInParallelBreak")));
                     try {
-                        const result = await Promise.all(this.tasks.map(task => task.run({ abortSignal, runCtx: childCtx })))
-                        childCtx.log.info(`Tasks completed: ${result}`);
+                        const result = await Promise.all(this.tasks.map(task => task.run({ abortSignal, runCtx: childCtx })));
+                        childCtx.log.info(dictionary("app.domain.entities.routine.tasksCompletedWithResult", JSON.stringify(result)));
                         resolve();
                     } catch (e) {
                         if (abortSignal.aborted) {
-                            childCtx.log.warn(`Tasks aborted: ${abortSignal.reason}`);
+                            childCtx.log.warn(dictionary("app.domain.entities.routine.tasksAborted", String(abortSignal.reason)));
                             this.#setStatus("aborted");
-                            return reject(new Error(`Routine aborted: ${abortSignal.reason}`));
+                            return reject(new Error(dictionary("app.domain.entities.routine.aborted", String(abortSignal.reason ?? ""))));
                         }
                         this.#setStatus("failed");
                         return reject(e);
@@ -468,24 +479,25 @@ export class Routine extends EventEmitter implements RoutineInterface {
             const runInParallelContinueOnError = async (abortSignal: AbortSignal) => {
 
                 return new Promise<void>(async (resolve, reject) => {
-                    this.logger.info(childCtx.log.info("Running tasks in parallel with continueOnError..."));
+                    this.logger.info(childCtx.log.info(dictionary("app.domain.entities.routine.runningTasksInParallelContinue")));
 
-                    const result = await Promise.allSettled(this.tasks.map(task => task.run({ abortSignal, runCtx: childCtx })))
+                    const result = await Promise.allSettled(this.tasks.map(task => task.run({ abortSignal, runCtx: childCtx })));
 
                     if (result.every((res) => res.status === 'fulfilled')) {
-                        childCtx.log.info(`Tasks completed: ${this.getTasks().map(task => task.name).join(', ')}`);
+                        const completedTaskNames = this.getTasks().map(task => this.getTaskDisplayName(task)).join(', ');
+                        childCtx.log.info(dictionary("app.domain.entities.routine.tasksCompletedList", completedTaskNames));
                         this.#setStatus("completed");
                         resolve();
                     } else {
                         for (const res of result) {
                             if (res.status === 'rejected') {
-                                childCtx.log.warn(`Task failed: ${res.reason}`);
+                                childCtx.log.warn(dictionary("app.domain.entities.routine.taskFailedReason", String(res.reason)));
                             } else {
-                                childCtx.log.info(`Task completed: ${res.value}`);
+                                childCtx.log.info(dictionary("app.domain.entities.routine.taskFulfilledValue", String(res.value)));
                             }
                         }
                         this.#setStatus("failed");
-                        reject("Some tasks failed. Check logs for details")
+                        reject(new Error(dictionary("app.domain.entities.routine.tasksFailedDetails")))
                     }
                 })
             }
@@ -501,7 +513,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
             //handler to abort tasks when routine is aborted or timeout occurs
             const handleOnAbortExecution = () => {
-                abortTasksController.abort("Routine aborted");
+                abortTasksController.abort(dictionary("app.domain.entities.routine.abortSignal"));
             }
 
             userAbortSignal.addEventListener("abort", handleOnAbortExecution);
@@ -527,7 +539,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
                         ]);
 
                 this.#setStatus("completed")
-                this.logger.info(childCtx.log.info(`Routine completed successfully in ${Date.now() - routineStartTime}ms`));
+                this.logger.info(childCtx.log.info(dictionary("app.domain.entities.routine.completed", Date.now() - routineStartTime)));
                 this.#eventDispatcher(routineEvents.routineCompleted);
 
                 resolve();
@@ -535,15 +547,15 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
                     if (userAbortSignal.aborted) {
                         this.#setStatus("aborted");
-                        this.logger.warn(childCtx.log.warn(`Routine aborted by user: ${e?.message || e}`))
+                    this.logger.warn(childCtx.log.warn(dictionary("app.domain.entities.routine.aborted", e?.message || String(e))));
                         this.#eventDispatcher(routineEvents.routineAborted);
                     } else if (this.timeoutController?.timedout) {
-                        this.logger.warn(childCtx.log.warn(`Routine timed out: ${e?.message || e}`))
+                    this.logger.warn(childCtx.log.warn(dictionary("app.domain.entities.routine.timedOut", e?.message || String(e))));
                         this.#eventDispatcher(routineEvents.routineTimeout);
                         this.#setStatus("timedout");
                     } else {
                         this.#setStatus("failed");
-                        this.logger.error(childCtx.log.error(`Routine ended with error: ${e?.message || e}`))
+                    this.logger.error(childCtx.log.error(dictionary("app.domain.entities.routine.failed", e?.message || String(e))));
                         this.#eventDispatcher(routineEvents.routineFailed);
                     }
 

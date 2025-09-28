@@ -5,6 +5,7 @@ import dgram from 'dgram';
 import { jobTypes } from "..";
 import ip from "ip";
 import { Context } from "@src/domain/entities/context";
+import dictionary from "@common/i18n";
 
 export interface SendUDPJobType extends JobType {
     params: {
@@ -60,8 +61,9 @@ export class SendUDPJob extends Job {
     async job(ctx: Context): Promise<void> {
         this.failed = false;
         const { signal: abortSignal } = this.abortController || {};
-        ctx.log.info(`Starting job "${this.name}" with ID ${this.id}`);
-        this.log.info(`Starting job "${this.name}" with ID ${this.id}`);
+        const displayName = this.getDisplayName();
+        ctx.log.info(dictionary("app.domain.entities.job.sendUdp.starting", displayName));
+        this.log.info(dictionary("app.domain.entities.job.sendUdp.starting", displayName));
 
         let ipAddress, portNumber, message, subnetMask;
 
@@ -87,8 +89,8 @@ export class SendUDPJob extends Job {
         const client = dgram.createSocket('udp4');
 
         if (isBroadcast(ipAddress, subnetMask)) {
-            this.log.info(`Sending UDP packet to broadcast address ${ipAddress}:${portNumber}`);
-            ctx.log.info(`Sending UDP packet to broadcast address ${ipAddress}:${portNumber}`);
+            this.log.info(dictionary("app.domain.entities.job.sendUdp.sendingToBroadcast", ipAddress, portNumber));
+            ctx.log.info(dictionary("app.domain.entities.job.sendUdp.sendingToBroadcast", ipAddress, portNumber));
             client.bind(() => {
                 client.setBroadcast(true);
             });
@@ -124,23 +126,23 @@ export class SendUDPJob extends Job {
 
             client.send(messageBuffer, 0, messageBuffer.length, portNumber, ipAddress, (err) => {
                 if (err) {
-                    this.log.error(`Failed to send UDP packet: ${err.message}`);
-                    ctx.log.error(`Failed to send UDP packet: ${err.message}`);
+                    this.log.error(dictionary("app.domain.entities.job.sendUdp.failed", err.message));
+                    ctx.log.error(dictionary("app.domain.entities.job.sendUdp.failed", err.message));
                     return safeReject(err);
                 }
-                ctx.log.info(`UDP packet "${message}" sent to ${ipAddress}:${portNumber}`);
+                ctx.log.info(dictionary("app.domain.entities.job.sendUdp.sent", message, ipAddress, portNumber));
                 safeResolve();
             });
 
             if (abortSignal) {
                 abortSignal.addEventListener("abort", () => {
-                    safeReject(new Error(`Job "${this.name}" was aborted`));
+                    safeReject(new Error(dictionary("app.domain.entities.job.aborted", displayName)));
                 });
             }
         }).finally(() => {
             if (!this.abortedByUser) {
-                this.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
-                ctx.log.info(`Job "${this.name}" with ID ${this.id} has finished`);
+                this.log.info(dictionary("app.domain.entities.job.sendUdp.finished", displayName));
+                ctx.log.info(dictionary("app.domain.entities.job.sendUdp.finished", displayName));
                 this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id, failed: this.failed });
             }
         });
