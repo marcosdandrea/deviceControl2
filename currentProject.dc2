@@ -14,9 +14,9 @@
       "status": "unknown",
       "enabled": true,
       "runInSync": true,
-      "continueOnError": true,
+      "continueOnError": false,
       "isRunning": false,
-      "routineTimeout": 20000,
+      "routineTimeout": 60000,
       "autoCheckConditionEveryMs": false,
       "triggersId": [
         {
@@ -56,7 +56,7 @@
       "continueOnError": true,
       "isRunning": false,
       "routineTimeout": 10000,
-      "autoCheckConditionEveryMs": 10000,
+      "autoCheckConditionEveryMs": false,
       "triggersId": [
         {
           "id": "2d2UN31n",

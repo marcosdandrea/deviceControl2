@@ -5,17 +5,18 @@ import { Task } from "@src/domain/entities/task";
 import { Trigger } from "@src/domain/entities/trigger";
 import { createNewTriggerByType } from "@src/domain/entities/trigger/types";
 import { Log } from "@src/utils/log";
-import { clearDirectory, readFile, writeFile } from "@src/services/fileSystem"
+import { readFile, writeFile } from "@src/services/fileSystem"
 import { setMainWindowTitle } from "../windowManager/mainWindowTitleManager";
 import { EventManager } from "@src/services/eventManager";
 import projectEvents from "@common/events/project.events";
 import { createRoutine } from "../routine";
 import { broadcastToClients } from "@src/services/ipcServices";
-import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
-import path from "path";
+import { clearProjectContext } from "../context";
 
 const log = Log.createInstance("projectUseCases", true);
 const eventManager = new EventManager();
+
+let lastOpenedProjectId = undefined
 
 export const createNewProject = async (projectData?: projectType): Promise<Project> => {
    let project = Project.getInstance()
@@ -33,6 +34,8 @@ export const createNewProject = async (projectData?: projectType): Promise<Proje
       triggers: [],
       tasks: []
    })
+
+   lastOpenedProjectId = project.id;
 
    log.info("New project created successfully");
    eventManager.emit(projectEvents.created, project);
@@ -95,13 +98,12 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
          throw new Error("No project instance found. Creating a new one.");
 
       const projectId = project.id;
-      const newProjectId = projectData.id;
 
-      if (projectId !== newProjectId) {
-         log.warn("Removing log files from previous project instance.");
-         await clearDirectory(path.join(__dirname, "../logs")).catch(err => {
-            log.error("Failed to clear logs:", err);
-         });
+      if (projectId !== lastOpenedProjectId) {
+         log.warn("Removing execution log files from previous project instance.");
+         await clearProjectContext();
+         lastOpenedProjectId = undefined;
+         log.info("Execution log files cleared successfully.");
       }
 
       log.warn("Closing the current project before loading a new one.");
@@ -161,6 +163,8 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
    await createRoutines();
    project.routines = Object.values(routines);
    project.onAny(broadcastToClients)
+
+   lastOpenedProjectId = project.id;
 
    setMainWindowTitle(project.name);
 
@@ -228,12 +232,9 @@ export const closeProject = (): void => {
 
    Project.close();
    setMainWindowTitle(null);
-
    broadcastToClients(projectEvents.closed, { projectData: {} });
    eventManager.emit(projectEvents.closed);
-   clearDirectory(path.join(__dirname, "../logs")).catch(err => {
-      log.error(`Failed to clear logs on project close: ${err}`);
-   });
+   
    log.info("Project closed successfully");
 }
 

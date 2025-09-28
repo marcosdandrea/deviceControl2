@@ -4,6 +4,7 @@ import { Log } from "@src/utils/log";
 import crypto from "crypto";
 import jobEvents from "@common/events/job.events";
 import { Context } from "../context";
+import dictionary from "@common/i18n";
 
 export class Job extends EventEmitter implements JobInterface {
     id: JobInterface["id"];
@@ -94,7 +95,7 @@ export class Job extends EventEmitter implements JobInterface {
             if (!(ctx instanceof Context))
                 throw new Error("ctx must be an instance of Context");
 
-            this.log.info(ctx.log.info(`Executed "${this.name}" job`));
+            this.log.info(ctx.log.info(dictionary("app.domain.entities.job.executed", this.name)));
             this.dispatchEvent(jobEvents.jobRunning, { jobId: this.id, jobName: this.name });
 
             let handleOnAbort: (() => void) | null = null;
@@ -102,7 +103,7 @@ export class Job extends EventEmitter implements JobInterface {
             // Promise to handle abortion when abortSignal is triggered
             const abortPromise = new Promise<void>((_, reject) => {
                 handleOnAbort = () => {
-                    this.log.warn(ctx.log.warn(`Job execution was aborted`));
+                    this.log.warn(ctx.log.warn(dictionary("app.domain.entities.job.aborted")));
                     this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
                     reject(new Error(`Job "${this.name}" was aborted`));
                 };
@@ -117,16 +118,16 @@ export class Job extends EventEmitter implements JobInterface {
                     abortPromise
                 ]);
 
-                this.log.info(ctx.log.info(`Execution finished successfully in ${Date.now() - timeStart} ms`));
+                this.log.info(ctx.log.info(dictionary("app.domain.entities.job.finished", (Date.now() - timeStart).toString())));
                 resolve();
 
             } catch (error) {
                 if (abortSignal.aborted) {
-                    this.log.warn(ctx.log.warn(`Job "${this.name}" was aborted`));
+                    this.log.warn(ctx.log.warn(dictionary("app.domain.entities.job.abortedByUser", this.name)));
                     this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
-                    reject(new Error(`Job "${this.name}" was aborted`));
+                    reject(new Error(dictionary("app.domain.entities.job.abortedByUser", this.name)));
                 } else {
-                    this.log.error(ctx.log.error(`Execution failed: ${(error as Error).message}`));
+                    this.log.error(ctx.log.error(dictionary("app.domain.entities.job.failed", error?.message || "Unknown error")));
                     this.failed = true;
                     this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
                     reject(error?.message);

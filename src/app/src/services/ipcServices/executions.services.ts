@@ -75,7 +75,7 @@ const deleteExecution = async ({ routineId, executionId }: { routineId: string; 
         callback({ error });
     }
 }
-
+/*
 const downloadExecutions = async (
     { routineId, executionIds }: { routineId: string; executionIds: string[] },
     callback: Function,
@@ -181,7 +181,7 @@ const deleteAllExecutions = async (
         callback({ error });
     }
 }
-
+*/
 const downloadExecutions = async (
     { routineId, executionIds }: { routineId: string; executionIds: string[] },
     callback: Function,
@@ -217,6 +217,7 @@ const downloadExecutions = async (
         callback({ error });
     }
 }
+
 
 const deleteExecutions = async (
     { routineId, executionIds }: { routineId: string; executionIds: string[] },
