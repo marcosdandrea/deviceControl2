@@ -3,6 +3,8 @@ import { ConditionInterface, ConditionType, requiredConditionParamType } from "@
 import { Log } from "@src/utils/log";
 import conditionEvents from "@common/events/condition.events";
 import { Context } from "../context";
+import dictionary from "@common/i18n";
+import crypto from "crypto";
 
 export class Condition extends EventEmitter implements ConditionInterface {
 
@@ -105,12 +107,12 @@ export class Condition extends EventEmitter implements ConditionInterface {
         try {
             await this.doEvaluation({ abortSignal });
             this.#dispatchEvent(conditionEvents.succeded);
-            ctx.log.info(`Evaluation succeeded`, null);
+            ctx.log.info(dictionary("app.domain.entities.condition.evaluationSucceeded", this.getDisplayName()));
             this.logger.info(`Evaluation succeeded`);
             return Promise.resolve(true);
         } catch (error) {
             this.logger.error(`Error during evaluation: ${error instanceof Error ? error.message : String(error)}`, error);
-            ctx.log.error(`Error during evaluation: ${error instanceof Error ? error.message : String(error)}`, null);
+            ctx.log.error(dictionary("app.domain.entities.condition.evaluationFailed", this.getDisplayName(), error instanceof Error ? error.message : String(error)));
             this.#dispatchEvent(conditionEvents.error, error);
             return Promise.reject(false);
         }
@@ -124,6 +126,10 @@ export class Condition extends EventEmitter implements ConditionInterface {
             type: this.type,
             params: this.params || {}
         };
+    }
+
+    private getDisplayName(): string {
+        return this.name || this.id;
     }
 
 }

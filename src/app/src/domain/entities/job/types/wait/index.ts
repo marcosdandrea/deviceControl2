@@ -3,6 +3,7 @@ import { Job } from "../..";
 import jobEvents from "@common/events/job.events";
 import { jobTypes } from "..";
 import { Context } from "@src/domain/entities/context";
+import dictionary from "@common/i18n";
 
 export class WaitJob extends Job {
     static description = "Waits for a specified amount of time before completing.";
@@ -38,8 +39,9 @@ export class WaitJob extends Job {
                return reject(new Error("AbortSignal is required for job execution"));
 
             const { time } = this.params;
+            const displayName = this.name || this.id;
             if (typeof time !== "number" || time < 0 || time > 2147483647) {
-                ctx.log.error(`Invalid 'time' parameter for job "${this.name}": ${time}`);
+                ctx.log.error(dictionary("app.domain.entities.job.wait.invalidTimeParameter", displayName, time));
                 this.failed = true;
                 this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error: "Invalid time parameter" });
                 return reject(new Error("Invalid time parameter. Must be between 0 and 2147483647."));
@@ -63,7 +65,7 @@ export class WaitJob extends Job {
 
             abortListener = () => {
                 cleanup();
-                ctx.log.warn(`Job "${this.name}" was aborted`);
+                ctx.log.warn(dictionary("app.domain.entities.job.wait.aborted", displayName));
                 this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
                 reject(new Error("Job aborted"));
             };
@@ -72,7 +74,7 @@ export class WaitJob extends Job {
 
             this.timeoutTimer = setTimeout(() => {
                 cleanup();
-                ctx.log.info(`Job "${this.name}" completed successfully`);
+                ctx.log.info(dictionary("app.domain.entities.job.wait.completed", displayName));
                 this.dispatchEvent(jobEvents.jobFinished, { jobId: this.id });
                 resolve();
             }, time);
