@@ -19,11 +19,13 @@ import os from "os";
 import systemEvents from "@common/events/system.events";
 import { getUserDataPath } from "@src/utils/paths";
 import path from "path";
+import { decryptData, encryptData } from "@src/services/cryptography";
 
 const log = Log.createInstance("projectUseCases", true);
 const eventManager = new EventManager();
 
 let lastOpenedProjectId = undefined
+const currentProjectFilename = process.env.CURRENT_PROJECT_FILENAME || "currentProject.dc2"
 
 const defaultProject = {
    id: nanoid(10),
@@ -103,7 +105,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
    const routines: Record<string, Routine> = {}
    const tasks: Record<string, Task> = {}
 
-   log.info("Loading project data...");
+   log.info("Loading project...");
 
    // check that major and minor version match
    const [major, minor] = projectData.appVersion.split(".").map(Number);
@@ -200,8 +202,8 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
    setMainWindowTitle(project.name);
 
    broadcastToClients(projectEvents.loaded, { projectData: project.toJson() });
-   //broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto "${project.name}" cargado.` });
    eventManager.emit(projectEvents.loaded, project);
+   saveLastProject();
    return Promise.resolve(project)
 
 }
@@ -211,10 +213,12 @@ export const saveLastProject = async (): Promise<void> => {
    if (!project)
       throw new Error("No project is currently loaded.");
    const projectData = project.toJson();
-   const recentLoadedProjectFile = path.join(await getUserDataPath(), "currentProject.dc2")
+   const recentLoadedProjectFile = path.join(await getUserDataPath(), currentProjectFilename)
 
    try {
-      await writeFile(recentLoadedProjectFile, JSON.stringify(projectData, null, 2))
+      const projectDataString = JSON.stringify(projectData, null, 2);
+      const filedataEncrypted = await encryptData(projectDataString);
+      await writeFile(recentLoadedProjectFile, filedataEncrypted);
       log.info(`Project auto-saved successfully to ${recentLoadedProjectFile}`);
    } catch (error) {
       log.error(`Failed to auto-save project to ${recentLoadedProjectFile}:`, error);
@@ -223,10 +227,12 @@ export const saveLastProject = async (): Promise<void> => {
 }
 
 export const getLastProject = async (): Promise<projectType> => {
-   const recentLoadedProjectFile = path.join(await getUserDataPath(), "currentProject.dc2")
+   const recentLoadedProjectFile = path.join(await getUserDataPath(), currentProjectFilename)
 
    try {
-      const projectData = await readFile(recentLoadedProjectFile);
+      const filedataEncrypted = await readFile(recentLoadedProjectFile, false);
+      const filedataDecrypted = await decryptData(filedataEncrypted as string);
+      const projectData = JSON.parse(filedataDecrypted as string) as projectType;
       return projectData;
    } catch (error) {
       log.error(`Failed to load last project:`, error);
@@ -251,14 +257,16 @@ export const loadLastProject = async (): Promise<projectType> => {
 export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promise<Project | string> => {
 
    try {
+      console.log (fileContent)
       const { decryptData } = await import('@src/services/cryptography/index.js');
-      const projectRawData = await decryptData(fileContent) as string;
+      const projectRawData = await decryptData(String(fileContent) as string);
       const projectContent = JSON.parse(projectRawData);
       await loadProject(projectContent);
       await saveLastProject();
       log.info("Project file loaded successfully:", projectContent.name);
       broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto "${projectContent.name}" cargado.` });
    } catch (error) {
+      console.error(error);
       broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el archivo del proyecto: ${error.message}` });
       log.error(`Failed to load project file: ${error.message}`);
       return null;
@@ -296,7 +304,7 @@ export const getCurrentProject = (): Project => {
 
 export const removeCurrentProjectFile = async (): Promise<void> => {
    try {
-      const recentLoadedProjectFile = path.join(await getUserDataPath(), "currentProject.dc2")
+      const recentLoadedProjectFile = path.join(await getUserDataPath(), currentProjectFilename)
       await deleteFile(recentLoadedProjectFile);
    } catch (error) {
       log.error("Error removing current project file:", error);

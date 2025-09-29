@@ -16,12 +16,12 @@ export const writeFile = async (filePath: string, content: string): Promise<void
     }
 }
 
-export const readFile = async (filePath: string): Promise<object> => {
+export const readFile = async (filePath: string, parse: boolean = true): Promise<object|string> => {
     log.info(`Reading file: ${filePath}`);
     try {
         const content = await fs.readFile(filePath, 'utf8');
         log.info(`File read successfully: ${filePath}`);
-        const projectData = JSON.parse(content);
+        const projectData = parse ? JSON.parse(content) : content;
         return projectData;
     } catch (error) {
         log.error(`Error reading file ${filePath}:`, error);

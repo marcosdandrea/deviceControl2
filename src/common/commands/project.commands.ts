@@ -1,6 +1,7 @@
 export default {
     create: "project:create",
-    loadProjectFile: "project:load",
+    load: "project:load",
+    loadProjectFile: "project:loadFromFile",
     getProjectFile: "project:getFile",
     close: "project:unload",
     getCurrent: "project:getCurrent",

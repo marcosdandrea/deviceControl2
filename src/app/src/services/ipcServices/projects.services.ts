@@ -37,7 +37,7 @@ export const closeProject = async (_payload: null, callback: Function) => {
     log.info('Client requested to close the current project');
     const { closeProject } = await import('@src/domain/useCases/project/index.js');
     try {
-        closeProject();
+        await closeProject();
         callback?.({ success: true });
         log.info('Project closed successfully');
     } catch (error) {
@@ -46,14 +46,13 @@ export const closeProject = async (_payload: null, callback: Function) => {
     }
 }
 
-export const getProjectFile = async (_payload: null, callback: Function) => {
+export const getProjectFromMemory = async (_payload: null, callback: Function) => {
     log.info('Client requested project file');
-    const { getCurrentProject } = await import('@src/domain/useCases/project/index.js');
     try {
-        const currentProject = getCurrentProject();
+        const { getCurrentProject } = await import('@src/domain/useCases/project/index.js');
         const { encryptData } = await import('@src/services/cryptography/index.js');
+        const currentProject = getCurrentProject();
         const projectFile = await encryptData(JSON.stringify(currentProject.toJson()));
-        console.log ({projectFile})
         callback({ projectFile });
         log.info(`Project file sent to client`);
     } catch (error) {
@@ -62,11 +61,11 @@ export const getProjectFile = async (_payload: null, callback: Function) => {
     }
 }
 
-export const loadProjectFile = async (payload: ArrayBuffer | string, callback: Function) => {
-    log.info('Client requested to load a project');
-    const { loadProjectFile } = await import('@src/domain/useCases/project/index.js');
+export const loadProjectFromFile = async (payload: ArrayBuffer | string, callback: Function) => {
+    log.info('Client requested to load a project from file');
+    const { closeProject, loadProjectFile } = await import('@src/domain/useCases/project/index.js');
     try {
-        Project.close();
+        await closeProject();
         const generalServer = ServerManager.getInstance("general");
         generalServer.unbindAllRoutes();
         await loadProjectFile(payload);
@@ -79,11 +78,27 @@ export const loadProjectFile = async (payload: ArrayBuffer | string, callback: F
     }
 }
 
+export const loadProject = async (payload: string, callback: Function) => {
+    log.info('Client requested to load a project from data');
+    const { closeProject, loadProject } = await import('@src/domain/useCases/project/index.js');
+
+    try {
+        await closeProject();
+        const project = JSON.parse(payload) as Project;
+        await loadProject(project);
+        callback({ success: true });
+        log.info(`Project loaded successfully`);
+    } catch (error) {
+        log.error(`Error loading project: ${error.message}`);
+        callback({ error: error.message });
+    }
+}
 
 export default {
     createNewProject,
     getCurrentProject,
-    loadProjectFile,
+    loadProjectFromFile,
     closeProject,
-    getProjectFile
+    loadProject,
+    getProjectFromMemory
 };

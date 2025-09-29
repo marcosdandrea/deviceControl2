@@ -38,9 +38,10 @@ const init = (io: import('socket.io').Server) => {
         //project
         socket.on(projectCommands.create, projectServices.createNewProject);
         socket.on(projectCommands.getCurrent, projectServices.getCurrentProject);
-        socket.on(projectCommands.loadProjectFile, projectServices.loadProjectFile);
+        socket.on(projectCommands.load, projectServices.loadProject);
+        socket.on(projectCommands.loadProjectFile, projectServices.loadProjectFromFile);
         socket.on(projectCommands.close, projectsServices.closeProject);
-        socket.on(projectCommands.getProjectFile, projectsServices.getProjectFile);
+        socket.on(projectCommands.getProjectFile, projectsServices.getProjectFromMemory);
 
         //executions
         socket.on(projectCommands.getExecutions, executionsServices.getExecutionsList);
