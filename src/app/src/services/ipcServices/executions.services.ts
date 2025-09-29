@@ -7,7 +7,6 @@ import projectEvents from "@common/events/project.events";
 import { ServerManager } from "../server/serverManager";
 import { getUserDataPath } from "@src/utils/paths";
 
-const logBaseDir = path.join(getUserDataPath(), "logs");
 
 
 const notifyExecutionsUpdated = async (routineId: string) => {
@@ -24,6 +23,7 @@ const getExecutionsList = async ({ routineId }: { routineId: string }, callback:
     try {
         let executions: { timestamp: string; executionId: string; }[] = [];
 
+        const logBaseDir = path.join(await getUserDataPath(), "logs");
         const logDirectoryPath = path.join(logBaseDir, "routines");
 
         const getExecutionDetails = async (routineId: string, file: string) => {
@@ -60,6 +60,7 @@ const getExecutionsList = async ({ routineId }: { routineId: string }, callback:
 const getExecution = async ({ routineId, executionId }: { routineId: string; executionId: string }, callback: Function) => {
     try {
         console.log("Reading execution:", routineId, executionId);
+        const logBaseDir = path.join(await getUserDataPath(), "logs");
         const filePath = path.join(logBaseDir, "routines", routineId, `${executionId}.json`);
         const content = await fileSystem.readFile(filePath);
         callback(content);
@@ -70,6 +71,8 @@ const getExecution = async ({ routineId, executionId }: { routineId: string; exe
 
 const deleteExecution = async ({ routineId, executionId }: { routineId: string; executionId: string }, callback: Function) => {
     try {
+        
+        const logBaseDir = path.join(await getUserDataPath(), "logs");
         const filePath = path.join(logBaseDir, "routines", routineId, `${executionId}.json`);
         await fileSystem.deleteFile(filePath);
         await notifyExecutionsUpdated(routineId);
@@ -78,7 +81,7 @@ const deleteExecution = async ({ routineId, executionId }: { routineId: string; 
         callback({ error });
     }
 }
-/*
+
 const downloadExecutions = async (
     { routineId, executionIds }: { routineId: string; executionIds: string[] },
     callback: Function,
@@ -93,112 +96,7 @@ const downloadExecutions = async (
             return;
         }
 
-        const routineLogPath = path.join(__dirname, "..", logDirectory, "routines", routineId);
-        const zip = new JSZip();
-
-        await Promise.all(executionIds.map(async executionId => {
-            const filePath = path.join(routineLogPath, `${executionId}.json`);
-            const content = await fs.readFile(filePath);
-            zip.file(`${executionId}.json`, content);
-        }));
-
-        const archive = await zip.generateAsync({ type: "nodebuffer" });
-
-        callback({
-            success: true,
-            data: archive.toString("base64"),
-            fileName: `${routineId}-executions.zip`,
-        });
-    } catch (error) {
-        console.error("Error downloading executions:", error);
-        callback({ error });
-    }
-}
-
-const deleteExecutions = async (
-    { routineId, executionIds }: { routineId: string; executionIds: string[] },
-    callback: Function,
-) => {
-    try {
-        if (!routineId) {
-            callback({ error: "Routine ID is required to delete executions." });
-            return;
-        }
-        if (!executionIds || executionIds.length === 0) {
-            callback({ error: "No executions provided to delete." });
-            return;
-        }
-
-        const routineLogPath = path.join(__dirname, "..", logDirectory, "routines", routineId);
-
-        await Promise.all(executionIds.map(async executionId => {
-            const filePath = path.join(routineLogPath, `${executionId}.json`);
-            await fileSystem.deleteFile(filePath);
-        }));
-
-        await notifyExecutionsUpdated(routineId);
-
-        callback({ success: true });
-    } catch (error) {
-        console.error("Error deleting executions:", error);
-        callback({ error });
-    }
-}
-
-const deleteAllExecutions = async (
-    { routineId }: { routineId: string },
-    callback: Function,
-) => {
-    try {
-        if (!routineId) {
-            callback({ error: "Routine ID is required to delete executions." });
-            return;
-        }
-
-        const routineLogPath = path.join(__dirname, "..", logDirectory, "routines", routineId);
-
-        let files: string[] = [];
-        try {
-            files = await readDir(routineLogPath);
-        } catch (error) {
-            if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-                await notifyExecutionsUpdated(routineId);
-                callback({ success: true });
-                return;
-            }
-            throw error;
-        }
-
-        const jsonFiles = files.filter(file => file.endsWith(".json"));
-
-        await Promise.all(jsonFiles.map(async file => {
-            const filePath = path.join(routineLogPath, file);
-            await removeFile(filePath);
-        }));
-
-        await notifyExecutionsUpdated(routineId);
-
-        callback({ success: true });
-    } catch (error) {
-        console.error("Error deleting all executions:", error);
-        callback({ error });
-    }
-}
-*/
-const downloadExecutions = async (
-    { routineId, executionIds }: { routineId: string; executionIds: string[] },
-    callback: Function,
-) => {
-    try {
-        if (!routineId) {
-            callback({ error: "Routine ID is required to download executions." });
-            return;
-        }
-        if (!executionIds || executionIds.length === 0) {
-            callback({ error: "No executions provided to download." });
-            return;
-        }
-
+        const logBaseDir = path.join(await getUserDataPath(), "logs");
         const routineLogPath = path.join(logBaseDir, "routines", routineId);
         const zip = new JSZip();
 
@@ -236,6 +134,7 @@ const deleteExecutions = async (
             return;
         }
 
+        const logBaseDir = path.join(await getUserDataPath(), "logs");
         const routineLogPath = path.join(logBaseDir, "routines", routineId);
 
         await Promise.all(executionIds.map(async executionId => {
@@ -260,6 +159,7 @@ const deleteAllExecutions = async (
             return;
         }
 
+        const logBaseDir = path.join(await getUserDataPath(), "logs");
         const routineLogPath = path.join(logBaseDir, "routines", routineId);
 
         let files: string[] = [];

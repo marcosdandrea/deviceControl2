@@ -16,8 +16,8 @@ const BlockControlView = () => {
   };
 
   return (
-    <Tooltip placement="bottom" title={blocked ? "Desbloquear control principal" : "Bloquear control principal"} arrow>
-        <div>
+    <Tooltip placement="bottom" title={"Bloquear o desbloquear la vista de control"} arrow>
+        <>
       <ToolbarButton
         onClick={handleOnClick}
         icon={
@@ -28,7 +28,7 @@ const BlockControlView = () => {
           )
         }
       />
-      </div>
+      </>
     </Tooltip>
   );
 };

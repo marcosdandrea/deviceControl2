@@ -24,7 +24,6 @@ const log = Log.createInstance("projectUseCases", true);
 const eventManager = new EventManager();
 
 let lastOpenedProjectId = undefined
-const recentLoadedProjectFile = path.join(getUserDataPath(), "currentProject.dc2")
 
 const defaultProject = {
    id: nanoid(10),
@@ -212,6 +211,8 @@ export const saveLastProject = async (): Promise<void> => {
    if (!project)
       throw new Error("No project is currently loaded.");
    const projectData = project.toJson();
+   const recentLoadedProjectFile = path.join(await getUserDataPath(), "currentProject.dc2")
+
    try {
       await writeFile(recentLoadedProjectFile, JSON.stringify(projectData, null, 2))
       log.info(`Project auto-saved successfully to ${recentLoadedProjectFile}`);
@@ -222,6 +223,8 @@ export const saveLastProject = async (): Promise<void> => {
 }
 
 export const getLastProject = async (): Promise<projectType> => {
+   const recentLoadedProjectFile = path.join(await getUserDataPath(), "currentProject.dc2")
+
    try {
       const projectData = await readFile(recentLoadedProjectFile);
       return projectData;
@@ -293,6 +296,7 @@ export const getCurrentProject = (): Project => {
 
 export const removeCurrentProjectFile = async (): Promise<void> => {
    try {
+      const recentLoadedProjectFile = path.join(await getUserDataPath(), "currentProject.dc2")
       await deleteFile(recentLoadedProjectFile);
    } catch (error) {
       log.error("Error removing current project file:", error);

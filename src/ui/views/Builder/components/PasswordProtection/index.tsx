@@ -74,6 +74,11 @@ const PasswordProtection = ({ children }) => {
         debe escribir su contraseña.
       </p>
       <Input.Password
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleOk();
+          }
+        }}
         value={password}
         placeholder="Contraseña"
         onChange={handleOnChangePassword}

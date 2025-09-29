@@ -1,9 +1,18 @@
-import { app } from "electron";
+const isHeadless = process.argv.includes("--headless") || process.argv.includes("--h");
 
-export const getAppPath = (): string => {
+export const getAppPath = async (): Promise<string> => {
+  if (isHeadless) {
+    return process.cwd();
+  }
+  const { app } = await import ("electron")
+
   return app.getAppPath()
 }
 
-export const getUserDataPath = (): string => {
+export const getUserDataPath = async (): Promise<string> => {
+  if (isHeadless) {
+    return process.cwd();
+  }
+  const { app } = await import ("electron")
   return app.getPath("userData");
 }

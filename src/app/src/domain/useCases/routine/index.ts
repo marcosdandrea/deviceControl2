@@ -20,13 +20,13 @@ const log = Log.createInstance("routineUseCase", true);
 const eventManager = new EventManager();
 
 const EXECUTIONS_LOG_DEPTH_PER_ROUTINE = Number(process.env.EXECUTIONS_LOG_DEPTH_PER_ROUTINE || "0");
-const logBaseDir = path.join(getUserDataPath(), "logs");
 
 const enforceExecutionLogDepthForRoutine = async (routineId: string) => {
   if (!EXECUTIONS_LOG_DEPTH_PER_ROUTINE || EXECUTIONS_LOG_DEPTH_PER_ROUTINE <= 0) {
     return;
   }
 
+  const logBaseDir = path.join(await getUserDataPath(), "logs");
   const routineLogPath = path.join(logBaseDir, "routines", routineId);
 
   try {
@@ -171,6 +171,7 @@ export const createRoutine = async (routineData, projectData): Promise<Routine> 
         log: logData,
       };
 
+      const logBaseDir = path.join(await getUserDataPath(), "logs");
       const logFilePath = path.join(logBaseDir, "routines", id, `${executionId}.json`);
       await fs.mkdir(path.dirname(logFilePath), { recursive: true });
       await fs.writeFile(logFilePath, JSON.stringify(data));

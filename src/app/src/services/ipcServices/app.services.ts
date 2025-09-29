@@ -65,9 +65,7 @@ const getAvailableConditions = async (_args: any, callback: Function) => {
 let usersWhichBlockedControl: string[] = []
 
 const blockMainControlView = async (socket: Socket, callback: Function) => {
-    socket.on('disconnect', () => {
-        unblockMainControlView(socket)
-    })
+    socket.on('disconnect', unblockMainControlView.bind(null, socket, undefined))
     usersWhichBlockedControl.push(socket.id)
     broadcastToClients(appCommands.blockMainControl, null)
     callback?.({ success: true })
@@ -75,6 +73,7 @@ const blockMainControlView = async (socket: Socket, callback: Function) => {
 }
 
 const unblockMainControlView = async (socket: Socket, callback?: Function) => {
+    socket.off('disconnect', unblockMainControlView.bind(null, socket, undefined))
     usersWhichBlockedControl = usersWhichBlockedControl.filter(id => id !== socket.id)
     broadcastToClients(appCommands.unblockMainControl, null)
     callback?.({ success: true })
