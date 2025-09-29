@@ -2,6 +2,7 @@ import React from "react";
 import ToolbarButton from "../ToolbarButton";
 import useProject from "@hooks/useProject";
 import { HiFolderOpen } from "react-icons/hi2";
+import { Tooltip } from "antd";
 
 const LoadProjectButton = () => {
 
@@ -42,9 +43,13 @@ const LoadProjectButton = () => {
     }
 
     return (
+        <Tooltip placement="bottom" title="Cargar proyecto" arrow>
+            <>
         <ToolbarButton 
             icon={<HiFolderOpen size={20}/>} 
             onClick={handleOnLoad} />
+            </>
+        </Tooltip>
     );
 }
  

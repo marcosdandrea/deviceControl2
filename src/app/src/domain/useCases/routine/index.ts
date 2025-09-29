@@ -5,26 +5,29 @@ import { EventManager } from '@src/services/eventManager';
 import routineEvents from '@common/events/routine.events';
 import projectEvents from '@common/events/project.events';
 import { broadcastToClients } from '@src/services/ipcServices';
-import { writeFile, deleteFile as removeFile } from '@src/services/fileSystem';
+import { deleteFile as removeFile } from '@src/services/fileSystem';
 import { Task } from '@src/domain/entities/task';
 import { createNewJobByType } from '@src/domain/entities/job/types';
 import { createNewConditionByType } from '@src/domain/entities/conditions/types';
 import { Condition } from '@src/domain/entities/conditions';
 import { Job } from '@src/domain/entities/job';
-import path from "path";
+import path from "node:path";
 import { promises as fs } from "fs";
+import systemEvents from '@common/events/system.events';
+import { getUserDataPath } from '@src/utils/paths';
 
 const log = Log.createInstance("routineUseCase", true);
 const eventManager = new EventManager();
 
 const EXECUTIONS_LOG_DEPTH_PER_ROUTINE = Number(process.env.EXECUTIONS_LOG_DEPTH_PER_ROUTINE || "0");
+const logBaseDir = path.join(getUserDataPath(), "logs");
 
 const enforceExecutionLogDepthForRoutine = async (routineId: string) => {
   if (!EXECUTIONS_LOG_DEPTH_PER_ROUTINE || EXECUTIONS_LOG_DEPTH_PER_ROUTINE <= 0) {
     return;
   }
 
-  const routineLogPath = path.resolve(process.cwd(), "logs", "routines", routineId);
+  const routineLogPath = path.join(logBaseDir, "routines", routineId);
 
   try {
     const files = await fs.readdir(routineLogPath);
@@ -51,6 +54,7 @@ const enforceExecutionLogDepthForRoutine = async (routineId: string) => {
   } catch (error) {
     const err = error as NodeJS.ErrnoException;
     if (err?.code !== "ENOENT") {
+      broadcastToClients(systemEvents.appLogError, { message: `Failed to enforce execution log depth for routine ${routineId}: ${String(error)}` });
       log.warn(`Failed to enforce execution log depth for routine ${routineId}: ${String(error)}`);
     }
   }
@@ -167,11 +171,15 @@ export const createRoutine = async (routineData, projectData): Promise<Routine> 
         log: logData,
       };
 
-      await writeFile(`./logs/routines/${id}/${executionId}.json`, JSON.stringify(data));
+      const logFilePath = path.join(logBaseDir, "routines", id, `${executionId}.json`);
+      await fs.mkdir(path.dirname(logFilePath), { recursive: true });
+      await fs.writeFile(logFilePath, JSON.stringify(data));
+      log.info(`Execution log for routine ${id} saved to ${logFilePath}`);
       await enforceExecutionLogDepthForRoutine(id);
       await broadcastToClients(projectEvents.executionsUpdated, { routineId: id });
 
     } catch (error) {
+      broadcastToClients(systemEvents.appLogError, { message: `Failed to persist execution log for routine ${id}: ${String(error)}` });
       log.error(`Failed to persist execution log for routine ${id}:`, error);
     }
 

@@ -2,6 +2,9 @@ import { getConditionTypes } from "@src/domain/entities/conditions/types"
 import { getJobTypes } from "@src/domain/entities/job/types"
 import { getTriggerTypes } from "@src/domain/entities/trigger/types"
 import {Log} from "@src/utils/log"
+import { broadcastToClients } from "."
+import appCommands from "@common/commands/app.commands"
+import { Socket } from "socket.io"
 const log = new Log("AppServices", true)
 
 const getAvailableTriggers = async (_args: any, callback: Function) => {
@@ -59,6 +62,24 @@ const getAvailableConditions = async (_args: any, callback: Function) => {
     return conditions
 }
 
+let usersWhichBlockedControl: string[] = []
+
+const blockMainControlView = async (socket: Socket, callback: Function) => {
+    socket.on('disconnect', () => {
+        unblockMainControlView(socket)
+    })
+    usersWhichBlockedControl.push(socket.id)
+    broadcastToClients(appCommands.blockMainControl, null)
+    callback?.({ success: true })
+    return { success: true }
+}
+
+const unblockMainControlView = async (socket: Socket, callback?: Function) => {
+    usersWhichBlockedControl = usersWhichBlockedControl.filter(id => id !== socket.id)
+    broadcastToClients(appCommands.unblockMainControl, null)
+    callback?.({ success: true })
+    return { success: true }
+}
 
 
-export default { getAvailableTriggers, getAvailableJobs, getAvailableConditions }
+export default { getAvailableTriggers, getAvailableJobs, getAvailableConditions, blockMainControlView, unblockMainControlView }

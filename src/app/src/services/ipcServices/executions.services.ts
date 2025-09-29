@@ -5,6 +5,10 @@ import fileSystem, { readDirectory as readDir, deleteFile as removeFile } from "
 import { Execution } from "@common/types/execution.type";
 import projectEvents from "@common/events/project.events";
 import { ServerManager } from "../server/serverManager";
+import { getUserDataPath } from "@src/utils/paths";
+
+const logBaseDir = path.join(getUserDataPath(), "logs");
+
 
 const notifyExecutionsUpdated = async (routineId: string) => {
     try {
@@ -16,13 +20,11 @@ const notifyExecutionsUpdated = async (routineId: string) => {
     }
 };
 
-const logDirectory = '/logs';
-
 const getExecutionsList = async ({ routineId }: { routineId: string }, callback: Function) => {
     try {
         let executions: { timestamp: string; executionId: string; }[] = [];
 
-        const logDirectoryPath = path.join(__dirname, "..", logDirectory, "routines");
+        const logDirectoryPath = path.join(logBaseDir, "routines");
 
         const getExecutionDetails = async (routineId: string, file: string) => {
             const filePath = path.join(logDirectoryPath, routineId, `${file}`);
@@ -58,7 +60,7 @@ const getExecutionsList = async ({ routineId }: { routineId: string }, callback:
 const getExecution = async ({ routineId, executionId }: { routineId: string; executionId: string }, callback: Function) => {
     try {
         console.log("Reading execution:", routineId, executionId);
-        const filePath = path.join(__dirname, "..", logDirectory, "routines", routineId, `${executionId}.json`);
+        const filePath = path.join(logBaseDir, "routines", routineId, `${executionId}.json`);
         const content = await fileSystem.readFile(filePath);
         callback(content);
     } catch (error) {
@@ -68,7 +70,7 @@ const getExecution = async ({ routineId, executionId }: { routineId: string; exe
 
 const deleteExecution = async ({ routineId, executionId }: { routineId: string; executionId: string }, callback: Function) => {
     try {
-        const filePath = path.join(__dirname, "..", logDirectory, "routines", routineId, `${executionId}.json`);
+        const filePath = path.join(logBaseDir, "routines", routineId, `${executionId}.json`);
         await fileSystem.deleteFile(filePath);
         await notifyExecutionsUpdated(routineId);
         callback({ success: true });
@@ -197,7 +199,7 @@ const downloadExecutions = async (
             return;
         }
 
-        const routineLogPath = path.join(__dirname, "..", logDirectory, "routines", routineId);
+        const routineLogPath = path.join(logBaseDir, "routines", routineId);
         const zip = new JSZip();
 
         await Promise.all(executionIds.map(async executionId => {
@@ -234,7 +236,7 @@ const deleteExecutions = async (
             return;
         }
 
-        const routineLogPath = path.join(__dirname, "..", logDirectory, "routines", routineId);
+        const routineLogPath = path.join(logBaseDir, "routines", routineId);
 
         await Promise.all(executionIds.map(async executionId => {
             const filePath = path.join(routineLogPath, `${executionId}.json`);
@@ -258,7 +260,7 @@ const deleteAllExecutions = async (
             return;
         }
 
-        const routineLogPath = path.join(__dirname, "..", logDirectory, "routines", routineId);
+        const routineLogPath = path.join(logBaseDir, "routines", routineId);
 
         let files: string[] = [];
         try {

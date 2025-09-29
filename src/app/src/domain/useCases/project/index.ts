@@ -5,7 +5,7 @@ import { Task } from "@src/domain/entities/task";
 import { Trigger } from "@src/domain/entities/trigger";
 import { createNewTriggerByType } from "@src/domain/entities/trigger/types";
 import { Log } from "@src/utils/log";
-import { readFile, writeFile } from "@src/services/fileSystem"
+import { deleteFile, readFile, writeFile } from "@src/services/fileSystem"
 import { setMainWindowTitle } from "../windowManager/mainWindowTitleManager";
 import { EventManager } from "@src/services/eventManager";
 import projectEvents from "@common/events/project.events";
@@ -15,13 +15,16 @@ import { clearProjectContext } from "../context";
 import { nanoid } from "nanoid";
 import { version as appVersion } from '../../../../../../package.json';
 import dictionary from "@common/i18n";
-import os, { version } from "os";
+import os from "os";
 import systemEvents from "@common/events/system.events";
+import { getUserDataPath } from "@src/utils/paths";
+import path from "path";
 
 const log = Log.createInstance("projectUseCases", true);
 const eventManager = new EventManager();
 
 let lastOpenedProjectId = undefined
+const recentLoadedProjectFile = path.join(getUserDataPath(), "currentProject.dc2")
 
 const defaultProject = {
    id: nanoid(10),
@@ -103,16 +106,16 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
 
    log.info("Loading project data...");
 
-         // check that major and minor version match
-      const [major, minor] = projectData.appVersion.split(".").map(Number);
-      const [appMajor, appMinor] = appVersion.split(".").map(Number);
-      if (major !== appMajor) {
-         //broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el proyecto con la versión ${projectData.appVersion}. Se esperaba al menos la versión ${appVersion}.x` });
-         throw new Error(`Versión del proyecto ${projectData.appVersion}. Se esperaba al menos la versión ${appVersion}.x`);
-      } else if (minor > appMinor) {
-         log.warn(`Version de proyecto: ${projectData.appVersion}. Versión del sistema: ${appVersion}.${appMinor}. Puede que el proyecto contenga errores.`);
-         broadcastToClients(systemEvents.appLogError, { message: `El proyecto ha sido creado con una versión de Device Control más reciente (${projectData.appVersion}). Se intentará cargar el proyecto pero podría contener errores.` });
-      } 
+   // check that major and minor version match
+   const [major, minor] = projectData.appVersion.split(".").map(Number);
+   const [appMajor, appMinor] = appVersion.split(".").map(Number);
+   if (major !== appMajor) {
+      //broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el proyecto con la versión ${projectData.appVersion}. Se esperaba al menos la versión ${appVersion}.x` });
+      throw new Error(`Versión del proyecto ${projectData.appVersion}. Se esperaba al menos la versión ${appVersion}.x`);
+   } else if (minor > appMinor) {
+      log.warn(`Version de proyecto: ${projectData.appVersion}. Versión del sistema: ${appVersion}.${appMinor}. Puede que el proyecto contenga errores.`);
+      broadcastToClients(systemEvents.appLogError, { message: `El proyecto ha sido creado con una versión de Device Control más reciente (${projectData.appVersion}). Se intentará cargar el proyecto pero podría contener errores.` });
+   }
 
    try {
 
@@ -210,17 +213,17 @@ export const saveLastProject = async (): Promise<void> => {
       throw new Error("No project is currently loaded.");
    const projectData = project.toJson();
    try {
-      await writeFile("./currentProject.dc2", JSON.stringify(projectData, null, 2))
-      log.info(`Project auto-saved successfully to ./currentProject.dc2`);
+      await writeFile(recentLoadedProjectFile, JSON.stringify(projectData, null, 2))
+      log.info(`Project auto-saved successfully to ${recentLoadedProjectFile}`);
    } catch (error) {
-      log.error(`Failed to auto-save project to ./currentProject.dc2:`, error);
+      log.error(`Failed to auto-save project to ${recentLoadedProjectFile}:`, error);
       throw new Error(`Failed to auto-save project: ${error.message}`);
    }
 }
 
 export const getLastProject = async (): Promise<projectType> => {
    try {
-      const projectData = await readFile("./currentProject.dc2");
+      const projectData = await readFile(recentLoadedProjectFile);
       return projectData;
    } catch (error) {
       log.error(`Failed to load last project:`, error);
@@ -234,7 +237,7 @@ export const loadLastProject = async (): Promise<projectType> => {
       if (!projectContent)
          throw new Error("No last project found.");
       await loadProject(projectContent);
-      log.info("Last project loaded successfully:", projectContent?.name || 'Unnamed Project');
+      log.info(`Last project loaded successfully: ${projectContent.name}`);
       return projectContent;
    } catch (error) {
       log.error(`Failed to load last project:`, error);
@@ -260,14 +263,24 @@ export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promis
 
 }
 
-export const closeProject = (): void => {
+export const closeProject = async (): Promise<void> => {
+   try {
+      const project = Project.getInstance();
 
-   Project.close();
-   setMainWindowTitle(null);
-   broadcastToClients(projectEvents.closed, { projectData: {} });
-   eventManager.emit(projectEvents.closed);
-   broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto cerrado` });
-   log.info("Project closed successfully");
+      if (!project)
+         return;
+
+      Project.close();
+      await removeCurrentProjectFile();
+      setMainWindowTitle(null);
+      broadcastToClients(projectEvents.closed, { projectData: {} });
+      eventManager.emit(projectEvents.closed);
+      broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto cerrado` });
+      log.info("Project closed successfully");
+   } catch (error) {
+      log.error("Error closing project:", error);
+      broadcastToClients(systemEvents.appLogError, { message: `Error al cerrar el proyecto: ${error.message}` });
+   }
 }
 
 export const getCurrentProject = (): Project => {
@@ -276,4 +289,12 @@ export const getCurrentProject = (): Project => {
       throw new Error("No project is currently loaded.");
 
    return project;
+}
+
+export const removeCurrentProjectFile = async (): Promise<void> => {
+   try {
+      await deleteFile(recentLoadedProjectFile);
+   } catch (error) {
+      log.error("Error removing current project file:", error);
+   }
 }

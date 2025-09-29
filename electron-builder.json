@@ -4,18 +4,29 @@
   "files": ["dist-electron", "dist-react"],
   "asar": true,
 
+  "extraResources": [
+    { "from": "resources/png", "to": "png" }
+  ],
+
   "directories": {
     "output": "dist/${version}"    
   },
 
   "mac": {
-    "icon": "./resources/icons/mac/icon.icns",
-    "target": "dmg",
-    "artifactName": "mac/${productName}-${version}.${ext}"
+    "icon": "resources/icons/mac/icon.icns",
+    "category": "public.app-category.utilities",
+    "target": ["zip", { "target": "dmg" }],
+    "artifactName": "mac/${productName}-${version}.${ext}",
+    "extendInfo": {
+      "CFBundleIconFile": "icon.icns"
+    }
+  },
+  "dmg": {
+    "format": "ULFO"
   },
   "linux": {
     "icon": "./resources/icons/png/512x512.png",
-    "target": "AppImage",
+    "target": ["AppImage"],
     "category": "Utility",
     "artifactName": "linux/${productName}-${version}.${ext}"
   },

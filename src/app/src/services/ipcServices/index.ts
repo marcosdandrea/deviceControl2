@@ -32,6 +32,8 @@ const init = (io: import('socket.io').Server) => {
         socket.on(appCommands.getTriggerTypes, appServices.getAvailableTriggers);
         socket.on(appCommands.getConditionTypes, appServices.getAvailableConditions);
         socket.on(appCommands.getJobTypes, appServices.getAvailableJobs);
+        socket.on(appCommands.blockMainControl, (args: any, callback: Function) => appServices.blockMainControlView(socket, callback));
+        socket.on(appCommands.unblockMainControl, (args: any, callback: Function) => appServices.unblockMainControlView(socket, callback));
 
         //project
         socket.on(projectCommands.create, projectServices.createNewProject);

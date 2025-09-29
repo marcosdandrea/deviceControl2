@@ -132,11 +132,23 @@ export class Server {
       res.sendFile('index.html', { root: path });
     });
 
+    this.app.get('/controlPreview', (_: express.Request, res: express.Response) => {
+      res.sendFile('index.html', { root: path });
+    });
+
     this.app.get('/builder', (_: express.Request, res: express.Response) => {
       res.sendFile('index.html', { root: path });
     });
 
     this.app.get('/terminal', (_: express.Request, res: express.Response) => {
+      res.sendFile('index.html', { root: path });
+    });
+
+    this.app.get('/executions', (_: express.Request, res: express.Response) => {
+      res.sendFile('index.html', { root: path });
+    });
+
+    this.app.get('/notAllowed', (_: express.Request, res: express.Response) => {
       res.sendFile('index.html', { root: path });
     });
 

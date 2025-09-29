@@ -5,6 +5,7 @@ import { FaGear } from "react-icons/fa6";
 import useProject from "@hooks/useProject";
 import PopoutWindow from "@components/PopUpWindow";
 import Configuration from "@views/Configuration";
+import { Tooltip } from "antd";
 
 
 const OpenConfigButton = () => {
@@ -12,6 +13,7 @@ const OpenConfigButton = () => {
   const [open, setOpen] = useState(false);
 
   return (
+    <Tooltip placement="bottom" title="Abrir configuración del proyecto" arrow>
     <>
       <ToolbarButton
         disabled={!project}
@@ -29,6 +31,7 @@ const OpenConfigButton = () => {
         </PopoutWindow>
       )}
     </>
+    </Tooltip>
   );
 };
 

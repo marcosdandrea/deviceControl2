@@ -10,7 +10,8 @@ const Navigation = () => {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/control" element={<Control />} />
+                <Route path="/control" element={<Control isPreview={false} />} />
+                <Route path="/controlPreview" element={<Control isPreview={true} />} />
                 <Route path='/builder' element={<Builder />} />
                 <Route path='/terminal' element={<Terminal />} />
                 <Route path='/executions' element={<Executions />} />

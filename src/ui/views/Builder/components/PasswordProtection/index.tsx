@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import useProject from "@hooks/useProject";
 import { Input, message, Modal } from "antd";
 import { useState } from "react";
@@ -12,6 +12,19 @@ const PasswordProtection = ({ children }) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [allowed, setAllowed] = useState(false);
   const [password, setPassword] = useState("");
+  const [currentProjectId, setCurrentProjectId] = useState(null);
+
+  useEffect(() => {
+    if (!project) return
+    if (currentProjectId === project.id) return;
+      
+    setCurrentProjectId(project.id);
+    if (project.password) {
+      setIsModalOpen(true);
+    } else {
+      setAllowed(true);
+    }
+  }, [project]);
 
   const handleOnChangePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

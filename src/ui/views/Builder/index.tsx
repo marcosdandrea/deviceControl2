@@ -1,7 +1,6 @@
 import React from "react";
 import styles from "./style.module.css";
 import Desktop from "./components/Desktop";
-import StatusBar from "./components/StatusBar";
 import Toolbar from "./components/Toolbar";
 import { ConfigProvider, theme } from "antd";
 import LoadProjectButton from "./components/Toolbar/components/LoadProjectButton";
@@ -16,6 +15,7 @@ import Divider from "./components/Toolbar/components/Divider";
 import OpenConfigButton from "./components/Toolbar/components/OpenConfigButton";
 import ExecutionsTimelineButton from "./components/Toolbar/components/ExecutionsTimelineButton";
 import PasswordProtection from "./components/PasswordProtection";
+import BlockControlView from "./components/Toolbar/components/BlockControlView";
 
 const Builder = () => {
   return (
@@ -42,6 +42,7 @@ const Builder = () => {
             <div className={styles.toolbarRight}>
               <OpenConfigButton />
               <OpenControlView />
+              <BlockControlView />
               <Divider />
               <ExecutionsTimelineButton />
               <OpenTerminalView />

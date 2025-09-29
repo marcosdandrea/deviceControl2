@@ -19,6 +19,7 @@ type Props = {
 };
 
 const Routine = ({ routineData, onSwipeLeft }: Props) => {
+    const disableRoutineSwipe = true; // setear true para deshabilitar el swipe (testing)
     const maxDisplacementInPixels = 4 * 16;   // límite visual
     const activationThreshold = 60;        // umbral para disparar acción
     const resistanceK = 0.018;             // “dureza” del resorte (más alto = más duro)
@@ -52,6 +53,7 @@ const Routine = ({ routineData, onSwipeLeft }: Props) => {
 
     const handlePointerDown = (e: React.PointerEvent) => {
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        if (disableRoutineSwipe) return;
         startXRef.current = e.clientX;
         draggingRef.current = true;
         setDragging(true);

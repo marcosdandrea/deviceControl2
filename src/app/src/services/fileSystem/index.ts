@@ -1,7 +1,6 @@
 import { promises as fs } from 'fs';
 import { Log } from '@src/utils/log';
 import path from "path"
-import e from 'cors';
 const log = Log.createInstance('FileSystemService');
 
 export const writeFile = async (filePath: string, content: string): Promise<void> => {

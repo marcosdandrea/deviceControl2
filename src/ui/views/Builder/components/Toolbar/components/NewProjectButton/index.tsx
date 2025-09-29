@@ -1,7 +1,7 @@
 import React from "react";
 import ToolbarButton from "../ToolbarButton";
 import useProject from "@hooks/useProject";
-import { Popconfirm } from "antd";
+import { Popconfirm, Tooltip } from "antd";
 import { HiDocument } from "react-icons/hi";
 import { projectType } from "@common/types/project.types";
 import { nanoid } from "nanoid";
@@ -37,6 +37,8 @@ const NewProjectButton = () => {
     }
 
     return (
+        <Tooltip placement="bottom" title="Crear nuevo proyecto" arrow>
+            <>
         <Popconfirm
             disabled={!project}
             onConfirm={handleOnCreateNewProject}
@@ -47,6 +49,8 @@ const NewProjectButton = () => {
             icon={<HiDocument size={20}/>}
             onClick={!project ? handleOnCreateNewProject : undefined} />
             </Popconfirm >
+            </>
+        </Tooltip>
     );
 }
 
