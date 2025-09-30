@@ -257,13 +257,12 @@ export const loadLastProject = async (): Promise<projectType> => {
 export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promise<Project | string> => {
 
    try {
-      console.log (fileContent)
       const { decryptData } = await import('@src/services/cryptography/index.js');
       const projectRawData = await decryptData(String(fileContent) as string);
       const projectContent = JSON.parse(projectRawData);
       await loadProject(projectContent);
       await saveLastProject();
-      log.info("Project file loaded successfully:", projectContent.name);
+      log.info(`Project file loaded successfully: ${projectContent.name}`);
       broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto "${projectContent.name}" cargado.` });
    } catch (error) {
       console.error(error);

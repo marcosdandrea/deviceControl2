@@ -1,3 +1,5 @@
+import { message } from "antd";
+import { info } from "console";
 import { nanoid } from "nanoid";
 
 type LogLevel = "info" | "warn" | "error" | "debug";
@@ -94,10 +96,13 @@ class LoggerContext {
     return current;
   }
 
-  addLog(executionId: string, path: nodeType[], entry: Omit<logContextEntry, "ts"> & { ts?: string }): string {
+  addLog(executionId: string, path: nodeType[], entry: Omit<logContextEntry, "ts"> & { ts?: string }, isTheEnd?: boolean): string {
     const node = this.ensurePath(executionId, path);
+    const timestamp = entry.ts
+      ? new Date(new Date(entry.ts).getTime() + (isTheEnd ? 1 : 0)).toISOString()
+      : new Date(Date.now() + (isTheEnd ? 1 : 0)).toISOString();
     node.logs.push({
-      ts: entry.ts ?? new Date().toISOString(),
+      ts: timestamp,
       level: entry.level,
       message: entry.message,
       data: entry.data,
@@ -188,11 +193,36 @@ export class Context {
   }
 
   /** Finaliza SOLO esta instancia y entrega SOLO su rama */
-  finish() {
+
+  finish = {
+    info: (message: string, data?: unknown): string => {
+      const logMessage = this.logger.addLog(this.id, this.path, { level: "info", message, data }, true);
+      this.onFinishCtx();
+      return logMessage;
+    },
+    warn: (message: string, data?: unknown): string => {
+      const logMessage = this.logger.addLog(this.id, this.path, { level: "warn", message, data }, true);
+      this.onFinishCtx();
+      return logMessage;
+    },
+    error: (message: string, data?: unknown): string => {
+      const logMessage = this.logger.addLog(this.id, this.path, { level: "error", message, data }, true);
+      this.onFinishCtx();
+      return logMessage;
+    },
+    debug: (message: string, data?: unknown): string => {
+      const logMessage = this.logger.addLog(this.id, this.path, { level: "debug", message, data }, true);
+      this.onFinishCtx();
+      return logMessage;
+    }
+  }
+
+  onFinishCtx() {
     const log = this.logger.exportSubtreeByNodeId(this.id, this.originNodeId);
     const fullTree = this.logger.toJSON();
     this.onFinishCallback?.({ executionId: this.id, log, fullTree });
   }
+    
 
   /** Registra el callback de ESTA instancia */
   onFinish(callback: (subtree: any) => void) {

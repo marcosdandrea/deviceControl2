@@ -6,7 +6,7 @@ import { HiDocumentArrowUp } from "react-icons/hi2";
 
 const UploadAndApplyButton = () => {
 
-    const { loadProject, unloadProject, project, unsavedChanges } = useProject({ fetchProject: false });
+    const { loadProject, project, unsavedChanges } = useProject({ fetchProject: false });
 
     const handleOnUploadAndApply = async () => {
         loadProject(JSON.stringify(project));

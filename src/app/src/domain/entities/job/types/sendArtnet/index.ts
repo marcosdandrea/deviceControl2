@@ -40,7 +40,7 @@ export class SendArtnetJob extends Job {
             name: "channels",
             type: "string",
             validationMask: "^[0-9,\\-\\s]+$",
-            description: "DMX channels or ranges to set (0-512, e.g. 0-15,50-90)",
+            description: "ej: 1,3,55-120,140-240",
             required: true
         },
         {

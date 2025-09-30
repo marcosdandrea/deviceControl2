@@ -7,6 +7,8 @@ import Descriptions from './component/Descriptions';
 import Footer from './component/Footer';
 import { nanoid } from 'nanoid';
 import { RoutineType } from '@common/types/routine.type';
+import useRoutines from '@hooks/useRoutines';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export const routineConfigurationContext = createContext(null)
 
@@ -25,9 +27,21 @@ const getDefaultRoutine = () => (
 
 const RoutinePanel = ({ routineId }) => {
 
-
+    const navigate = useNavigate()
+    const {routines} = useRoutines()
+    const {routineId: paramRoutineId} = useParams()
     const { project } = useProject({fetchProject: false});
     const [routine, setRoutine] = useState<RoutineType | { id: string }>({ id: nanoid(10) });
+
+    useEffect(()=>{
+        if (paramRoutineId == "newRoutine") return
+        if (paramRoutineId && routines){
+            const routine = routines.find(r => r.id === paramRoutineId)
+            if (!routine){
+                navigate('/builder')
+            }
+        }
+    }, [paramRoutineId, routines])
 
     useEffect(() => {
         if (routineId && project) {

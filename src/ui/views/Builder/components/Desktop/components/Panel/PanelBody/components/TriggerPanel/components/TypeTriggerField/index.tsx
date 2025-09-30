@@ -7,6 +7,8 @@ const TypeTriggerField = () => {
 
     const { trigger, setTrigger } = useContext(triggerContext)
     const {availableTriggers} = useGetAvailableTriggers() 
+
+    console.log (trigger)
     
     const handleOnChangeSelect = (value: string) => {
         const selectedTrigger = availableTriggers[value]
@@ -33,7 +35,7 @@ const TypeTriggerField = () => {
                 tabIndex={-1} />
 
                     <Select
-                        disabled={trigger?.name === ''}
+                        disabled={trigger?.name === '' || trigger?.id === ''}
                         optionFilterProp="label"
                         value={trigger?.type || "Seleccione un tipo de disparador"}
                         style={{ width: 'calc(100% - 80px)' }}

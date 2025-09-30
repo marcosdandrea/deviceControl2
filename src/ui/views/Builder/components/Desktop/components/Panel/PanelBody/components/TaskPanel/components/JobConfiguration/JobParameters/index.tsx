@@ -78,8 +78,10 @@ const JobParameters = () => {
                             label={param.easyName || param.name}
                             key={param.id}>
                             {
+                                
                                 param.type === 'string' ?
                                     <Input
+                                        placeholder={param.description || ''}
                                         type="text"
                                         status={validateParam(param, task?.job?.params?.[param.name]) ? '' : 'error'}
                                         value={task?.job?.params ? task.job.params[param.name] : ''}
@@ -87,6 +89,7 @@ const JobParameters = () => {
                                     : param.type === 'number' ?
                                         <Input
                                             type="number"
+                                            placeholder={param.description || ''}
                                             status={validateParam(param, task?.job?.params?.[param.name]) ? '' : 'error'}
                                             value={task?.job?.params ? task.job.params[param.name] : ''}
                                             onChange={(e) => handleOnChangeValue(param.name, Number(e.target.value))} />
@@ -97,6 +100,7 @@ const JobParameters = () => {
                                                 onChange={(e) => handleOnChangeValue(param.name, Boolean(e.target.checked))} />
                                             : param.type === 'textBox' ?
                                                 <Input.TextArea
+                                                    placeholder={param.description || ''}
                                                     value={task?.job.params ? task.job.params[param.name] : ''}
                                                     onChange={(e) => handleOnChangeValue(param.name, String(e.target.value))} />
                                                 : param.type === 'password' ?

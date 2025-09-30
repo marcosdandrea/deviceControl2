@@ -1,5 +1,6 @@
 import path from "path";
 import { promises as fs } from "fs";
+import fsSync from "fs";
 import JSZip from "jszip";
 import fileSystem, { readDirectory as readDir, deleteFile as removeFile } from "../fileSystem";
 import { Execution } from "@common/types/execution.type";
@@ -28,7 +29,6 @@ const getExecutionsList = async ({ routineId }: { routineId: string }, callback:
 
         const getExecutionDetails = async (routineId: string, file: string) => {
             const filePath = path.join(logDirectoryPath, routineId, `${file}`);
-            console.log("Reading file:", filePath);
             const content = await fileSystem.readFile(filePath) as Execution;
             return {
                 origin: content.triggeredBy.type || "unknown",
@@ -187,11 +187,61 @@ const deleteAllExecutions = async (
     }
 }
 
+export const getLastExecutions = async (count: number): Promise<Buffer> => {
+    // This function retrieves the last 'count' executions across all routines in a zip file.
+    // It reads all the execution logs from the filesystem across all routines, sorts them by timestamp, and adds them to a zip archive.
+
+    const logBaseDir = path.join(await getUserDataPath(), "logs");
+    const routinesLogPath = path.join(logBaseDir, "routines");
+    const zip = new JSZip();
+    let allExecutions: { routineId: string; fileName: string; timestamp: string; }[] = [];
+
+    try {
+        const routineDirs = await fsSync.promises.readdir(routinesLogPath, { withFileTypes: true });
+
+        for (const dirent of routineDirs) {
+            if (dirent.isDirectory()) {
+                const routineId = dirent.name;
+                const routinePath = path.join(routinesLogPath, routineId);
+                const files = await fsSync.promises.readdir(routinePath);
+                for (const file of files) {
+                    if (file.endsWith(".json")) {
+                        const filePath = path.join(routinePath, file);
+                       const stats = await fsSync.promises.stat(filePath);
+                       allExecutions.push({
+                           routineId,
+                           fileName: file,
+                           timestamp: stats.birthtime.toISOString(),
+                       });
+                    }
+                }
+            }
+        }
+
+        // Sort all executions by timestamp
+        allExecutions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+        // Add the latest 'count' executions to the zip
+        for (const execution of allExecutions.slice(0, count)) {
+            const filePath = path.join(routinesLogPath, execution.routineId, execution.fileName);
+            const content = await fsSync.promises.readFile(filePath);
+            const executionLog = JSON.parse(content.toString()) as Execution
+            const time = new Date(executionLog.log.ts).toISOString().replace(/[:]/g, '-').replace(/[.]/g, '-');
+            zip.file(`${executionLog.log.name}/${time}`, content);
+        }
+    } catch (error) {
+        console.error("Error getting last executions:", error);
+    }
+
+    return zip.generateAsync({ type: "nodebuffer" });
+}
+
 export default {
     getExecutionsList,
     getExecution,
     deleteExecution,
     downloadExecutions,
+    getLastExecutions,
     deleteExecutions,
     deleteAllExecutions,
 };

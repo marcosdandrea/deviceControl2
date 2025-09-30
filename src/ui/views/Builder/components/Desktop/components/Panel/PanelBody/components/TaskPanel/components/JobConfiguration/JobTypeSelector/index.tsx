@@ -8,12 +8,11 @@ const JobTypeSelector = () => {
     const { task, setTask } = useContext(taskContext)
     const { availableJobs } = useGetAvailableJobs()
 
-    console.log (availableJobs)
-
     const handleOnChangeJobType = (value: string) => {
         const thisJob = availableJobs[value]
-        const params = thisJob.params.map(param => ({ [param.name]: undefined }))
+        const params = thisJob.params.map(param => ({ [param.name]: param.defaultValue || undefined }))
         const invalidParams = thisJob.params.filter(param => param.required).map(param => param.name)
+        console.log (params)
         setTask({
             ...task,
             job: {

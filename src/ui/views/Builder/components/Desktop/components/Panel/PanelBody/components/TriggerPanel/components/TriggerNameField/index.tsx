@@ -106,9 +106,9 @@ const TriggerNameField = () => {
             setTriggerExists(true)
             setSearchingMode(true)
         } else {
-            setTrigger({ ...defaultTrigger, id: nanoid(8), name: value })
-            setTriggerExists(false)
-            setSearchingMode(false)
+            //setTrigger({ ...defaultTrigger, id: nanoid(8), name: value })
+            //setTriggerExists(false)
+            //setSearchingMode(false)
         }
     }
 

@@ -16,6 +16,7 @@ import OpenConfigButton from "./components/Toolbar/components/OpenConfigButton";
 import ExecutionsTimelineButton from "./components/Toolbar/components/ExecutionsTimelineButton";
 import PasswordProtection from "./components/PasswordProtection";
 import BlockControlView from "./components/Toolbar/components/BlockControlView";
+import BeforeExit from "@components/BeforeExit";
 
 const Builder = () => {
   return (
@@ -28,6 +29,7 @@ const Builder = () => {
         <div className={styles.builderView}>
           <Toolbar>
             <div className={styles.toolbarLeft}>
+              <BeforeExit />
               <NewProjectButton />
               <LoadProjectButton />
               <Divider />

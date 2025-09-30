@@ -154,6 +154,8 @@ const Footer = () => {
             message.success('Tarea eliminada de la rutina correctamente')
         }
 
+        Navigation(-1)
+
     }
 
     return (

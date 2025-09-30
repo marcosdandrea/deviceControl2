@@ -1,6 +1,6 @@
 import React, { createContext, useEffect, useMemo, useRef, useState } from "react";
 import style from './style.module.css'
-import { useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import useProject from "@hooks/useProject";
 import Text from "@components/Text";
 import { Input, Switch } from "antd";
@@ -11,6 +11,7 @@ import TriggerParameters from "./components/TriggerParameters";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import useGetAvailableTriggers from "@views/Builder/hooks/useGetAvailableTriggers";
+import useRoutines from "@hooks/useRoutines";
 
 export const triggerContext = createContext({ trigger: undefined, setTrigger: (trigger: TriggerType) => { }, defaultTrigger: undefined, setInvalidParams: (params: string[]) => { }, invalidParams: [] as string[], triggerInstanceId: undefined });
 
@@ -24,13 +25,24 @@ const defaultTrigger = {
 } as TriggerType
 
 const TriggerPanel = () => {
-    const { triggerId } = useParams()
+    const navigate = useNavigate()
+    const { triggerId, routineId } = useParams()
     const [searchParams] = useSearchParams();
     const { project } = useProject({ fetchProject: false })
+    const { routines } = useRoutines()
     const [trigger, setTrigger] = useState<TriggerType | undefined>(undefined);
     const [invalidParams, setInvalidParams] = useState<string[]>([]);
     const triggerInstanceId = searchParams.get('instanceId') || undefined;
     const { availableTriggers } = useGetAvailableTriggers()
+
+    useEffect(()=>{
+        if (routineId && routines){
+            const routine = routines.find(r => r.id === routineId)
+            if (!routine){
+                navigate('/builder')
+            }
+        }
+    },[routineId, routines])
 
 
     useEffect(() => {

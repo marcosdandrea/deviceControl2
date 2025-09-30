@@ -540,7 +540,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
                         ]);
 
                 this.#setStatus("completed")
-                this.logger.info(childCtx.log.info(dictionary("app.domain.entities.routine.completed", Date.now() - routineStartTime)));
+                this.logger.info(childCtx.finish.info(dictionary("app.domain.entities.routine.completed", Date.now() - routineStartTime)));
                 this.#eventDispatcher(routineEvents.routineCompleted);
 
                 resolve();
@@ -548,15 +548,15 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
                     if (userAbortSignal.aborted) {
                         this.#setStatus("aborted");
-                    this.logger.warn(childCtx.log.warn(dictionary("app.domain.entities.routine.aborted", e?.message || String(e))));
+                    this.logger.warn(childCtx.finish.warn(dictionary("app.domain.entities.routine.aborted", e?.message || String(e))));
                         this.#eventDispatcher(routineEvents.routineAborted);
                     } else if (this.timeoutController?.timedout) {
-                    this.logger.warn(childCtx.log.warn(dictionary("app.domain.entities.routine.timedOut", e?.message || String(e))));
+                    this.logger.warn(childCtx.finish.warn(dictionary("app.domain.entities.routine.timedOut", e?.message || String(e))));
                         this.#eventDispatcher(routineEvents.routineTimeout);
                         this.#setStatus("timedout");
                     } else {
                         this.#setStatus("failed");
-                    this.logger.error(childCtx.log.error(dictionary("app.domain.entities.routine.failed", e?.message || String(e))));
+                    this.logger.error(childCtx.finish.error(dictionary("app.domain.entities.routine.failed", e?.message || String(e))));
                         this.#eventDispatcher(routineEvents.routineFailed);
                     }
 
@@ -567,7 +567,6 @@ export class Routine extends EventEmitter implements RoutineInterface {
                 this.timeoutController?.removeAllListeners();
                 cleanOnFinish();
                 this.#resumeAutoCheckingConditions();
-                childCtx.finish();
             }
         })
     }
