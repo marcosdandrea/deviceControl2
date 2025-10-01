@@ -254,7 +254,7 @@ export const loadLastProject = async (): Promise<projectType> => {
    }
 }
 
-export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promise<Project | string> => {
+export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promise<Project> => {
 
    try {
       const { decryptData } = await import('@src/services/cryptography/index.js');
@@ -263,7 +263,7 @@ export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promis
       await loadProject(projectContent);
       await saveLastProject();
       log.info(`Project file loaded successfully: ${projectContent.name}`);
-      broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto "${projectContent.name}" cargado.` });
+      return projectContent
    } catch (error) {
       console.error(error);
       broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el archivo del proyecto: ${error.message}` });
@@ -285,7 +285,6 @@ export const closeProject = async (): Promise<void> => {
       setMainWindowTitle(null);
       broadcastToClients(projectEvents.closed, { projectData: {} });
       eventManager.emit(projectEvents.closed);
-      broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto cerrado` });
       log.info("Project closed successfully");
    } catch (error) {
       log.error("Error closing project:", error);

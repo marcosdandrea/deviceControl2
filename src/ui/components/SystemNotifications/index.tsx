@@ -17,6 +17,10 @@ const SystemNotifications = () => {
     const handleOnInfoLog = (data) => {
         if (data.message === lastMessage) return;
         lastMessage = data.message;
+        if (data.type === "success") {
+            message.success(data.message);
+            return;
+        }
         message.info(data.message);
     }
 

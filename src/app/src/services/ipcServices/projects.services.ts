@@ -2,6 +2,8 @@
 import { Project } from '@src/domain/entities/project';
 import { Log } from '@src/utils/log';
 import { ServerManager } from '../server/serverManager';
+import { broadcastToClients } from '.';
+import systemEvents from '@common/events/system.events';
 
 const log = Log.createInstance('IPC Project Services', true);
 
@@ -38,6 +40,7 @@ export const closeProject = async (_payload: null, callback: Function) => {
     const { closeProject } = await import('@src/domain/useCases/project/index.js');
     try {
         await closeProject();
+        broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto cerrado` });
         callback?.({ success: true });
         log.info('Project closed successfully');
     } catch (error) {
@@ -68,8 +71,9 @@ export const loadProjectFromFile = async (payload: ArrayBuffer | string, callbac
         await closeProject();
         const generalServer = ServerManager.getInstance("general");
         generalServer.unbindAllRoutes();
-        await loadProjectFile(payload);
+        const project = await loadProjectFile(payload);
         callback({ projectData: payload });
+      broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto "${project.name}" cargado.` });
         log.info(`Project loaded successfully`);
     } catch (error) {
         console.log(error);
@@ -87,6 +91,8 @@ export const loadProject = async (payload: string, callback: Function) => {
         const project = JSON.parse(payload) as Project;
         await loadProject(project);
         callback({ success: true });
+        broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto cargado`, type: "success" });
+
         log.info(`Project loaded successfully`);
     } catch (error) {
         log.error(`Error loading project: ${error.message}`);
