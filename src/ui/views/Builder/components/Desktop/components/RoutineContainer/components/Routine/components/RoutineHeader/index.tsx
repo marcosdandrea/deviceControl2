@@ -4,17 +4,23 @@ import style from './style.module.css';
 import { routineContext } from '../..';
 import RoutineQuickOptionsButton from './components/RoutineQuickOptionsButon';
 import { SortableKnob } from 'react-easy-sort';
-import RoutineVisibility from './components/RoutineVisibility';
+import RoutineVisibilityIcon from './components/RoutineVisibilityIcon';
+import RoutineEnabledIcon from './components/RoutineEnabledIcon';
 
 const RoutineHeader = () => {
 
     const { routineData } = useContext(routineContext)
 
     return (
-        <div className={style.routineHeader}>
+        <div 
+            title={routineData?.name || 'Routine name'}
+            className={style.routineHeader}>
             <SortableKnob>
                 <div className={style.title}>
-                    <RoutineVisibility />
+                    <div className={style.iconsContainer}>
+                    <RoutineVisibilityIcon />
+                    <RoutineEnabledIcon />
+                    </div>
                     <Text
                         style={{ userSelect: 'none', pointerEvents: 'none' }}
                         size={14}

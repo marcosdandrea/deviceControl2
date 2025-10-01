@@ -1,9 +1,9 @@
 import React from "react";
 import styles from "./style.module.css"
 import { routineContext } from "../../../..";
-import { MdVisibility, MdVisibilityOff } from "react-icons/md";
+import { MdVisibilityOff } from "react-icons/md";
 
-const RoutineVisibility = () => {
+const RoutineVisibilityIcon = () => {
     const { routineData } = React.useContext(routineContext)
 
     return (
@@ -17,4 +17,4 @@ const RoutineVisibility = () => {
     );
 }
 
-export default RoutineVisibility;
+export default RoutineVisibilityIcon;
