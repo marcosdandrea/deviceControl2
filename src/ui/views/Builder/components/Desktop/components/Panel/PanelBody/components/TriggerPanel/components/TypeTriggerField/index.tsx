@@ -7,8 +7,6 @@ const TypeTriggerField = () => {
 
     const { trigger, setTrigger } = useContext(triggerContext)
     const {availableTriggers} = useGetAvailableTriggers() 
-
-    console.log (trigger)
     
     const handleOnChangeSelect = (value: string) => {
         const selectedTrigger = availableTriggers[value]

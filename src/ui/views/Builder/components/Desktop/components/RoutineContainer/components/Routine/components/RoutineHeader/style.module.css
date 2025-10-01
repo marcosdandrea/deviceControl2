@@ -6,6 +6,15 @@
     margin-bottom: 0.5rem;
     border-bottom: solid 1px var(--component-border);
     cursor: grab;
+    column-gap: 0.5rem;
+}
+
+.title{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    column-gap: 0.25rem;
 }
 
 .routineHeader:active{

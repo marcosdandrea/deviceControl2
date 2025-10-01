@@ -1,160 +1,67 @@
 
 import React, { useContext, useEffect, useState } from "react";
-import { Button, Input, message, Select } from "antd";
 import { taskContext } from "../..";
 import useProject from "@hooks/useProject";
-import { nanoid } from "nanoid";
-import Text from "@components/Text";
-import { MdAdd, MdEdit, MdNewLabel } from "react-icons/md";
+import EditableSelectList from "@views/Builder/components/EditableSelectList";
 
 const TaskNameField = () => {
 
+    const { project } = useProject({ fetchProject: false })
     const { task, setTask, defaultTask } = useContext(taskContext)
-    const { project, setProject } = useProject({ fetchProject: false })
-    const [editNameMode, setEditNameMode] = useState(false)
-    const [searchValue, setSearchValue] = useState("")
-    const [taskExists, setTaskExists] = useState(false)
-    const [searchingMode, setSearchingMode] = useState(false)
-    const [currentTask, setCurrentTask] = useState(task?.id || null)
+
+    const [taskOptions, setTaskOptions] = useState([])
+    const [selectedTask, setSelectedTask] = useState<{ label: string; value: string; } | null>(null)
+
+    useEffect(() => {
+        if (project) {
+            const options = project.tasks?.map((t: any) => ({ label: t.name, value: t.id }))
+            setTaskOptions(options)
+        }
+    }, [project])
 
     useEffect(() => {
         if (task) {
-            setSearchValue(task.name)
-            const taskExists = project?.tasks.find(t => t.name === task.name)
-            if (taskExists) {
-                setTaskExists(true)
-            } else {
-                setTaskExists(false)
-            }
-        } else {
-            setSearchValue("")
-            setTaskExists(false)
+            setSelectedTask({ label: task.name, value: task.id })
         }
     }, [task])
 
-    const notFoundContent = () => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Text size={14} color='var(--secondary)'>Presione el boton + para crear</Text>
-        </div>
-    )
-
-    const handleOnCreateNewTask = () => {
-        setEditNameMode(false)
-        setTask({ ...defaultTask, id: nanoid(8), name: searchValue })
+    const handleOnCreateTaskOption = (tasks: { label: string; value: string; }[], newTask: { label: string; value: string; }) => {
+        setTaskOptions(tasks)
+        setSelectedTask(newTask)
+        setTask({ ...defaultTask, id: newTask.value, name: newTask.label })
     }
 
-    const handleOnEditTaskName = () => {
-        if (!taskExists) 
+    const handleOnUpdateTaskOption = (tasks: { label: string; value: string; }[], updatedOption: { label: string; value: string; }) => {
+        setTaskOptions(tasks)
+        setSelectedTask(updatedOption)
+        const taskInProject = project.tasks.find(t => t.id === updatedOption.value)
+        if (taskInProject) {
+            setTask({ ...taskInProject, name: updatedOption.label })
             return
-        
-        setEditNameMode(false)
-        setSearchingMode(false)
-        if (task.name === searchValue) return
-        task.name = searchValue
-        message.success('Nombre de tarea actualizado')
-    }
-
-    const handleOnChangingTaskName = (e) => {
-        setSearchValue(e.target.value)
-    }
-
-    const handleOnChangeSelect = (value) => {
-        setSearchingMode(false)
-        const selectedTask = project?.tasks.find(t => t.id === value)
-        setSearchValue(selectedTask.name)
-        if (selectedTask) {
-            setTask(selectedTask)
-            setTaskExists(true)
-        } else {
-            setTask({ ...defaultTask, id: nanoid(8), name: '' })
         }
+        setTask({ ...defaultTask, id: updatedOption.value, name: updatedOption.label })
     }
 
-    const handleOnSearchTask = (value: string) => {
-        if (value.trim() === '') return
-
-        setSearchValue(value)
-        const taskExists = project?.tasks.find(t => t.name.toLowerCase().includes(value.toLowerCase()))
-        if (taskExists) {
-            setTask(taskExists)
-            setTaskExists(true)
-            setSearchingMode(true)
+    const handleOnSelectTask = (value: string, label: any) => {
+        setSelectedTask({ label: label, value: value })
+        const selected = project.tasks.find((t: any) => t.id === value)
+        if (selected) {
+            setTask(selected)
         } else {
-            setTaskExists(false)
-            setSearchingMode(false)
-            setTask(null)
+            setTask({ ...defaultTask, id: value, name: label })
         }
-    }
-
-    const handleOnEnableEditNameMode = () => {
-        console.log(`Enabling edit mode for task name: ${task.name}`)
-        setEditNameMode(true)
-    }
-
-    const handleOnSearchingBlurs = () => {
-        //setSearchingMode(false)
-        //setTaskExists(true)
-        //setTask(currentTask)
-    }
-
-    const handleOnSearchFocus = () => {
-        setCurrentTask(task || null)
-        setSearchingMode(true)
     }
 
     return (
-        <Input.Group compact>
-            <Input
-                style={{
-                    width: '80px',
-                    color: "var(--text-secondary)",
-                    backgroundColor: "var(--component-interactive)",
-                    pointerEvents: 'none',
-                    borderRight: 0,
-                }}
-                value="Nombre"
-                readOnly
-                tabIndex={-1} />
-            {
-                editNameMode ?
-                    <Input
-                        style={{ width: 'calc(100% - 80px - 40px)' }}
-                        value={searchValue}
-                        autoFocus
-                        onBlur={handleOnEditTaskName}
-                        onPressEnter={handleOnEditTaskName}
-                        onChange={handleOnChangingTaskName} />
-                    :
-                    <Select
-                        showSearch
-                        notFoundContent={notFoundContent()}
-                        onBlur={handleOnSearchingBlurs}
-                        onFocus={handleOnSearchFocus}
-                        optionFilterProp="label"
-                        placeholder="Seleccione una tarea o escriba un nombre para crear una nueva"
-                        value={task?.name || "Escriba un nombre para crear una nueva"}
-                        style={{ width: 'calc(100% - 80px - 40px)' }}
-                        onSearch={handleOnSearchTask}
-                        status={task && task.name.trim() === '' ? 'error' : ''}
-                        onChange={handleOnChangeSelect}
-                        options={project?.tasks.map(t => ({ label: t.name, value: t.id }))} />
-            }
-            {
-                taskExists
-                    ? <Button
-                        disabled={searchingMode}
-                        onClick={handleOnEnableEditNameMode}
-                        style={{ width: '40px', padding: 10, marginLeft: 1 }}>
-                        <MdEdit size={40} color="var(--text-secondary)" />
-                    </Button>
-                    : <Button
-                        style={{ width: '40px', padding: 10, marginLeft: 1 }}
-                        onClick={handleOnCreateNewTask}>
-                        <MdAdd size={40} color="var(--text-secondary)" />
-                    </Button>
-            }
-        </Input.Group>
-
+        <EditableSelectList
+            label="Nombre"
+            options={taskOptions}
+            value={selectedTask}
+            createNewOptionLabel="Crear Nueva Tarea"
+            onCreateOption={handleOnCreateTaskOption}
+            onUpdateOption={handleOnUpdateTaskOption}
+            onSelectOption={handleOnSelectTask}
+            />
     );
 }
 

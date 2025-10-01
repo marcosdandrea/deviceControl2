@@ -10,7 +10,7 @@ const JobParameters = () => {
     const [jobParams, setJobParams] = useState<any[]>([])
 
     useEffect(() => {
-        if (!availableJobs || !task) return;
+        if (!availableJobs || !task || !task.job?.type) return;
         const thisJob = availableJobs[task.job.type]
         if (!thisJob)
             setJobParams([])
@@ -24,7 +24,7 @@ const JobParameters = () => {
 
     }, [task, availableJobs])
 
-    if (!task || Object.keys(task.job.params).length === 0) return (<></>)
+    if (!task?.job?.params || Object.keys(task.job.params).length === 0) return (<></>)
 
     const handleOnChangeValue = (paramName: string, value: any) => {
         const paramDef = jobParams.find(p => p.name === paramName)

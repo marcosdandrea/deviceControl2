@@ -44,37 +44,37 @@ const Descriptions = () => {
             <AntdDescriptions.Item label="Habilitar" contentStyle={{ textAlign: 'center' }}>
                 <Switch
                     tabIndex={3}
-                    checked={routine.enabled}
+                    checked={routine?.enabled}
                     onChange={handleOnChangeEnable}
                 />
             </AntdDescriptions.Item>
             <AntdDescriptions.Item label="Ejecutar tareas en paralelo" contentStyle={{ textAlign: 'center' }}>
                 <Switch
                     tabIndex={4}
-                    checked={!routine.runInSync}
+                    checked={!routine?.runInSync}
                     onChange={handleOnChangeSync}
                 />
             </AntdDescriptions.Item>
             <AntdDescriptions.Item label="Continuar en caso de error" contentStyle={{ textAlign: 'center' }}>
                 <Switch
                     tabIndex={5}
-                    checked={routine.continueOnError}
+                    checked={routine?.continueOnError}
                     onChange={handleOnChangeContinueOnError}
                 />
             </AntdDescriptions.Item>
             <AntdDescriptions.Item label="Ocultar de la vista de control" contentStyle={{ textAlign: 'center' }}>
                 <Switch
                     tabIndex={6}
-                    checked={routine.hidden}
+                    checked={routine?.hidden}
                     onChange={handleOnChangeShowInControlView}
                 />
             </AntdDescriptions.Item>
-            <AntdDescriptions.Item label={`Chequear condiciones ${routine.autoCheckConditionEveryMs ? "cada ms" : "desactivado"}`} contentStyle={{ textAlign: 'center' }}>
+            <AntdDescriptions.Item label={`Chequear condiciones ${routine?.autoCheckConditionEveryMs ? "cada ms" : "desactivado"}`} contentStyle={{ textAlign: 'center' }}>
                 {
-                    routine.autoCheckConditionEveryMs > 0 ?
+                    routine?.autoCheckConditionEveryMs > 0 ?
                     <InputNumber
                     tabIndex={7}
-                    value={routine.autoCheckConditionEveryMs}
+                    value={routine?.autoCheckConditionEveryMs}
                     style={{ width: "80px" }}
                     min={0} step={1000} 
                     onChange={handleOnChangeCheckConditions}/>
@@ -95,9 +95,9 @@ const Descriptions = () => {
                 contentStyle={{ textAlign: 'center' }}>
                 <InputNumber
                     tabIndex={9}
-                    value={routine?.routineTimeout || 60000}
+                    value={routine?.timeout}
                     style={{ width: "80px" }}
-                    min={5000} step={1000} defaultValue={60000}
+                    min={5000} step={1000} 
                     onChange={handleOnChangeTimeout}
                 />
             </AntdDescriptions.Item>

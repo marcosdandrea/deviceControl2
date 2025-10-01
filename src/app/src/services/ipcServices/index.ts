@@ -10,6 +10,8 @@ import systemCommands from '@common/commands/system.commands';
 import routineCommands from '@common/commands/routine.commands';
 import appCommands from '@common/commands/app.commands';
 import executionsServices from './executions.services';
+import tasksCommands from '@common/commands/tasks.commands';
+import tasksServices from './tasks.services';
 
 const log = Log.createInstance('IPC Services', false);
 
@@ -53,6 +55,10 @@ const init = (io: import('socket.io').Server) => {
 
         //routines
         socket.on(routineCommands.abort, routineServeices.abortRoutine);
+        socket.on(routineCommands.getRoutineTemplate, routineServeices.getRoutineTemplate);
+
+        //tasks
+        socket.on(tasksCommands.getTaskTemplate, tasksServices.getTaskTemplate);
 
     });
 

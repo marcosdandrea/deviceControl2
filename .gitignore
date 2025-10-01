@@ -12,8 +12,7 @@ dist
 dist-react
 dist-electron
 dist-app
-*.env
-!.env
+.env
 *.local
 
 # Editor directories and files

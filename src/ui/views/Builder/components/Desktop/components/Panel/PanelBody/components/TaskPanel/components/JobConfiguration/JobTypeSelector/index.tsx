@@ -41,8 +41,8 @@ const JobTypeSelector = () => {
                 />
                 <Select
                     style={{ width: 'calc(100% - 80px)' }}
-                    value={task?.job.type}
-                    status={task?.job.type == "" ? 'error' : ''}
+                    value={task?.job?.type}
+                    status={task?.job?.type == "" ? 'error' : ''}
                     onChange={handleOnChangeJobType}
                     placeholder="Seleccione un trabajo">
                     {

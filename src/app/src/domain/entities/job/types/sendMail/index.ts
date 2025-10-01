@@ -18,6 +18,11 @@ interface SendMailJobParams extends JobType {
     } & Record<string, any>;
 }
 
+const DEFAULT_SMTP_SERVER = process.env.EMAIL_HOST;
+const DEFAULT_SMTP_SSL = process.env.EMAIL_SSL ? process.env.EMAIL_SSL.toLowerCase() === 'true' : true;
+const DEFAULT_SMTP_USER = process.env.EMAIL_USER;
+const DEFAULT_SMTP_PASS = process.env.EMAIL_PASS;
+
 export class SendMailJob extends Job {
     static name = "Enviar correo electronico";
     static description = "Sends an email using specified SMTP server.";
@@ -70,7 +75,7 @@ export class SendMailJob extends Job {
             },
             {
             name: "smtpServer",
-            defaultValue: "smtp.gmail.com",
+            defaultValue: DEFAULT_SMTP_SERVER,
             validationMask: "^(?!\\s*$)(?:(?:[a-zA-Z\\d](?:[a-zA-Z\\d-]{0,61}[a-zA-Z\\d])?\\.)+[a-zA-Z]{2,}|localhost|(?:(?:\\d{1,3}\\.){3}\\d{1,3}))$",
             description: "Servidor SMTP",
             easyName: "Servidor SMTP",
@@ -79,7 +84,7 @@ export class SendMailJob extends Job {
             },
             {
             name: "ssl",
-            defaultValue: true,
+            defaultValue: DEFAULT_SMTP_SSL,
             validationMask: "^(true|false)$",
             description: "Usar SSL para SMTP",
             easyName: "Usar SSL",
@@ -88,7 +93,7 @@ export class SendMailJob extends Job {
             },
             {
             name: "username",
-            defaultValue: "pesp@proyecciones.net",
+            defaultValue: DEFAULT_SMTP_USER,
             validationMask: "^[\\s\\S]*$",
             description: "Usuario SMTP",
             easyName: "Usuario SMTP",
@@ -97,7 +102,7 @@ export class SendMailJob extends Job {
             },
             {
             name: "password",
-            defaultValue: "elqe ezwh geos ojxb",
+            defaultValue: DEFAULT_SMTP_PASS,
             validationMask: "^[\\s\\S]*$",
             description: "Contraseña SMTP",
             easyName: "Contraseña SMTP",
@@ -140,7 +145,7 @@ export class SendMailJob extends Job {
             const projectName = currentProject?.name || 'Proyecto sin nombre'
 
             await transporter.sendMail({
-                from: `${projectName}@devicecontrol2.com`,
+                from: `${projectName.replaceAll(' ', '_')}@devicecontrol2.com`,
                 to,
                 subject: `${subject} - Device Control 2`,
                 text: body,

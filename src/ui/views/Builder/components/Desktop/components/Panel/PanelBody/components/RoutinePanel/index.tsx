@@ -12,26 +12,20 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 export const routineConfigurationContext = createContext(null)
 
-const getDefaultRoutine = () => (
-    {
-        id: nanoid(10),
-        name: '',
-        description: '',
-        tasksId: [],
-        triggersId: [],
-        enabled: true,
-        continueOnError: true,
-    }
-)
-
-
 const RoutinePanel = ({ routineId }) => {
 
     const navigate = useNavigate()
-    const {routines} = useRoutines()
+    const {routines, getRoutineTemplate} = useRoutines()
     const {routineId: paramRoutineId} = useParams()
     const { project } = useProject({fetchProject: false});
     const [routine, setRoutine] = useState<RoutineType | { id: string }>({ id: nanoid(10) });
+    const [routineTemplate, setRoutineTemplate] = useState<RoutineType | null>(null)
+
+    console.log ({routineTemplate})
+
+    useEffect(() => {
+        getRoutineTemplate(setRoutineTemplate);
+    }, []);
 
     useEffect(()=>{
         if (paramRoutineId == "newRoutine") return
@@ -46,7 +40,7 @@ const RoutinePanel = ({ routineId }) => {
     useEffect(() => {
         if (routineId && project) {
             const foundRoutine = project.routines.find(r => r.id === routineId);
-            setRoutine(foundRoutine || getDefaultRoutine());
+            setRoutine(foundRoutine || routineTemplate);
         }
     }, [routineId, project])
 
@@ -60,6 +54,7 @@ const RoutinePanel = ({ routineId }) => {
             </div>
         </routineConfigurationContext.Provider>
     );
+    
 }
 
 export default RoutinePanel;

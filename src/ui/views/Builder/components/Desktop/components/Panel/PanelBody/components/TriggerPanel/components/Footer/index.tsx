@@ -69,7 +69,6 @@ const Footer = () => {
                 ...prev,
                 triggers: [...prev.triggers, trigger]
             }))
-            console.log ("Disparador agregado al proyecto")
             message.success('Disparador creado correctamente.')
 
         } else {
@@ -79,7 +78,6 @@ const Footer = () => {
                 ...prev,
                 triggers: prev.triggers.map(t => t.id === trigger.id ? trigger : t)
             }))
-            console.log ("Disparador actualizado en el proyecto")
             message.success('Disparador actualizado correctamente.')
         }
 
@@ -97,7 +95,6 @@ const Footer = () => {
                 ...prev,
                 routines: prev.routines.map(r => r.id === routineId ? routine : r)
             }))
-            console.log ("Disparador agregado a la rutina")
             message.success(`Disparador agregado a la rutina ${routine.name}.`)
         } 
         //actualiza la rutina en el proyecto
@@ -142,8 +139,6 @@ const Footer = () => {
         setProject({ ...project })
         navigate(-1)
     }
-
-    console.log ({invalidParams, trigger})
 
     return (
         <div className={style.footer}>

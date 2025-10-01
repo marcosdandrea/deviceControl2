@@ -1,7 +1,6 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext } from "react";
 import style from './style.module.css'
 import { triggerContext } from "../..";
-import useGetAvailableTriggers from "@views/Builder/hooks/useGetAvailableTriggers";
 import { Input, Select, TimePicker } from "antd";
 import { ProjectContext } from "@contexts/projectContextProvider";
 import WarningIcon from "@components/WarningIcon";
@@ -80,17 +79,9 @@ const TriggerParameters = () => {
                 }
             }
         });
-
-
-        /*
-        if (trigger) {
-            trigger.params = { ...trigger.params, [paramName]: value };
-        }*/
     }
 
     if (!trigger || Object.keys(trigger.params).length === 0) return null
-
-    console.log(trigger)
 
     return (
         <div className={style.triggerParameters}>
@@ -110,7 +101,6 @@ const TriggerParameters = () => {
                     const defaultValue = trigger.params[paramName]?.defaultValue || ''
                     const easyName = trigger.params[paramName]?.easyName || paramName
                     const moduleDescription = trigger.params[paramName]?.moduleDescription || ''
-                    const type = trigger.params[paramName]?.type
                     const warning = trigger.params[paramName]?.warning || false
                     const invalidValue = invalidParams.includes(paramName)
 
@@ -197,7 +187,7 @@ const TriggerParameters = () => {
                                 />
                             </Input.Group>
                         )
-                }
+                    }
                 )
             }
         </div>

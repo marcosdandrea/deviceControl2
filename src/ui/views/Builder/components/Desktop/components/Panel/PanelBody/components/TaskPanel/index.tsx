@@ -11,19 +11,10 @@ import TaskNameField from './components/TaskNameField';
 import WarningIcon from '@components/WarningIcon';
 import Header from './components/Header';
 import useRoutines from '@hooks/useRoutines';
+import { TaskType } from '@common/types/task.type';
+import useTasks from '@hooks/useTasks';
 
 export const taskContext = createContext({ task: undefined, setTask: (task) => { }, defaultTask: undefined, taskInstanceId: undefined });
-
-const defaultTask = {
-    id: nanoid(8),
-    name: '',
-    description: '',
-    retries: 3,
-    timeout: 15000,
-    waitBeforeRetry: 15000,
-    continueOnError: true,
-    job: { type: '', params: {}, },
-}
 
 const TaskPanel = () => {
     const navigate = useNavigate()
@@ -33,6 +24,15 @@ const TaskPanel = () => {
     const { project } = useProject({ fetchProject: false })
     const [task, setTask] = useState<any>(undefined);
     const taskInstanceId = searchParams.get('instanceId') || undefined;
+    
+    const [defaultTask, setDefaultTask] = useState<TaskType | null>(null)
+    const {getTaskTemplate} = useTasks()
+
+    useEffect(() => {
+        getTaskTemplate(setDefaultTask)
+    }, [])
+    
+    console.log({defaultTask})
 
     useEffect(() => {
         if (routines && routineId) {
@@ -48,6 +48,9 @@ const TaskPanel = () => {
             const task = project.tasks.find(t => t.id === taskId)
             if (task)
                 setTask(task)
+            else
+                if (taskId === 'newTask') 
+                setTask(null)
         }
     }, [project, taskId])
 

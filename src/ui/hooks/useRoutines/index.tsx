@@ -1,7 +1,13 @@
+import routineCommands from "@common/commands/routine.commands";
+import { RoutineType } from "@common/types/routine.type";
+import { SocketIOContext } from "@components/SocketIOProvider";
 import useProject from "@hooks/useProject";
-import { useEffect, useState } from "react";
+import { message } from "antd";
+import e from "cors";
+import { useContext, useEffect, useState } from "react";
 
 const useRoutines = () => {
+    const {emit} = useContext(SocketIOContext)
     const { project } = useProject({fetchProject: false});
     const [routines, updateRoutines] = useState(project?.routines || []);
 
@@ -19,7 +25,17 @@ const useRoutines = () => {
         }
     }
 
-    return {setRoutines: handleSetRoutines, routines};
+    const getRoutineTemplate = (callback: (routineTemplate: RoutineType) => void) => {
+        emit(routineCommands.getRoutineTemplate, null, (response: RoutineType | Error) => {
+            if (response instanceof Error) {
+                message.error("Error al obtener la plantilla de rutina: " + response.message);
+                return;
+            }
+            callback(response);
+        });
+    }
+
+    return {setRoutines: handleSetRoutines, routines, getRoutineTemplate};
 }
  
 export default useRoutines;

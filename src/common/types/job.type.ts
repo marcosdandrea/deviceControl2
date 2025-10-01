@@ -17,6 +17,7 @@ export type requiredJobParamType = {
     validationMask?: string; // Regex pattern as string
     description: string;
     required: boolean;
+    defaultValue?: any;
     options?: { label: string; value: string }[];
 }
 

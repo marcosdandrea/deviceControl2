@@ -24,6 +24,8 @@ import dictionary from "@common/i18n";
 export const RoutineActions = ["enable", "disable", "run", "stop"] as const;
 export type RoutineActions = typeof RoutineActions[number];
 
+const defaultRoutineTimeout = process.env.ROUTINE_DEFAULT_TIMEOUT_MS ? parseInt(process.env.ROUTINE_DEFAULT_TIMEOUT_MS) : 60000;
+
 export class Routine extends EventEmitter implements RoutineInterface {
 
     id: RoutineType["id"];
@@ -67,7 +69,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.isRunning = false;
         this.failed = false;
         this.hidden = props.hidden;
-        this.routineTimeout = props.routineTimeout || 10000;
+        this.routineTimeout = props.routineTimeout || defaultRoutineTimeout;
 
         this.taskInstances = props.tasksId ? [...props.tasksId] : [];
         this.triggerInstances = props.triggersId ? [...props.triggersId] : [];

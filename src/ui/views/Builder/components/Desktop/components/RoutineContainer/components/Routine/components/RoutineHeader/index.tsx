@@ -4,6 +4,7 @@ import style from './style.module.css';
 import { routineContext } from '../..';
 import RoutineQuickOptionsButton from './components/RoutineQuickOptionsButon';
 import { SortableKnob } from 'react-easy-sort';
+import RoutineVisibility from './components/RoutineVisibility';
 
 const RoutineHeader = () => {
 
@@ -12,7 +13,8 @@ const RoutineHeader = () => {
     return (
         <div className={style.routineHeader}>
             <SortableKnob>
-                <div style={{width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                <div className={style.title}>
+                    <RoutineVisibility />
                     <Text
                         style={{ userSelect: 'none', pointerEvents: 'none' }}
                         size={14}
