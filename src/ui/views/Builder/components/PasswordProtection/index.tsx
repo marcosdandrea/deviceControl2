@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import useProject from "@hooks/useProject";
-import { Input, message, Modal } from "antd";
+import { Input, Modal, App } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,6 +8,7 @@ const PasswordProtection = ({ children }) => {
   const unlockMasterKey = "9999999999999999";
 
   const navigate = useNavigate();
+  const { message } = App.useApp();
   const { project, unloadProject } = useProject({ fetchProject: true });
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [allowed, setAllowed] = useState(false);

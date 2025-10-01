@@ -13,6 +13,7 @@ const PanelHeader = () => {
     const [routineName, setRoutineName] = useState('Rutina');
     const [taskName, setTaskName] = useState('Tarea');
     const [triggerName, setTriggerName] = useState('Disparador');
+    const [routes, setRoutes] = useState([])
 
     useEffect(() => {
         if (!project) return;
@@ -38,36 +39,43 @@ const PanelHeader = () => {
         navigation('/builder')
     }
 
+    useEffect(() => {
+        const newRoutes = [];
+        if (routineId) {
+            newRoutes.push({title:
+                <div
+                    onClick={() => navigation(`/builder/${routineId}`)}
+                    style={{ cursor: 'pointer' }}>
+                    {routineName}
+                </div>
+            })
+        }
+        if (triggerId) {
+            newRoutes.push({title:
+                <div
+                    onClick={() => navigation(`/builder/${routineId}/trigger/${triggerId}`)}
+                    style={{ cursor: 'pointer' }}>
+                    {`disparador: ${triggerName}`}
+                </div>
+            })
+        }
+        if (taskId) {
+            newRoutes.push({title:
+                <div
+                    onClick={() => navigation(`/builder/${routineId}/task/${taskId}`)}
+                    style={{ cursor: 'pointer' }}>
+                    {`tarea: ${taskName}`}
+                </div>
+            })
+        }
+        setRoutes(newRoutes)
+    }, [routineId, triggerId, taskId, routineName, triggerName, taskName])
+
+
     return (
         <div className={style.panelHeader}>
             <div className={style.panelTitle}>
-                <Breadcrumb>
-                    {
-                        routineId &&
-                        <Breadcrumb.Item onClick={() => navigation(`/builder/${routineId}`)}>
-                            <div style={{cursor: 'pointer'}}>
-                                {routineName}
-                            </div>
-                        </Breadcrumb.Item>
-                    }
-                    {
-                        triggerId &&
-                        <Breadcrumb.Item onClick={() => navigation(`/builder/${routineId}/trigger/${triggerId}`)}>
-                            <div style={{cursor: 'pointer'}}>
-                                {`disparador: ${triggerName}`}
-                            </div>
-                        </Breadcrumb.Item>
-                    }
-                    {
-                        taskId &&
-                        <Breadcrumb.Item
-                            onClick={() => navigation(`/builder/${routineId}/task/${taskId}`)}>
-                            <div style={{cursor: 'pointer'}}>
-                                {`tarea: ${taskName}`}
-                            </div>
-                        </Breadcrumb.Item>
-                    }
-                </Breadcrumb>
+                <Breadcrumb items={routes} />
             </div>
             <Button
                 color="var(--component-interactive"

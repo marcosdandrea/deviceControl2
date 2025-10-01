@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./style.module.css";
 import Desktop from "./components/Desktop";
 import Toolbar from "./components/Toolbar";
-import { ConfigProvider, theme } from "antd";
+import { App, ConfigProvider, theme } from "antd";
 import LoadProjectButton from "./components/Toolbar/components/LoadProjectButton";
 import DownloadProjectButton from "./components/Toolbar/components/DownloadProjectButton";
 import UploadAndApplyButton from "./components/Toolbar/components/UploadAndApplyButton";
@@ -17,42 +17,45 @@ import ExecutionsTimelineButton from "./components/Toolbar/components/Executions
 import PasswordProtection from "./components/PasswordProtection";
 import BlockControlView from "./components/Toolbar/components/BlockControlView";
 import BeforeExit from "@components/BeforeExit";
+import SystemNotifications from "@components/SystemNotifications";
 
 const Builder = () => {
   return (
     <ConfigProvider
       theme={{
         algorithm: theme.darkAlgorithm,
-      }}
-    >
-      <PasswordProtection>
-        <div className={styles.builderView}>
-          <Toolbar>
-            <div className={styles.toolbarLeft}>
-              <BeforeExit />
-              <NewProjectButton />
-              <LoadProjectButton />
-              <Divider />
-              <DownloadProjectButton />
-              <UploadAndApplyButton />
-              <Divider />
-              <CloseProjectButton />
-            </div>
-            <div className={styles.toolbarCenter}>
-              <ProjectName />
-            </div>
-            <div className={styles.toolbarRight}>
-              <OpenConfigButton />
-              <OpenControlView />
-              <BlockControlView />
-              <Divider />
-              <ExecutionsTimelineButton />
-              <OpenTerminalView />
-            </div>
-          </Toolbar>
-          <Desktop />
-        </div>
-      </PasswordProtection>
+      }}>
+      <App>
+        <PasswordProtection>
+          <SystemNotifications />
+          <div className={styles.builderView}>
+            <Toolbar>
+              <div className={styles.toolbarLeft}>
+                <BeforeExit />
+                <NewProjectButton />
+                <LoadProjectButton />
+                <Divider />
+                <DownloadProjectButton />
+                <UploadAndApplyButton />
+                <Divider />
+                <CloseProjectButton />
+              </div>
+              <div className={styles.toolbarCenter}>
+                <ProjectName />
+              </div>
+              <div className={styles.toolbarRight}>
+                <OpenConfigButton />
+                <OpenControlView />
+                <BlockControlView />
+                <Divider />
+                <ExecutionsTimelineButton />
+                <OpenTerminalView />
+              </div>
+            </Toolbar>
+            <Desktop />
+          </div>
+        </PasswordProtection>
+      </App>
     </ConfigProvider>
   );
 };

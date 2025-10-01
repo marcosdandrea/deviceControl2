@@ -5,7 +5,8 @@
   "asar": true,
 
   "extraResources": [
-    { "from": "resources/png", "to": "png" }
+    { "from": "resources/png", "to": "png" },
+    { "from": ".env", "to": ".env" }
   ],
 
   "directories": {

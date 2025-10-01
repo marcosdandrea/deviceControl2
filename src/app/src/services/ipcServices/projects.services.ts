@@ -73,7 +73,7 @@ export const loadProjectFromFile = async (payload: ArrayBuffer | string, callbac
         generalServer.unbindAllRoutes();
         const project = await loadProjectFile(payload);
         callback({ projectData: payload });
-      broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto "${project.name}" cargado.` });
+        broadcastToClients(systemEvents.appLogInfo, { message: `Proyecto "${project?.name || "unknown"}" cargado.` });
         log.info(`Project loaded successfully`);
     } catch (error) {
         console.log(error);

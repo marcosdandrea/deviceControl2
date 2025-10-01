@@ -26,12 +26,9 @@ const useRoutines = () => {
     }
 
     const getRoutineTemplate = (callback: (routineTemplate: RoutineType) => void) => {
-        emit(routineCommands.getRoutineTemplate, null, (response: RoutineType | Error) => {
-            if (response instanceof Error) {
-                message.error("Error al obtener la plantilla de rutina: " + response.message);
-                return;
-            }
-            callback(response);
+        emit(routineCommands.getRoutineTemplate, null, (routineTemplate : RoutineType) => {
+            console.log('Received routine template', routineTemplate);
+            callback(routineTemplate);
         });
     }
 

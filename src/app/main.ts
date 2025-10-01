@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import "@src/utils/loadEnv";
 import { Log } from '@src/utils/log';
 import ipcServices, { broadcastToClients } from '@src/services/ipcServices/index.js';
 import { ServerManager } from '@src/services/server/serverManager';

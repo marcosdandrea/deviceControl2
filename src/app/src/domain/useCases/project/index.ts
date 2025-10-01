@@ -256,19 +256,24 @@ export const loadLastProject = async (): Promise<projectType> => {
 
 export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promise<Project> => {
 
+   let projectRawData: string;
    try {
       const { decryptData } = await import('@src/services/cryptography/index.js');
-      const projectRawData = await decryptData(String(fileContent) as string);
+      projectRawData = await decryptData(String(fileContent) as string);
+   } catch (error) {
+      broadcastToClients(systemEvents.appLogError, { message: `No se pudo desencriptar el archivo del proyecto` });
+      log.error(`Failed to decrypt project file: ${error.message}`);
+      throw new Error("La contraseña del proyecto es incorrecta o el archivo está corrupto.");
+   }
+   try {
       const projectContent = JSON.parse(projectRawData);
       await loadProject(projectContent);
       await saveLastProject();
       log.info(`Project file loaded successfully: ${projectContent.name}`);
       return projectContent
    } catch (error) {
-      console.error(error);
-      broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el archivo del proyecto: ${error.message}` });
       log.error(`Failed to load project file: ${error.message}`);
-      return null;
+      return error;
    }
 
 }

@@ -15,23 +15,21 @@ export const routineConfigurationContext = createContext(null)
 const RoutinePanel = ({ routineId }) => {
 
     const navigate = useNavigate()
-    const {routines, getRoutineTemplate} = useRoutines()
-    const {routineId: paramRoutineId} = useParams()
-    const { project } = useProject({fetchProject: false});
+    const { routines, getRoutineTemplate } = useRoutines()
+    const { routineId: paramRoutineId } = useParams()
+    const { project } = useProject({ fetchProject: false });
     const [routine, setRoutine] = useState<RoutineType | { id: string }>({ id: nanoid(10) });
     const [routineTemplate, setRoutineTemplate] = useState<RoutineType | null>(null)
-
-    console.log ({routineTemplate})
 
     useEffect(() => {
         getRoutineTemplate(setRoutineTemplate);
     }, []);
 
-    useEffect(()=>{
+    useEffect(() => {
         if (paramRoutineId == "newRoutine") return
-        if (paramRoutineId && routines){
+        if (paramRoutineId && routines) {
             const routine = routines.find(r => r.id === paramRoutineId)
-            if (!routine){
+            if (!routine) {
                 navigate('/builder')
             }
         }
@@ -40,9 +38,13 @@ const RoutinePanel = ({ routineId }) => {
     useEffect(() => {
         if (routineId && project) {
             const foundRoutine = project.routines.find(r => r.id === routineId);
-            setRoutine(foundRoutine || routineTemplate);
+            if (foundRoutine)
+                setRoutine(foundRoutine);
+            else 
+            setRoutine(routineTemplate);
+
         }
-    }, [routineId, project])
+    }, [routineId, project, routineTemplate])
 
     return (
         <routineConfigurationContext.Provider value={{ routine, setRoutine }}>
@@ -54,7 +56,7 @@ const RoutinePanel = ({ routineId }) => {
             </div>
         </routineConfigurationContext.Provider>
     );
-    
+
 }
 
 export default RoutinePanel;

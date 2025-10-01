@@ -5,10 +5,7 @@ import React, { createContext, useState } from 'react';
 
 export const RoutineContext = createContext(null);
 
-export const RoutineContextProvider = ({ children, routine }) => {
-    //const [routine, setRoutine] = useState(null);
-
-        const getColor = (status: RoutineStatus) => {
+export const getRoutineStatusColor = (status: RoutineStatus) => {
         switch (status) {
             case routineEvents.routineAutoCheckingConditions:
                 return Color.working;
@@ -29,8 +26,9 @@ export const RoutineContextProvider = ({ children, routine }) => {
         }
     }
 
+export const RoutineContextProvider = ({ children, routine }) => {
     return (
-        <RoutineContext.Provider value={{ routine, getColor }}>
+        <RoutineContext.Provider value={{ routine, getColor:getRoutineStatusColor }}>
             {children}
         </RoutineContext.Provider>
     );

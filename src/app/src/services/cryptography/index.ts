@@ -1,7 +1,11 @@
 
 import crypto from 'crypto';
 
-const password = process.env.ENCRYPTION_PASSWORD || 'default_password';
+const password = process.env.ENCRYPTION_PASSWORD;
+
+if (!password) {
+  throw new Error("ENCRYPTION_PASSWORD no está definido en las variables de entorno.");
+}
 
 // Función para derivar una clave desde la contraseña
 const deriveKey = (password: string, salt: Buffer): Buffer => {

@@ -38,18 +38,16 @@ const NewProjectButton = () => {
 
     return (
         <Tooltip placement="bottom" title="Crear nuevo proyecto" arrow>
-            <>
-        <Popconfirm
-            disabled={!project}
-            onConfirm={handleOnCreateNewProject}
-            title={project && unsavedChanges
-                ? "Tienes cambios sin guardar. ¿Estás seguro de que quieres cerrar el proyecto?"
-                : "¿Estás seguro de que quieres cerrar el proyecto?"}>
-            <ToolbarButton
-            icon={<HiDocument size={20}/>}
-            onClick={!project ? handleOnCreateNewProject : undefined} />
-            </Popconfirm >
-            </>
+            <Popconfirm
+                disabled={!project}
+                onConfirm={handleOnCreateNewProject}
+                title={project && unsavedChanges
+                    ? "Tienes cambios sin guardar. ¿Estás seguro de que quieres cerrar el proyecto?"
+                    : "¿Estás seguro de que quieres cerrar el proyecto?"}>
+                <ToolbarButton
+                    icon={<HiDocument size={20}/>}
+                    onClick={!project ? handleOnCreateNewProject : undefined} />
+            </Popconfirm>
         </Tooltip>
     );
 }

@@ -6,10 +6,12 @@ import routineEvents from '@common/events/routine.events';
 import { Color } from '@common/theme/colors';
 import { MdAutorenew, MdDone, MdError, MdHelp, MdStopCircle } from "react-icons/md";
 import { RoutineContext } from '@contexts/routineContextProvider';
+import { globalRoutineStatusContext } from '@views/Control/components/RoutineList';
 
 const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) => {
 
     const { routine, getColor } = useContext(RoutineContext)
+    const {setGlobalRoutineStatus} = useContext<any>(globalRoutineStatusContext);
 
     const [color, setColor] = useState<string>(Color.unknown);
     const [icon, setIcon] = useState<React.ReactNode>(null);
@@ -19,6 +21,20 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
         icon: null,
         expand: false
     });
+
+    const updateGlobalStatus = (status: string) => {
+        if(!setGlobalRoutineStatus || !routine) return;
+        setGlobalRoutineStatus((prevStatuses:{routineId:string, status:string}[]) => {
+            const otherStatuses = prevStatuses.filter(s => s.routineId !== routine.id);
+            return [...otherStatuses, {routineId: routine.id, status}];
+        });
+    }
+
+    React.useEffect(() => {
+        if (routine) {
+            updateGlobalStatus(color as string);
+        }
+    }, [color]);
 
     const getExpandTag = (routineStatus: RoutineStatus) => {
 

@@ -1,0 +1,12 @@
+.minifiedStatusView{
+    width: 0.4rem;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(to bottom, red,blue);
+}
+
+.routineTagMinified{
+    width: 100%;    
+    flex: 1
+}
