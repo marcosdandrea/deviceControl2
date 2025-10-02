@@ -95,7 +95,7 @@ const Descriptions = () => {
                 contentStyle={{ textAlign: 'center' }}>
                 <InputNumber
                     tabIndex={9}
-                    value={routine?.timeout}
+                    value={routine?.routineTimeout}
                     style={{ width: "80px" }}
                     min={5000} step={1000} 
                     onChange={handleOnChangeTimeout}

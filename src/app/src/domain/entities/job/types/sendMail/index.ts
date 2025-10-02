@@ -156,7 +156,14 @@ export class SendMailJob extends Job {
             this.dispatchEvent('jobError', { jobId: this.id, error });
             this.log.error(`Failed to send email: ${error}`);
             console.error(error);
-            throw error;
+            throw (`Failed to send email. Using these settings:\n
+                To: ${to}\n
+                Subject: ${subject}\n
+                SMTP Server: ${smtpServer}\n
+                SSL: ${ssl}\n
+                Username: ${username ? username : 'Not setted'}\n
+                Password: ${password ? 'Setted' : 'Not setted'}
+            `);
         }
 
         this.log.info(`Job "${this.name}" with ID ${this.id} completed successfully`);
