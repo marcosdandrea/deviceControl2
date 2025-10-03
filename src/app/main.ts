@@ -29,6 +29,7 @@ if (enableHeapSnapshoot)
 
 let electronApp: Electron.App | null = null;
 
+
 const coreProcesses = async () => {
 
   //server for panel and administration

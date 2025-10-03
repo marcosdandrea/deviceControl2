@@ -65,9 +65,18 @@ export const getProjectFromMemory = async (_payload: null, callback: Function) =
 }
 
 export const loadProjectFromFile = async (payload: ArrayBuffer | string, callback: Function) => {
-    log.info('Client requested to load a project from file');
-    const { closeProject, loadProjectFile } = await import('@src/domain/useCases/project/index.js');
     try {
+        log.info('Client requested to load a project from file');
+
+        const licenseIsValid = await import('@src/services/licensing/index.js').then(mod => mod.checkLicense()).catch(() => false);
+        if (!licenseIsValid) {
+            broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el archivo del proyecto. La licencia del sistema no es válida.` });
+            log.error(`Failed to load project file: License is not valid`);
+            throw new Error("La licencia del sistema no es válida. Por favor, ingrese una licencia válida para cargar proyectos.");
+        }
+
+
+        const { closeProject, loadProjectFile } = await import('@src/domain/useCases/project/index.js');
         await closeProject();
         const generalServer = ServerManager.getInstance("general");
         generalServer.unbindAllRoutes();
@@ -83,10 +92,18 @@ export const loadProjectFromFile = async (payload: ArrayBuffer | string, callbac
 }
 
 export const loadProject = async (payload: string, callback: Function) => {
-    log.info('Client requested to load a project from data');
-    const { closeProject, loadProject } = await import('@src/domain/useCases/project/index.js');
-
     try {
+        log.info('Client requested to load a project from data');
+
+        const licenseIsValid = await import('@src/services/licensing/index.js').then(mod => mod.checkLicense()).catch(() => false);
+        if (!licenseIsValid) {
+            broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el proyecto. La licencia del sistema no es válida.` });
+            log.error(`Failed to load project: License is not valid`);
+            throw new Error("La licencia del sistema no es válida. Por favor, ingrese una licencia válida para cargar proyectos.");
+        }
+
+        const { closeProject, loadProject } = await import('@src/domain/useCases/project/index.js');
+
         await closeProject();
         const project = JSON.parse(payload) as Project;
         await loadProject(project);

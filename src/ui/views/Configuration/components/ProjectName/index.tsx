@@ -1,7 +1,7 @@
 import React from "react";
 import { useContext } from "react";
-import { configContext } from "@views/Configuration";
 import { Input, Space } from "antd";
+import { configContext } from "@views/Configuration";
 
 const ProjectName = () => {
     const { projectName, setProjectName, labelFlex, inputFlex } = useContext(configContext);

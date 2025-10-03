@@ -4,7 +4,9 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { getUserDataPath } from "@utils/paths";
+import { getUserDataPath } from "@src/utils/paths";
+import { broadcastToClients } from "../ipcServices";
+import systemEvents from "@common/events/system.events";
 
 const LICENSE_SECRET = process.env.LICENSE_SECRET ?? "devicecontrol-license-secret";
 const LICENSE_FILENAME = "license.json";
@@ -184,6 +186,7 @@ export const setSystemLicense = async (licenseKey: string): Promise<boolean> => 
   };
 
   await fs.writeFile(filePath, JSON.stringify(storedLicense, null, 2), "utf8");
+  broadcastToClients(systemEvents.appLicenseSet, null);
   return true;
 };
 

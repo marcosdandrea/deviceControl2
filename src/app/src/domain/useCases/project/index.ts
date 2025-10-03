@@ -242,6 +242,14 @@ export const getLastProject = async (): Promise<projectType> => {
 
 export const loadLastProject = async (): Promise<projectType> => {
    try {
+
+      const licenseIsValid = await import('@src/services/licensing/index.js').then(mod => mod.checkLicense()).catch(() => false);
+      if (!licenseIsValid) {
+         broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el archivo del proyecto. La licencia del sistema no es válida.` });
+         log.error(`Failed to load project file: License is not valid`);
+         throw new Error("La licencia del sistema no es válida. Por favor, ingrese una licencia válida para cargar proyectos.");
+      }
+
       const projectContent = await getLastProject();
       if (!projectContent)
          throw new Error("No last project found.");
@@ -256,8 +264,9 @@ export const loadLastProject = async (): Promise<projectType> => {
 
 export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promise<Project> => {
 
-   let projectRawData: string;
    try {
+
+      let projectRawData: string;
       const { decryptData } = await import('@src/services/cryptography/index.js');
       projectRawData = await decryptData(String(fileContent) as string);
    } catch (error) {

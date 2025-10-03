@@ -1,7 +1,7 @@
 import { getConditionTypes } from "@src/domain/entities/conditions/types"
 import { getJobTypes } from "@src/domain/entities/job/types"
 import { getTriggerTypes } from "@src/domain/entities/trigger/types"
-import {Log} from "@src/utils/log"
+import { Log } from "@src/utils/log"
 import { broadcastToClients } from "."
 import appCommands from "@common/commands/app.commands"
 import { Socket } from "socket.io"
@@ -80,5 +80,38 @@ const unblockMainControlView = async (socket: Socket, callback?: Function) => {
     return { success: true }
 }
 
+const checkLicense = async (_args: any, callback: Function): Promise<{ isValid: boolean; fingerprint: string | null }> => {
+    const { checkLicense, getSystemFingerprint } = await import('@src/services/licensing/index.js');
+    try {
+        const fingerprint = await getSystemFingerprint();
+        const isValid = await checkLicense();
+        log.info('License valid:', isValid);
+        callback?.({ isValid, fingerprint });
+        return { isValid, fingerprint };
+    } catch (error) {
+        log.error('Error validating license:', (error as Error).message);
+        callback?.({ isValid: false, fingerprint: null });
+        return { isValid: false, fingerprint: null };
+    }
+};
 
-export default { getAvailableTriggers, getAvailableJobs, getAvailableConditions, blockMainControlView, unblockMainControlView }
+const setLicense = async (args: any, callback: Function): Promise<boolean> => {
+    const { setSystemLicense } = await import('@src/services/licensing/index.js');
+    try {
+        const licenseKey = args?.licenseKey;
+        if (typeof licenseKey !== 'string') {
+            log.error('Invalid license key format');
+            callback?.(false);
+            return false;
+        }
+        const result = await setSystemLicense(licenseKey);
+        log.info('License set result:', result);
+        callback?.(result);
+        return result;
+    } catch (error) {
+        log.error('Error setting license:', (error as Error).message);
+        callback?.(false);
+        return false;
+    }
+}
+export default { getAvailableTriggers, getAvailableJobs, getAvailableConditions, blockMainControlView, unblockMainControlView, checkLicense, setLicense }

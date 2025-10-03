@@ -5,8 +5,7 @@ import React, { useContext, useEffect } from 'react';
 
 const SystemNotifications = () => {
     const {socket} = useContext(SocketIOContext)
-
-    let lastMessage = null;
+    const lastMessageRef = React.useRef({ message: null, timestamp: 0 });
 
     message.config({
         top: 50,
@@ -14,25 +13,48 @@ const SystemNotifications = () => {
         maxCount: 3,
     });
 
+    const canShowMessage = (messageText) => {
+        const now = Date.now();
+        const lastMsg = lastMessageRef.current;
+        
+        // Si es un mensaje diferente, siempre se puede mostrar
+        if (lastMsg.message !== messageText) {
+            return true;
+        }
+        
+        // Si es el mismo mensaje, verificar si han pasado más de 4 segundos
+        return now - lastMsg.timestamp > 4000;
+    };
+
+    const updateLastMessage = (messageText) => {
+        lastMessageRef.current = {
+            message: messageText,
+            timestamp: Date.now()
+        };
+    };
+
     const handleOnInfoLog = (data) => {
-        if (data.message === lastMessage) return;
-        lastMessage = data.message;
+        if (!canShowMessage(data.message)) return;
+        
+        updateLastMessage(data.message);
         if (data.type === "success") {
             message.success(data.message);
-            return;
+        } else {
+            message.info(data.message);
         }
-        message.info(data.message);
     }
 
     const handleOnErrorLog = (data) => {
-        if (data.message === lastMessage) return;
-        lastMessage = data.message;
+        if (!canShowMessage(data.message)) return;
+        
+        updateLastMessage(data.message);
         message.error(data.message);
     }
 
     const handleOnWarningLog = (data) => {
-        if (data.message === lastMessage) return;
-        lastMessage = data.message;
+        if (!canShowMessage(data.message)) return;
+        
+        updateLastMessage(data.message);
         message.warning(data.message);
     }
 
