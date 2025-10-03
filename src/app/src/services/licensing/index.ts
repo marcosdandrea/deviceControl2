@@ -7,6 +7,8 @@ import path from "node:path";
 import { getUserDataPath } from "@src/utils/paths";
 import { broadcastToClients } from "../ipcServices";
 import systemEvents from "@common/events/system.events";
+import { loadLastProject } from "@src/domain/useCases/project";
+import eventManager from "../eventManager";
 
 const LICENSE_SECRET = process.env.LICENSE_SECRET ?? "devicecontrol-license-secret";
 const LICENSE_FILENAME = "license.json";
@@ -186,7 +188,9 @@ export const setSystemLicense = async (licenseKey: string): Promise<boolean> => 
   };
 
   await fs.writeFile(filePath, JSON.stringify(storedLicense, null, 2), "utf8");
-  broadcastToClients(systemEvents.appLicenseSet, null);
+  broadcastToClients(systemEvents.appLicenseUpdated, {isValid: true});
+  eventManager.emit(systemEvents.appLicenseUpdated, {isValid: true});
+  loadLastProject()
   return true;
 };
 
@@ -206,5 +210,21 @@ export const checkLicense = async (): Promise<boolean> => {
     return false;
   }
 };
+
+const LICENSE_CHECK_INTERVAL = process.env.AUTOCHECK_LICENSE_INTERVAL_HOURS ? Number(process.env.AUTOCHECK_LICENSE_INTERVAL_HOURS) * 60 * 60 * 1000 : 3600000
+
+const autoCheckLicense = async () => {
+  try {
+    const isValid = await checkLicense();
+    eventManager.emit(systemEvents.appLicenseUpdated, isValid);
+    broadcastToClients(systemEvents.appLicenseUpdated, isValid);
+  } catch (error) {
+    console.error("Error checking license:", error);
+  } finally {
+    setTimeout(autoCheckLicense, LICENSE_CHECK_INTERVAL);
+  }
+};
+
+autoCheckLicense();
 
 export const decodeLicenseForDebug = (licenseKey: string): LicensePayload | null => parseLicenseKey(licenseKey);

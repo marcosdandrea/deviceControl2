@@ -2,6 +2,6 @@ export default {
     appLogInfo: "appLogInfo",
     appLogError: "appLogError",
     appLogWarning: "appLogWarning",
-    appLicenseSet: "appLicenseSet",
+    appLicenseUpdated: "appLicenseUpdated",
     //getSystemTime: "getSystemTime",
 }

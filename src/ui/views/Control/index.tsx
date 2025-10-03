@@ -24,7 +24,7 @@ const Control = ({ isPreview }: { isPreview: boolean }) => {
           <div className={styles.licenseRequired}>
             <h2>License Requerida</h2>
             <p>
-              Active la licencia de <strong>DeviceControl</strong> usando el panel Builder.
+              Active la licencia de <strong>Device Control 2</strong> usando el panel Builder.
             </p>
           </div>
         )}

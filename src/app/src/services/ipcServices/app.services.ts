@@ -109,7 +109,6 @@ const setLicense = async (args: any, callback: Function): Promise<boolean> => {
         const result = await setSystemLicense(licenseKey);
         log.info(`License set result: ${result}`);
         callback?.(result);
-        loadLastProject()
         return result;
     } catch (error) {
         log.error(`Error setting license: ${(error as Error).message}`);

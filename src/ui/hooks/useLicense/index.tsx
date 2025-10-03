@@ -9,11 +9,11 @@ const useLicense = () => {
   const [systemFingerprint, setSystemFingerprint] = useState<string | null>(null);
 
   useEffect(() => {
-    socket.on (systemEvents.appLicenseSet, () => {
+    socket.on (systemEvents.appLicenseUpdated, () => {
         checkLicense();
     });
     return () => {
-        socket.off (systemEvents.appLicenseSet);
+        socket.off (systemEvents.appLicenseUpdated);
     }
   }, [socket]);
 
