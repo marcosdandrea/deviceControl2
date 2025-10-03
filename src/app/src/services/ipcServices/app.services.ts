@@ -5,6 +5,7 @@ import { Log } from "@src/utils/log"
 import { broadcastToClients } from "."
 import appCommands from "@common/commands/app.commands"
 import { Socket } from "socket.io"
+import { loadLastProject } from "@src/domain/useCases/project"
 const log = new Log("AppServices", true)
 
 const getAvailableTriggers = async (_args: any, callback: Function) => {
@@ -85,11 +86,11 @@ const checkLicense = async (_args: any, callback: Function): Promise<{ isValid: 
     try {
         const fingerprint = await getSystemFingerprint();
         const isValid = await checkLicense();
-        log.info('License valid:', isValid);
+        log.info(`License valid: ${isValid}`);
         callback?.({ isValid, fingerprint });
         return { isValid, fingerprint };
     } catch (error) {
-        log.error('Error validating license:', (error as Error).message);
+        log.error(`Error checking license: ${(error as Error).message}`);
         callback?.({ isValid: false, fingerprint: null });
         return { isValid: false, fingerprint: null };
     }
@@ -97,6 +98,7 @@ const checkLicense = async (_args: any, callback: Function): Promise<{ isValid: 
 
 const setLicense = async (args: any, callback: Function): Promise<boolean> => {
     const { setSystemLicense } = await import('@src/services/licensing/index.js');
+
     try {
         const licenseKey = args?.licenseKey;
         if (typeof licenseKey !== 'string') {
@@ -105,11 +107,12 @@ const setLicense = async (args: any, callback: Function): Promise<boolean> => {
             return false;
         }
         const result = await setSystemLicense(licenseKey);
-        log.info('License set result:', result);
+        log.info(`License set result: ${result}`);
         callback?.(result);
+        loadLastProject()
         return result;
     } catch (error) {
-        log.error('Error setting license:', (error as Error).message);
+        log.error(`Error setting license: ${(error as Error).message}`);
         callback?.(false);
         return false;
     }
