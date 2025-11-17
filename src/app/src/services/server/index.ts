@@ -66,15 +66,24 @@ export class Server {
   }
 
   static async createInstance(props?: ServerProps): Promise<Server> {
-    const server = new Server(props);
-    await server.initPort(props);
-    await server.start();
-    return server;
+    try {
+      const server = new Server(props);
+      await server.initPort(props);
+      await server.start();
+      return server;
+    } catch (error) {
+      log.error(`Error starting server "${props?.name}": ${(error as Error).message}`);
+      throw error;
+    }
   }
 
   private async initPort(props: ServerProps) {
     if (this.port && this.port !== 0) {
-      // Puerto definido explícitamente, no buscar
+      // Puerto definido explícitamente, verificar si está libre
+      const isFree = await this.checkPortFree(this.port);
+      if (!isFree) {
+        throw new Error(`Port ${this.port} is already in use`);
+      }
       return;
     }
 
@@ -107,15 +116,16 @@ export class Server {
 
   private start(): Promise<void> {
     return new Promise((resolve, reject) => {
-      try {
-        this.serverListener = this.httpServer.listen(this.port, this.ip, () => {
-          log.info(`Server started at http://${this.ip}:${this.port}`);
-          resolve();
-        });
-      } catch (error) {
+      this.serverListener = this.httpServer.listen(this.port, this.ip, () => {
+        log.info(`Server started at http://${this.ip}:${this.port}`);
+        resolve();
+      });
+
+      // Agregar listener para errores de manera explícita
+      this.serverListener.on('error', (error) => {
         log.error('Failed to start server:', error);
         reject(error);
-      }
+      });
     });
   }
 
