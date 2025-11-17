@@ -1,4 +1,5 @@
 import { WindowManager } from "@src/services/windowManager/index.js"
+import { getVersion } from "@src/utils/getVersion";
 import { isDev } from "@src/utils/index.js"
 import { Log } from "@src/utils/log.js";
 
@@ -7,6 +8,16 @@ const log = Log.createInstance("windowManagerUseCase", true)
 let mainWindow: import('electron').BrowserWindow | null = null
 
 const fullscreen = process.argv.includes('--fullscreen') || process.argv.includes('--f') || process.env.FULLSCREEN === 'true'
+
+// Configurar handler para abrir URLs externas
+const setupIpcHandlers = async () => {
+    const { ipcMain, shell } = await import('electron');
+    
+    ipcMain.on('open-external', (event, url: string) => {
+        log.info(`Opening external URL: ${url}`);
+        shell.openExternal(url);
+    });
+};
 
 export const getWebContents = () => mainWindow?.webContents || null;
 
@@ -25,11 +36,14 @@ export const createMainWindow = async () => {
         return mainWindow
     }
 
+    // Configurar handlers IPC
+    await setupIpcHandlers();
+
     const WM = WindowManager.getInstance()
     const win = await WM.createWindow({
         name: "main",
         webPreferences: {
-            //preload: path.join(__dirname, "preload.js"),
+            preload: await import('path').then(path => path.join(__dirname, "preload.js")),
             contextIsolation: true,
             nodeIntegration: false,
         }
@@ -53,11 +67,9 @@ export const createMainWindow = async () => {
 
     setMainWindow(win)
     win.setMenu(null)
-    const appTitle: string = process.env.APP_TITLE || ""
-    win.setTitle(appTitle)
-
-    //import ("./mainWindowMenuManager.js")
-    import("./mainWindowTitleManager.js")
+    const title = `Device Control ${await getVersion()}`;
+    log.info(`Setting window title to: "${title}"`);
+    win.setTitle(title)
     log.info("Main window created")
 
     win.on("close", async (event) => {

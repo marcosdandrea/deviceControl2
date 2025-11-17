@@ -10,5 +10,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   removeListener: (channel: string, callback: (...args: any[]) => void) => {
     ipcRenderer.removeListener(channel, callback);
+  },
+  openExternal: (url: string) => {
+    ipcRenderer.send('open-external', url);
   }
 });

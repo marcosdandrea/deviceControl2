@@ -26,7 +26,7 @@ export class WindowManager {
         return WindowManager.instance;
     }
 
-    createWindow(options: { name: string; [key: string]: any, width?: number, height?: number }): Promise<BrowserWindow> {
+    createWindow(options: { name: string; [key: string]: any, width?: number, height?: number, title?: string }): Promise<BrowserWindow> {
         return new Promise((resolve, reject) => {
             try {
                 const {name, width, height} = options
@@ -36,6 +36,7 @@ export class WindowManager {
                     height: height || 452,
                     icon: path.join(app.getAppPath(), 'resources', "png", '48x48.png'),
                     show: false,
+                    title: options.title || name || "App Window",
                     ...options,
                 });
                 this.windows.set(id, window);

@@ -185,6 +185,10 @@ export class Task extends EventEmitter implements TaskInterface {
             this.failed = false;
             this.aborted = false;
 
+            abortSignal.addEventListener("abort", () => {
+                this.aborted = true;
+            });
+
             if (!this.job || typeof this.job.execute !== 'function')
                 throw new Error(dictionary("app.domain.entities.task.noJobConfigured", this.getDisplayName()));
 
@@ -221,7 +225,7 @@ export class Task extends EventEmitter implements TaskInterface {
 
                     // Si hay condición y se debe chequear antes de ejecutar el job
                     if (this.condition && this.checkConditionBeforeExecution) {
-            this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.checkingConditionBefore", this.getDisplayName())));
+                        this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.checkingConditionBefore", this.getDisplayName())));
 
                         const conditionMet = await checkCondition();
                         this.log.info(`Condition before execution for task ${this.name} evaluated to ${conditionMet}`);
@@ -257,7 +261,7 @@ export class Task extends EventEmitter implements TaskInterface {
                     if (this.aborted) {
                         this.timeoutController.clear();
                         this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.abortedNotContinuing", this.getDisplayName())));
-                        throw error
+                        //throw error
                     }
 
                     this.log.error(childCtx.log.info(dictionary("app.domain.entities.task.error", this.getDisplayName(), error instanceof Error ? error.message : String(error))), error);
