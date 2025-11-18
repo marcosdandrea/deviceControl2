@@ -258,7 +258,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
         try {
             await this.run(trigger, ctx);
         } catch (err) {
-            this.logger.error(`Error executing trigger ${trigger.name}: ${err.message}`);
+            this.logger.error(`Error executing routine ${this.name} using trigger ${trigger.name}: ${err.message}`);
         }
     }
 
@@ -405,8 +405,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
         const routineStartTime = Date.now();
 
         this.abortController = new AbortController();
-        const { signal: userAbortSignal } = this.abortController;        
-        
+        const { signal: userAbortSignal } = this.abortController;
+
         this.#suspendAutoCheckingConditions()
         this.isRunning = true;
         this.failed = false;
@@ -434,29 +434,32 @@ export class Routine extends EventEmitter implements RoutineInterface {
         return new Promise(async (resolve, reject) => {
 
             const runInSync = async (abortSignal: AbortSignal) => {
-                this.logger.info(childCtx.log.info(dictionary("app.domain.entities.routine.runningTasksInSync")));
+                return new Promise<void>(async (resolve, reject) => {
+                    this.logger.info(childCtx.log.info(dictionary("app.domain.entities.routine.runningTasksInSync")));
 
-                for (const task of this.tasks) {
-                    try {
-                        childCtx.log.info(dictionary("app.domain.entities.routine.runningTask", this.getTaskDisplayName(task)));
-                        await task.run({ abortSignal, runCtx: childCtx });
-                        childCtx.log.info(dictionary("app.domain.entities.routine.taskCompleted", this.getTaskDisplayName(task)));
-                    } catch (e) {
-                        if (abortSignal.aborted) {
-                            childCtx.log.warn(dictionary("app.domain.entities.routine.taskAborted", this.getTaskDisplayName(task), String(abortSignal.reason)));
-                            this.#setStatus("aborted");
-                            throw new Error(dictionary("app.domain.entities.routine.aborted", String(abortSignal.reason ?? "")));
-                        }
-                        if (this.continueOnError) {
-                            childCtx.log.warn(dictionary("app.domain.entities.routine.taskFailed", this.getTaskDisplayName(task), e?.message || String(e)));
-                            this.#setStatus("failed");
-                        } else {
-                            this.#setStatus("failed");
-                            throw new Error(dictionary("app.domain.entities.routine.breakOnErrorDisabled"));
+                    for (const task of this.tasks) {
+                        try {
+                            childCtx.log.info(dictionary("app.domain.entities.routine.runningTask", this.getTaskDisplayName(task)));
+                            await task.run({ abortSignal, runCtx: childCtx });
+                            childCtx.log.info(dictionary("app.domain.entities.routine.taskCompleted", this.getTaskDisplayName(task)));
+                            resolve()
+                        } catch (e) {
+                            if (abortSignal.aborted) {
+                                childCtx.log.warn(dictionary("app.domain.entities.routine.taskAborted", this.getTaskDisplayName(task), String(abortSignal.reason)));
+                                this.#setStatus("aborted");
+                                reject(dictionary("app.domain.entities.routine.aborted", String(abortSignal.reason ?? "")));
+                            }
+                            if (this.continueOnError) {
+                                childCtx.log.warn(dictionary("app.domain.entities.routine.taskFailed", this.getTaskDisplayName(task), e?.message || String(e)));
+                                this.#setStatus("failed");
+                                reject(e?.message)
+                            } else {
+                                this.#setStatus("failed");
+                                reject(dictionary("app.domain.entities.routine.breakOnErrorDisabled"));
+                            }
                         }
                     }
-                }
-
+                })
             }
 
             const runInParallelBreakOnError = async (abortSignal: AbortSignal) => {
@@ -548,19 +551,19 @@ export class Routine extends EventEmitter implements RoutineInterface {
                 resolve();
             } catch (e) {
 
-                    if (userAbortSignal.aborted) {
-                        this.#setStatus("aborted");
+                if (userAbortSignal.aborted) {
+                    this.#setStatus("aborted");
                     this.logger.warn(childCtx.finish.warn(dictionary("app.domain.entities.routine.aborted", e?.message || String(e))));
-                        this.#eventDispatcher(routineEvents.routineAborted);
-                    } else if (this.timeoutController?.timedout) {
+                    this.#eventDispatcher(routineEvents.routineAborted);
+                } else if (this.timeoutController?.timedout) {
                     this.logger.warn(childCtx.finish.warn(dictionary("app.domain.entities.routine.timedOut", e?.message || String(e))));
-                        this.#eventDispatcher(routineEvents.routineTimeout);
-                        this.#setStatus("timedout");
-                    } else {
-                        this.#setStatus("failed");
+                    this.#eventDispatcher(routineEvents.routineTimeout);
+                    this.#setStatus("timedout");
+                } else {
+                    this.#setStatus("failed");
                     this.logger.error(childCtx.finish.error(dictionary("app.domain.entities.routine.failed", e?.message || String(e))));
-                        this.#eventDispatcher(routineEvents.routineFailed);
-                    }
+                    this.#eventDispatcher(routineEvents.routineFailed);
+                }
 
                 reject(e);
             } finally {

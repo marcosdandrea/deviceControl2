@@ -2,6 +2,8 @@ import { JobType, requiredJobParamType } from "@common/types/job.type";
 import { Job } from "../..";
 import { jobTypes } from "..";
 import dictionary from "@common/i18n";
+import { Context } from "@src/domain/entities/context";
+import { a } from "vitest/dist/chunks/suite.B2jumIFP.js";
 
 interface SendTCPJobParams extends JobType {
     answer?: string | null; // Optional answer to check against the response
@@ -52,7 +54,7 @@ export class SendTCPJob extends Job {
     }
 
 
-    protected async job(): Promise<void> {
+    protected async job({ctx, abortSignal}: {ctx: Context, abortSignal: AbortSignal}): Promise<void> {
         this.failed = false;
         const displayName = this.getDisplayName();
         this.log.info(dictionary("app.domain.entities.job.sendUdp.starting", displayName));
@@ -95,6 +97,12 @@ export class SendTCPJob extends Job {
                         resolve();
                     });
                 }
+
+                abortSignal.addEventListener('abort', () => {
+                    client.end();
+                    this.log.warn(ctx.log.warn(dictionary("app.domain.entities.job.aborted", displayName)));
+                    reject(dictionary("app.domain.entities.job.aborted", displayName));
+                }, { once: true })
 
 
             });

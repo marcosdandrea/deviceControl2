@@ -5,7 +5,7 @@ import { Button } from "antd";
 import { FaKey } from "react-icons/fa6";
 
 const LicenseChecker = ({ children }) => {
-    const { isLicensed } = useLicense();
+    const { isLicensed, fetching } = useLicense();
     const port = location.port ? `:${location.port}` : '';
 
     const handleOpenBuilder = () => {
@@ -20,8 +20,16 @@ const LicenseChecker = ({ children }) => {
         }
     };
 
-    if (isLicensed) {
+    if (isLicensed==undefined || isLicensed) {
         return <>{children}</>;
+    }
+
+    if (fetching) {
+        return (
+            <div className={styles.licenseRequired}>
+                <p>Cargando estado de la licencia...</p>
+            </div>
+        );
     }
 
     return (

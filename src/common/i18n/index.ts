@@ -106,6 +106,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
         "app.domain.entities.task.retrying": "Reintentando la tarea '{1}' en {2} ms",
         "app.domain.entities.task.abortedDuringRetryWait": "La tarea '{1}' fue abortada durante la espera para reintentar.",
         "app.domain.entities.task.noJobConfigured": "No hay un trabajo válido configurado para la tarea '{1}'",
+        "app.domain.entities.task.abortedDuringJobExecution": "La tarea '{1}' fue abortada durante la ejecución del trabajo.",  
 
         "app.domain.entities.condition.evaluationAborted": "La evaluación de la condición '{1}' fue abortada.",
         "app.domain.entities.condition.notMet": "La condición '{1}' no se cumplió.",
@@ -204,6 +205,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
         "app.domain.entities.task.retrying": "Retrying task '{1}' in {2} ms",
         "app.domain.entities.task.abortedDuringRetryWait": "Task '{1}' was aborted during the retry wait.",
         "app.domain.entities.task.noJobConfigured": "No valid job configured for task '{1}'",
+        "app.domain.entities.task.abortedDuringJobExecution": "Task '{1}' was aborted during job execution.",
 
         "app.domain.entities.condition.evaluationAborted": "Condition '{1}' evaluation was aborted.",
         "app.domain.entities.condition.notMet": "Condition '{1}' was not met.",

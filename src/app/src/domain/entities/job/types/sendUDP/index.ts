@@ -58,9 +58,8 @@ export class SendUDPJob extends Job {
     ];
     }
 
-    async job(ctx: Context): Promise<void> {
+    protected async job({ctx, abortSignal}: {ctx: Context, abortSignal: AbortSignal}): Promise<void> {
         this.failed = false;
-        const { signal: abortSignal } = this.abortController || {};
         const displayName = this.getDisplayName();
 
         ctx.log.info(dictionary("app.domain.entities.job.sendUdp.starting", displayName));

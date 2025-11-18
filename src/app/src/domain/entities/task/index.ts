@@ -9,6 +9,7 @@ import taskEvents from "@common/events/task.events";
 import { Context } from "../context";
 import { TimeoutController } from "../../../controllers/Timeout";
 import dictionary from "@common/i18n";
+import timeoutEvents from "@common/events/timeout.events";
 
 export class Task extends EventEmitter implements TaskInterface {
     id: id;
@@ -133,33 +134,50 @@ export class Task extends EventEmitter implements TaskInterface {
 
             this.#dispatchEvent(taskEvents.taskRunning, { taskId: this.id, taskName: this.name });
 
+
             const abortJobsAndConditionsController = new AbortController();
 
-            const onAbort = () => {
+            const onAbortTask = () => {
                 this.aborted = true;
                 abortJobsAndConditionsController.abort();
             };
 
-            abortSignal.addEventListener("abort", onAbort, { once: true });
+            abortSignal.addEventListener("abort", onAbortTask, { once: true });
+            this.timeoutController.on(timeoutEvents.timeout, () => {
+                this.log.warn(`Task "${this.name}" timed out after ${this.timeout} ms`);
+                abortJobsAndConditionsController.abort();
+            });
+
+
+            const jobPromise = this.jobsAndConditions({ abortSignal: abortJobsAndConditionsController.signal, childCtx })
+                .catch((err) => { 
+                    if (!this.timeoutController.timedout)
+                        throw err
+                }); 
 
             try {
                 this.failed = false;
                 await Promise.race([
-                    this.jobsAndConditions({ abortSignal: abortJobsAndConditionsController.signal, childCtx }),
+                    jobPromise,
                     this.timeoutController.start(abortSignal)
                 ]);
+                this.timeoutController.clear();
+
                 this.#dispatchEvent(taskEvents.taskCompleted, { taskId: this.id, taskName: this.name, duration: Date.now() - (this.startTime ?? Date.now()) });
                 resolve();
             } catch (error) {
+
                 if (abortSignal.aborted) {
                     this.aborted = true;
                     this.timeoutController.clear();
-                    childCtx.log.info(dictionary("app.domain.entities.task.aborted", displayName));
+                    this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.aborted", displayName)));
 
                     this.#dispatchEvent(taskEvents.taskAborted, { taskId: this.id, taskName: this.name });
                     reject(new Error(dictionary("app.domain.entities.task.aborted", displayName)));
+
                 } else if (this.timeoutController.timedout) {
-                    childCtx.log.error(dictionary("app.domain.entities.task.timedOut", displayName));
+
+                    this.log.error(childCtx.log.error(dictionary("app.domain.entities.task.timedOut", displayName)));
 
                     abortJobsAndConditionsController.abort();
                     this.failed = true;
@@ -237,7 +255,7 @@ export class Task extends EventEmitter implements TaskInterface {
                     }
 
                     this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.executingJobAttempt", this.getDisplayName(), this.totalRetries + 1, this.retries)));
-                    await this.job.execute({ abortSignal, ctx: childCtx });
+                    await this.job.execute({ abortSignal, ctx: childCtx })
 
                     // Si no hay condición, termina después de ejecutar el job
                     if (!this.condition) {
@@ -261,7 +279,7 @@ export class Task extends EventEmitter implements TaskInterface {
                     if (this.aborted) {
                         this.timeoutController.clear();
                         this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.abortedNotContinuing", this.getDisplayName())));
-                        //throw error
+                        return reject(new Error(dictionary("app.domain.entities.task.abortedNotContinuing", this.getDisplayName())));
                     }
 
                     this.log.error(childCtx.log.info(dictionary("app.domain.entities.task.error", this.getDisplayName(), error instanceof Error ? error.message : String(error))), error);

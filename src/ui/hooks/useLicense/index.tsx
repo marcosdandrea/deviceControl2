@@ -5,7 +5,8 @@ import { useContext, useEffect, useState } from "react";
 
 const useLicense = () => {
   const { emit, socket } = useContext(SocketIOContext);
-  const [isLicensed, setIsLicensed] = useState<boolean | null>(null);
+  const [fetching, setFetching] = useState<boolean>(false);
+  const [isLicensed, setIsLicensed] = useState<boolean | undefined>(undefined);
   const [systemFingerprint, setSystemFingerprint] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,10 +35,11 @@ const useLicense = () => {
   };
 
   useEffect(() => {
-    checkLicense();
+    setFetching(true);
+    checkLicense().finally(() => setFetching(false));
   }, []);
 
-  return { isLicensed, checkLicense, setLicense, systemFingerprint};
+  return { isLicensed, checkLicense, setLicense, systemFingerprint, fetching};
 };
 
 export default useLicense;

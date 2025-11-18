@@ -44,7 +44,7 @@ export class Job extends EventEmitter implements JobInterface {
         this.log.info(`Job "${this.name}" created with ID ${this.id}`);
     }
 
-    protected job(ctx: Context, abortSignal: AbortSignal): Promise<void> {
+    protected job({ctx, abortSignal}: {ctx: Context, abortSignal: AbortSignal}): Promise<void> {
         throw new Error("Job method must be implemented in subclasses");
     }
 
@@ -103,10 +103,11 @@ export class Job extends EventEmitter implements JobInterface {
 
             // Promise to handle abortion when abortSignal is triggered
             const abortPromise = new Promise<void>((_, reject) => {
+
                 handleOnAbort = () => {
                     this.log.warn(ctx.log.warn(dictionary("app.domain.entities.job.aborted", displayName)));
                     this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
-                    reject(new Error(dictionary("app.domain.entities.job.aborted", displayName)));
+                    reject(dictionary("app.domain.entities.job.aborted", displayName));
                 };
 
                 abortSignal.addEventListener("abort", handleOnAbort, { once: true });
@@ -115,7 +116,7 @@ export class Job extends EventEmitter implements JobInterface {
             try {
 
                 await Promise.race([
-                    this.job(ctx, abortSignal),
+                    this.job({ctx, abortSignal}),
                     abortPromise
                 ]);
 
@@ -126,7 +127,7 @@ export class Job extends EventEmitter implements JobInterface {
                 if (abortSignal.aborted) {
                     this.log.warn(ctx.log.warn(dictionary("app.domain.entities.job.aborted", displayName)));
                     this.dispatchEvent(jobEvents.jobAborted, { jobId: this.id });
-                    reject(new Error(dictionary("app.domain.entities.job.aborted", displayName)));
+                    reject(dictionary("app.domain.entities.job.aborted", displayName));
                 } else {
                     this.log.error(ctx.log.error(dictionary("app.domain.entities.job.failed", error?.message || "Unknown error")));
                     this.failed = true;
