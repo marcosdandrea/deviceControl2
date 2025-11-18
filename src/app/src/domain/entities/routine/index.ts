@@ -438,11 +438,15 @@ export class Routine extends EventEmitter implements RoutineInterface {
                     this.logger.info(childCtx.log.info(dictionary("app.domain.entities.routine.runningTasksInSync")));
 
                     for (const task of this.tasks) {
+
+                        if (this.timeoutController?.timedout || abortSignal.aborted) 
+                            break
+                        
+
                         try {
                             childCtx.log.info(dictionary("app.domain.entities.routine.runningTask", this.getTaskDisplayName(task)));
                             await task.run({ abortSignal, runCtx: childCtx });
                             childCtx.log.info(dictionary("app.domain.entities.routine.taskCompleted", this.getTaskDisplayName(task)));
-                            resolve()
                         } catch (e) {
                             if (abortSignal.aborted) {
                                 childCtx.log.warn(dictionary("app.domain.entities.routine.taskAborted", this.getTaskDisplayName(task), String(abortSignal.reason)));
@@ -451,14 +455,23 @@ export class Routine extends EventEmitter implements RoutineInterface {
                             }
                             if (this.continueOnError) {
                                 childCtx.log.warn(dictionary("app.domain.entities.routine.taskFailed", this.getTaskDisplayName(task), e?.message || String(e)));
-                                this.#setStatus("failed");
-                                reject(e?.message)
+                                //this.#setStatus("failed");
+                                //reject(e?.message)
                             } else {
                                 this.#setStatus("failed");
                                 reject(dictionary("app.domain.entities.routine.breakOnErrorDisabled"));
                             }
                         }
                     }
+
+                    if (this.tasks.some(t => t.failed)){
+                        this.#setStatus("failed")
+                        reject(dictionary("app.domain.entities.routine.oneOrMoreTasksFailed"))
+                    } else {
+                        this.#setStatus("completed")
+                        resolve()
+                    }
+                    
                 })
             }
 

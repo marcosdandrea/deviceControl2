@@ -142,11 +142,13 @@ export class Task extends EventEmitter implements TaskInterface {
                 abortJobsAndConditionsController.abort();
             };
 
-            abortSignal.addEventListener("abort", onAbortTask, { once: true });
-            this.timeoutController.on(timeoutEvents.timeout, () => {
+            const onTimeout = () => {
                 this.log.warn(`Task "${this.name}" timed out after ${this.timeout} ms`);
                 abortJobsAndConditionsController.abort();
-            });
+            };
+
+            abortSignal.addEventListener("abort", onAbortTask);
+            this.timeoutController.on(timeoutEvents.timeout, onTimeout);
 
 
             const jobPromise = this.jobsAndConditions({ abortSignal: abortJobsAndConditionsController.signal, childCtx })
@@ -167,7 +169,15 @@ export class Task extends EventEmitter implements TaskInterface {
                 resolve();
             } catch (error) {
 
-                if (abortSignal.aborted) {
+                if (this.timeoutController.timedout) {
+                    this.log.error(childCtx.log.error(dictionary("app.domain.entities.task.timedOut", displayName)));
+
+                    abortJobsAndConditionsController.abort();
+                    this.failed = true;
+                    this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
+                    reject(new Error(dictionary("app.domain.entities.task.timedOut", displayName)));
+
+                 } else if (abortSignal.aborted) {
                     this.aborted = true;
                     this.timeoutController.clear();
                     this.log.info(childCtx.log.info(dictionary("app.domain.entities.task.aborted", displayName)));
@@ -175,14 +185,6 @@ export class Task extends EventEmitter implements TaskInterface {
                     this.#dispatchEvent(taskEvents.taskAborted, { taskId: this.id, taskName: this.name });
                     reject(new Error(dictionary("app.domain.entities.task.aborted", displayName)));
 
-                } else if (this.timeoutController.timedout) {
-
-                    this.log.error(childCtx.log.error(dictionary("app.domain.entities.task.timedOut", displayName)));
-
-                    abortJobsAndConditionsController.abort();
-                    this.failed = true;
-                    this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
-                    reject(new Error(dictionary("app.domain.entities.task.timedOut", displayName)));
                 } else {
                     this.failed = true;
                     this.#dispatchEvent(taskEvents.taskFailed, { taskId: this.id, taskName: this.name, error });
@@ -190,6 +192,8 @@ export class Task extends EventEmitter implements TaskInterface {
                     reject(error);
                 }
             } finally {
+                abortSignal.removeEventListener("abort", onAbortTask);
+                this.timeoutController.off(timeoutEvents.timeout, onTimeout);
                 this.timeoutController.clear();
             }
         })

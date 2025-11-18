@@ -3,6 +3,7 @@ import { Job } from "../..";
 import Artnet from "@src/services/artnet";
 import jobEvents from "@common/events/job.events";
 import { jobTypes } from "..";
+import { Context } from "@src/domain/entities/context";
 
 interface SendArtnetJobParams extends JobType {
     // Optional host and port can be provided
@@ -60,9 +61,10 @@ export class SendArtnetJob extends Job {
         ];
     }
 
-    async job(): Promise<void> {
+    async job({ctx, abortSignal}: {ctx: Context, abortSignal: AbortSignal}): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            
         this.failed = false;
-        const { signal: abortSignal } = this.abortController || {};
         this.log.info(`Starting job "${this.name}" with ID ${this.id}`);
 
         let channels: number[], universe: number, value: number, host: string | undefined, port: number | undefined;
@@ -77,7 +79,7 @@ export class SendArtnetJob extends Job {
         } catch (error) {
             this.failed = true;
             this.dispatchEvent(jobEvents.jobError, { jobId: this.id, error });
-            throw error;
+            reject(error)
         }
 
         const interpolate = this.params.interpolate === true;
@@ -91,7 +93,6 @@ export class SendArtnetJob extends Job {
         const artnet = Artnet.getInstance();
         const sender = artnet.getSender({ ip: host || "255.255.255.255", port, net, subnet, universe: uni });
 
-        return new Promise<void>((resolve, reject) => {
             let interval: NodeJS.Timeout | null = null;
 
             const handleOnFinish = (err?: Error) => {

@@ -30,7 +30,6 @@ if (enableHeapSnapshoot)
 let electronApp: Electron.App | null = null;
 
 const handleFatalError = async (error: Error) => {
-  console.error (error)
   log.error('Device Control has encounter an error and it will exit:', error.message);
   if (!isHeadless) {
     try {

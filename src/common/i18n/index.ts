@@ -87,6 +87,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
         "app.domain.entities.routine.breakOnErrorDisabled": "La tarea falló. Se detiene la ejecución porque 'continuar en error' está deshabilitado.",
         "app.domain.entities.routine.tasksFailedDetails": "Algunas tareas fallaron. Verifica los registros para más detalles.",
         "app.domain.entities.routine.abortSignal": "Señal de aborto recibida",
+        "app.domain.entities.routine.oneOrMoreTasksFailed": "Una o más tareas fallaron",
 
 
         "app.domain.entities.task.starting": "Iniciando la tarea '{1}'",
@@ -186,6 +187,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
         "app.domain.entities.routine.breakOnErrorDisabled": "Task failed. Breaking execution because 'Continue on error' is disabled.",
         "app.domain.entities.routine.tasksFailedDetails": "Some tasks failed. Check logs for details.",
         "app.domain.entities.routine.abortSignal": "Abort signal received",
+        "app.domain.entities.routine.oneOrMoreTasksFailed": "One or more tasks failed",
 
 
         "app.domain.entities.task.starting": "Starting task '{1}'",

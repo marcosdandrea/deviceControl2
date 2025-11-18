@@ -6,6 +6,9 @@ export class TimeoutController extends EventEmitter {
     timeout: NodeJS.Timeout | null
     timedout: boolean = false;
     enable: boolean = true;
+    private externalAbortHandler: (() => void) | null = null;
+    private internalAbortHandler: (() => void) | null = null;
+    private externalAbortSignal: AbortSignal | null = null;
 
     constructor(public milliseconds: number) {
         super();
@@ -28,11 +31,14 @@ export class TimeoutController extends EventEmitter {
     }
 
     #handleOnTimeout() {
-        this.abortController?.signal.removeEventListener("abort", this.#handleOnAbort.bind(this));
+        if (this.internalAbortHandler && this.abortController) {
+            this.abortController.signal.removeEventListener("abort", this.internalAbortHandler);
+        }
         this.abortController?.abort();
         this.timeout = null;
         this.timedout = true;
         this.abortController = null;
+        this.internalAbortHandler = null;
         this.#dispatchEvents(timeoutEvents.timeout);
     }
 
@@ -41,10 +47,16 @@ export class TimeoutController extends EventEmitter {
             clearTimeout(this.timeout);
             this.timeout = null;
         }
-        if (this.abortController) {
-            this.abortController.signal.removeEventListener("abort", this.#handleOnAbort.bind(this));
+        if (this.abortController && this.internalAbortHandler) {
+            this.abortController.signal.removeEventListener("abort", this.internalAbortHandler);
             this.abortController.abort();
             this.abortController = null;
+            this.internalAbortHandler = null;
+        }
+        if (this.externalAbortSignal && this.externalAbortHandler) {
+            this.externalAbortSignal.removeEventListener("abort", this.externalAbortHandler);
+            this.externalAbortHandler = null;
+            this.externalAbortSignal = null;
         }
     }
 
@@ -69,19 +81,25 @@ export class TimeoutController extends EventEmitter {
                 reject("Timeout aborted");
             }
 
+            this.externalAbortHandler = handleOnAbort;
+            this.externalAbortSignal = abortSignal;
             abortSignal.addEventListener("abort", handleOnAbort);
 
             this.#dispatchEvents(timeoutEvents.running);
 
             this.abortController = new AbortController();
-            this.abortController.signal.addEventListener("abort", this.#handleOnAbort.bind(this));
+            this.internalAbortHandler = this.#handleOnAbort.bind(this);
+            this.abortController.signal.addEventListener("abort", this.internalAbortHandler);
 
             this.timedout = false;
 
             this.timeout = setTimeout(() => {
                 this.#handleOnTimeout();
-                this.clear();
-                abortSignal.removeEventListener("abort", handleOnAbort);
+                if (this.externalAbortSignal && this.externalAbortHandler) {
+                    this.externalAbortSignal.removeEventListener("abort", this.externalAbortHandler);
+                    this.externalAbortHandler = null;
+                    this.externalAbortSignal = null;
+                }
                 reject("Timeout expired");
             }, this.milliseconds);
         });

@@ -30,7 +30,7 @@ export class WaitJob extends Job {
         }];
     }
 
-    async job(ctx: Context, abortSignal: AbortSignal): Promise<void> {
+    async job({ctx, abortSignal}: {ctx: Context, abortSignal: AbortSignal}): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             const displayName = this.getDisplayName();
 
