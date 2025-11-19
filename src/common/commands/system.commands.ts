@@ -6,4 +6,7 @@ export default {
     checkUDPPortAvailability: "checkUDPPortAvailability",
     checkTCPPortAvailability: "checkTCPPortAvailability",
     getNetworkInterfaces: "getNetworkInterfaces",
+
+    getIsSignedHardware: "getIsSignedHardware",
+    
 } as const;

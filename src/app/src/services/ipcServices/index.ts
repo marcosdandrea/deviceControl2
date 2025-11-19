@@ -12,6 +12,7 @@ import appCommands from '@common/commands/app.commands';
 import executionsServices from './executions.services';
 import tasksCommands from '@common/commands/tasks.commands';
 import tasksServices from './tasks.services';
+import hardwareServices from './hardware.services';
 
 const log = Log.createInstance('IPC Services', false);
 
@@ -29,6 +30,7 @@ const init = (io: import('socket.io').Server) => {
         socket.on(systemCommands.checkUDPPortAvailability, checkUDPPortAvailability);
         socket.on(systemCommands.checkTCPPortAvailability, checkTCPPortAvailability);
         socket.on(systemCommands.getNetworkInterfaces, getNetworkInterfaces);
+        socket.on(systemCommands.getIsSignedHardware, hardwareServices.isSignedHarware);
 
         //app
         socket.on(appCommands.getTriggerTypes, appServices.getAvailableTriggers);
@@ -61,6 +63,8 @@ const init = (io: import('socket.io').Server) => {
 
         //tasks
         socket.on(tasksCommands.getTaskTemplate, tasksServices.getTaskTemplate);
+
+
 
     });
 

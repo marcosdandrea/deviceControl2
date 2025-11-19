@@ -11,6 +11,7 @@ import LastModified from "./components/LastModified";
 import CreatedAt from "./components/CreatedAt";
 import Footer from "./components/Footer";
 import { Project } from "@src/domain/entities/project";
+import usePropietaryHardware from "@hooks/usePropietaryHardware";
 
 interface ConfigContextProps {
   project: Project;
@@ -38,6 +39,7 @@ export const configContext = createContext<ConfigContextProps | undefined>(
 
 const Configuration = ({onSaved}) => {
   const { project, setProject } = useProject({ fetchProject: false });
+  const {isSignedHardware} = usePropietaryHardware();
 
   const [projectName, setProjectName] = React.useState<string>(
     project?.name || "Proyecto sin nombre"
@@ -108,6 +110,7 @@ const Configuration = ({onSaved}) => {
       >
         <div className={style.configurationView}>
           <div className={style.body}>
+            {isSignedHardware ? <p>signedHardware</p> : <p>unsignedHardware</p>}
           <ProjectAppVersion />
           <ProjectName />
           <Description />
