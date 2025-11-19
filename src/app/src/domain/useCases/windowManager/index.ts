@@ -58,7 +58,7 @@ export const createMainWindow = async () => {
         win.loadURL('http://localhost:5123/control');
         win.webContents.openDevTools({ mode: "detach" })
     } else {
-        win.loadURL(`http://${addresses[0]}/control`);
+        win.loadURL(`http://${addresses[0]}:${mainServer.port}/control`);
         if (fullscreen) {
             win.maximize()
             win.setFullScreen(true)
