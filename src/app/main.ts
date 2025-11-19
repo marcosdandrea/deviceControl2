@@ -68,7 +68,7 @@ const coreProcesses = async () => {
     //server for panel and administration
     const mainServer = await ServerManager.createInstance({
       name: "main",
-      port: 80,
+      port: process.env.MAIN_SERVER_DEFAULT_PORT ? parseInt(process.env.MAIN_SERVER_DEFAULT_PORT) : 8080,
       useSocketIO: true,
     })
 
