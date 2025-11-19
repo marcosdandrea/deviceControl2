@@ -4,11 +4,11 @@ import Executions from '@views/Executions';
 import NotAllowed from '@views/NotAllowed';
 import Terminal from '@views/Terminal';
 import React from 'react';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 
 const Navigation = () => {
     return (
-        <BrowserRouter>
+        <HashRouter>
             <Routes>
                 <Route path="/control" element={<Control isPreview={false} />} />
                 <Route path="/controlPreview" element={<Control isPreview={true} />} />
@@ -21,7 +21,7 @@ const Navigation = () => {
                 <Route path='/builder/:routineId/trigger/:triggerId' element={<Builder />} />
                 <Route path='*' element={<Builder />} />
             </Routes>
-        </BrowserRouter>
+        </HashRouter>
     )
 }
 
