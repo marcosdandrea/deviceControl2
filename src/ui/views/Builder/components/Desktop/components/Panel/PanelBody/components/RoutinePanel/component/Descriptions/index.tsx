@@ -90,7 +90,7 @@ const Descriptions = () => {
             <AntdDescriptions.Item 
                 label={<span style={{ display: 'flex', alignItems: 'center', columnGap: "0.5rem"}}>Tiempo máximo de ejecución (ms) 
                     <InfoIcon
-                        message="Tiempo máximo que puede durar la ejecución de la rutina. Si se supera este tiempo, la rutina se detendrá automáticamente lanzando un evento 'timeout'"/>
+                        message="Tiempo máximo que puede durar la ejecución de la rutina. Si se supera este tiempo, la rutina se detendrá automáticamente lanzando un evento 'timeout'. Valor por defecto: 60000 ms"/>
                     </span>}             
                 contentStyle={{ textAlign: 'center' }}>
                 <InputNumber

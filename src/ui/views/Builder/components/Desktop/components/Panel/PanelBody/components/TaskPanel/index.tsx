@@ -3,7 +3,6 @@ import style from './style.module.css'
 import JobConfiguration from './components/JobConfiguration';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import useProject from '@hooks/useProject';
-import { nanoid } from 'nanoid';
 import { Input } from 'antd';
 import ConditionConfiguration from './components/ConditionConfiguration';
 import Footer from './components/Footer';
@@ -32,8 +31,6 @@ const TaskPanel = () => {
         getTaskTemplate(setDefaultTask)
     }, [])
     
-    console.log({defaultTask})
-
     useEffect(() => {
         if (routines && routineId) {
             const routine = routines.find(r => r.id === routineId)

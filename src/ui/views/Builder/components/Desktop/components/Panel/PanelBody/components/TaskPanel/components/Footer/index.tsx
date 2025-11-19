@@ -70,7 +70,7 @@ const Footer = () => {
         const thisRoutine = project.routines.find(r => r.id === routineId)
         if (!thisRoutine) return;
         if (!thisRoutine.tasksId) thisRoutine.tasksId = []
-        const instanceId = taskInstanceId || nanoid(8)
+        const instanceId = nanoid(8)
         thisRoutine.tasksId.push({ id: instanceId, taskId })
         setProject({ ...project })
         message.success('Tarea agregada a la rutina correctamente')

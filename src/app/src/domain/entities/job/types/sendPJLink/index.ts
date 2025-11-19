@@ -70,9 +70,8 @@ export class SendPJLinkJob extends Job {
         ];
     }
 
-    async job(ctx: Context): Promise<void> {
+    protected async job({ctx, abortSignal}: {ctx: Context, abortSignal: AbortSignal}): Promise<void> {
         this.failed = false;
-        const { signal: abortSignal } = this.abortController || {};
         const { ipAddress, command } = this.params as SendPJLinkJobParams["params"];
         const displayName = this.getDisplayName();
 

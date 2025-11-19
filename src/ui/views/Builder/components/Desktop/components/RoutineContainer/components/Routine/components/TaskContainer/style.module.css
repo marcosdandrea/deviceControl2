@@ -9,7 +9,6 @@
     border-radius: 5px;
     row-gap: 0.5rem;
     flex: 3;
-    overflow: hidden;
     min-height: 10rem;
 }
 

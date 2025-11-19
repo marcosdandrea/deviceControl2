@@ -455,16 +455,15 @@ export class Routine extends EventEmitter implements RoutineInterface {
                             }
                             if (this.continueOnError) {
                                 childCtx.log.warn(dictionary("app.domain.entities.routine.taskFailed", this.getTaskDisplayName(task), e?.message || String(e)));
-                                //this.#setStatus("failed");
-                                //reject(e?.message)
                             } else {
                                 this.#setStatus("failed");
                                 reject(dictionary("app.domain.entities.routine.breakOnErrorDisabled"));
+                                break;
                             }
                         }
                     }
 
-                    if (this.tasks.some(t => t.failed)){
+                    if (this.continueOnError && this.tasks.some(t => t.failed)){
                         this.#setStatus("failed")
                         reject(dictionary("app.domain.entities.routine.oneOrMoreTasksFailed"))
                     } else {
