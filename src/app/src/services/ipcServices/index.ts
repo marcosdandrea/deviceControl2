@@ -1,6 +1,6 @@
 import projectServices from './projects.services';
 import { Log } from '@src/utils/log';
-import { checkTCPPortAvailability, checkUDPPortAvailability, getAppVersion, getNetworkInterfaces, getServerPorts, getSystemTime } from './system.services';
+import { checkTCPPortAvailability, checkUDPPortAvailability, getAppVersion, getServerPorts, getSystemTime } from './system.services';
 import projectCommands from '@common/commands/project.commands';
 import { ServerManager } from '../server/serverManager';
 import projectsServices from './projects.services';
@@ -15,6 +15,8 @@ import tasksServices from './tasks.services';
 import hardwareServices from './hardware.services';
 import wifiCommands from '@common/commands/wifi.commands';
 import wifiServices from './wifi.services';
+import netCommands from '@common/commands/net.commands';
+import networkServices from './network.services';
 
 const log = Log.createInstance('IPC Services', false);
 
@@ -31,8 +33,10 @@ const init = (io: import('socket.io').Server) => {
         socket.on(systemCommands.getServerPorts, getServerPorts);
         socket.on(systemCommands.checkUDPPortAvailability, checkUDPPortAvailability);
         socket.on(systemCommands.checkTCPPortAvailability, checkTCPPortAvailability);
-        socket.on(systemCommands.getNetworkInterfaces, getNetworkInterfaces);
         socket.on(systemCommands.getIsSignedHardware, hardwareServices.isSignedHarware);
+
+        //network
+        socket.on(netCommands.getNetworkInterfaces, networkServices.getNetworkInterfaces);
 
         //wifi
         socket.on(wifiCommands.getAvailableNetworks, wifiServices.getAvailableNetworks);

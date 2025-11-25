@@ -1,9 +1,9 @@
 import React from "react";
 import { Switch } from "antd";
-import { LanContext, lanContextType } from "../../context";
+import { InterfaceContext, interfaceContextType } from "../../../../context";
 
 const EnableDhcp = () => {
-    const {useDhcp, setUseDhcp} = React.useContext(LanContext) as lanContextType
+    const {useDhcp, setUseDhcp} = React.useContext(InterfaceContext) as interfaceContextType 
 
     return ( 
         <Switch  

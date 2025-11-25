@@ -7,8 +7,11 @@ const useGetNetworkInterfaces = () => {
     const [networkInterfaces, setNetworkInterfaces] =  useState<string[]>([])
 
     const getNetworkInterfaces = () => {
-        emit(systemCommands.getNetworkInterfaces, null, (response: {interfaces: string[]}) => {
-            setNetworkInterfaces(response.interfaces)
+        emit(systemCommands.getServerPorts, null, (response: {main: number, general: number}) => {
+            // Para obtener las IPs del servidor, usamos la API del sistema
+            // que retorna las IPs donde el servidor está escuchando
+            // Por ahora, esto devuelve un array vacío hasta que se implemente correctamente
+            setNetworkInterfaces([])
         })
     }
 

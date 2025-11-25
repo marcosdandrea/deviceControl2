@@ -1,5 +1,7 @@
+import wifiEvents from '@common/events/wifi.events';
 import { WiFiConnectionStatus, WiFiNetwork } from '@common/types/wifi.types';
-import WifiService, { startWiFiMonitoring } from '@src/services/hardwareManagement/wifi';
+import WifiService, { WiFiConnectionResult, startWiFiMonitoring as initializeWifiMonitoring, stopWiFiMonitoring as finalizeWifiMonitoring, wifiEventEmitter } from '@src/services/hardwareManagement/wifi';
+import { broadcastToClients } from '.';
 
 const getAvailableNetworks = async (_payload: any, callback: Function): Promise<WiFiNetwork[]> => {
     const wifiNetworks = await WifiService.getAvailableNetworks()
@@ -7,16 +9,22 @@ const getAvailableNetworks = async (_payload: any, callback: Function): Promise<
     return wifiNetworks;
 }
 
-const connectToNetwork = async (payload: { ssid: string; password: string }, callback: Function): Promise<void> => {
+const connectToNetwork = async (payload: { ssid: string; password: string }, callback?: Function): Promise<WiFiConnectionResult> => {
     const result = await WifiService.connectToNetwork(payload.ssid, payload.password);
     callback?.(result);
     return result;
 }
 
-const disconnectFromNetwork = async (_payload: any, callback: Function): Promise<void> => {
-    const result = await WifiService.disconnectFromNetwork();
-    callback?.(result);
-    return result;
+const disconnectFromNetwork = async (_payload: any, callback: Function): Promise<void | { error: string}> => {
+    try {
+        const result = await WifiService.disconnectFromNetwork();
+        callback?.(result);
+        return result;
+    } catch (error) {
+        console.error("Error disconnecting from WiFi network:", error);
+        callback?.({ error: error.message });
+        return { error: error.message };
+    }
 }
 
 const getConnectionStatus = async (_payload: any, callback: Function): Promise<WiFiConnectionStatus> => {
@@ -32,11 +40,21 @@ const forgetNetwork = async (payload: { ssid: string }, callback: Function): Pro
 }
 
 const startWiFiMonitoring = (payload: any, callback: Function): void => {
-    startWiFiMonitoring(payload, callback);
+    initializeWifiMonitoring();
+
+    wifiEventEmitter.on(wifiEvents.wifiNetworksUpdated, (networks: WiFiNetwork[]) => {
+        broadcastToClients(wifiEvents.wifiNetworksUpdated, networks);
+    });
+
+    wifiEventEmitter.on(wifiEvents.wifiStatusChanged, (status: WiFiConnectionStatus) => {
+        broadcastToClients(wifiEvents.wifiStatusChanged, status);
+    });
 }
 
 const stopWiFiMonitoring = (payload: any, callback: Function): void => {
-    stopWiFiMonitoring(payload, callback);
+    finalizeWifiMonitoring();
+    wifiEventEmitter.removeAllListeners(wifiEvents.wifiNetworksUpdated);
+    wifiEventEmitter.removeAllListeners(wifiEvents.wifiStatusChanged);
 }
 
 export default {

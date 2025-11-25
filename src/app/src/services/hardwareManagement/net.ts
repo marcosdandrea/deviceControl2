@@ -57,23 +57,34 @@ export class NetworkManagerService {
   static async listDevices(): Promise<NetworkDeviceSummary[]> {
     const cmd =
       'nmcli -t -f DEVICE,TYPE,STATE,CONNECTION device status';
-    const out = await run(cmd);
+    
+    try {
+      const out = await run(cmd);
 
-    if (!out) return [];
+      if (!out) {
+        console.log("Empty output from nmcli");
+        return [];
+      }
 
-    const lines = out.split("\n").filter(Boolean);
+      const lines = out.split("\n").filter(Boolean);
 
-    return lines.map<NetworkDeviceSummary>((line) => {
-      const [device, type, state, connectionRaw] = line.split(":");
-      return {
-        device,
-        type: mapType(type),
-        state: mapState(state),
-        connection: connectionRaw && connectionRaw !== "--"
-          ? connectionRaw
-          : null,
-      };
-    });
+      const devices = lines.map<NetworkDeviceSummary>((line) => {
+        const [device, type, state, connectionRaw] = line.split(":");
+        return {
+          device,
+          type: mapType(type),
+          state: mapState(state),
+          connection: connectionRaw && connectionRaw !== "--"
+            ? connectionRaw
+            : null,
+        };
+      });
+
+      return devices;
+    } catch (error) {
+      console.error("Error in listDevices:", error);
+      throw error;
+    }
   }
 
   /**

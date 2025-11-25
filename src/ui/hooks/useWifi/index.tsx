@@ -5,6 +5,7 @@ import { SocketIOContext } from "@components/SocketIOProvider";
 import { useContext, useEffect, useState } from "react";
 
 const useWifi = () => {
+    
     const {socket} = useContext(SocketIOContext)
     const [wifiStatus, setWifiStatus] = useState<WiFiConnectionStatus>({ connected: false });
     const [availableNetworks, setAvailableNetworks] = useState<WiFiNetwork[]>([])
@@ -22,6 +23,15 @@ const useWifi = () => {
             setWifiStatus(status);
         });
 
+        // Obtener el estado inicial de la conexión WiFi
+        socket.emit(wifiCommands.getConnectionStatus, null, (status: WiFiConnectionStatus) => {
+            setWifiStatus(status);
+        });
+
+        socket.emit(wifiCommands.getAvailableNetworks, null, (networks: WiFiNetwork[]) => {
+            setAvailableNetworks(networks);
+        });
+
         return () => {
             socket.off(wifiEvents.wifiNetworksUpdated);
             socket.off(wifiEvents.wifiStatusChanged);
@@ -30,7 +40,17 @@ const useWifi = () => {
 
     }, [socket]);
 
-    return { wifiStatus, availableNetworks };
+    const disconnectWifi = () => {
+        if (!socket) return;
+        socket.emit(wifiCommands.disconnectFromNetwork);
+    }
+
+    const connectWifi = (ssid: string, password: string, callback?: (result: any) => void) => {
+        if (!socket) return;
+        socket.emit(wifiCommands.connectToNetwork, { ssid, password }, callback);
+    }
+
+    return { wifiStatus, availableNetworks, disconnectWifi, connectWifi };
 }
  
 export default useWifi;

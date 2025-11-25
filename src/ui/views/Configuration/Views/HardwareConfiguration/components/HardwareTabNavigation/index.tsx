@@ -3,7 +3,7 @@ import style from "./style.module.css";
 import { Tabs } from "antd";
 import ScreenConfiguration from "../../Views/ScreenConfiguration";
 import PowerConfiguration from "../../Views/PowerConfiguration";
-import LanConfiguration from "../../Views/LanConfiguration";
+import NetInterfaceConfiguration from "../../Views/InterfaceConfiguration";
 import WifiConfiguration from "../../Views/WifiConfiguration";
 import { MdLan, MdOutlineScreenshotMonitor, MdOutlineWifi } from "react-icons/md";
 import { ImPower } from "react-icons/im";
@@ -23,13 +23,13 @@ const HardwareTabNavigation = () => {
         },
         {
             key: '3',
-            label: <div className={style.label}><MdLan />Lan</div>,
-            children: <LanConfiguration />,
+            label: <div className={style.label}><MdOutlineWifi />WiFi</div>,
+            children: <WifiConfiguration />,
         },
         {
             key: '4',
-            label: <div className={style.label}><MdOutlineWifi />WiFi</div>,
-            children: <WifiConfiguration />,
+            label: <div className={style.label}><MdLan />Interfaces</div>,
+            children: <NetInterfaceConfiguration />,
         },
     ];
 

@@ -42,7 +42,8 @@ const handleFatalError = async (error: Error) => {
       process.exit(1);
     }
   } else {
-    console.error('Device Control has encounter an error and it will exit:', error.message);
+    console.error('Device Control has encounter an error and it will exit');
+    console.error(error);
     process.exit(1);
   }
 };

@@ -1,0 +1,28 @@
+import React from "react";
+import style from "./style.module.css";
+import useNetworkInterfaces from "@hooks/useNetworkInterfaces";
+import { Tabs } from "antd";
+import InterfaceContextProvider from "./context";
+import InterfaceSettings from "./components/InterfaceSettings";
+
+const NetInterfaceConfiguration = () => {
+
+    const {networkInterfaces} = useNetworkInterfaces()
+
+    console.log ("Network Interfaces:", networkInterfaces);
+
+    return (
+    <div className={style.interfaceSettings}>
+        <Tabs>
+            {networkInterfaces.map((netInterface) => (
+                <Tabs.TabPane tab={netInterface.device} key={netInterface.device}>
+                    <InterfaceContextProvider netInterface={netInterface}>
+                        <InterfaceSettings />
+                    </InterfaceContextProvider>
+                </Tabs.TabPane>
+            ))}
+        </Tabs>
+    </div>);
+}
+
+export default NetInterfaceConfiguration;

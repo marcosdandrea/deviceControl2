@@ -44,8 +44,13 @@ const SocketIOProvider = ({ children, mountComponentsOnlyWhenConnect = false, di
 
     const emit = (event: string, data?: any, cb?: Function) => {
         if (socket) {
-            socket.emit(event, data, cb);
-            Logger.log(`Emitted event: ${event}`, data);
+            Logger.log(`Emitting event: ${event}, including callback?: ${!!cb}, data:`, data);
+            socket.emit(event, data, (response: any) => {
+                Logger.log(`Received response for ${event}:`, response);
+                if (cb) {
+                    cb(response);
+                }
+            });
         } else {
             Logger.error("Socket is not connected");
         }

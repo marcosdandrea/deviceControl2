@@ -1,4 +1,4 @@
-const isHeadless = process.argv.includes("--headless") || process.argv.includes("--h");
+const isHeadless = process.argv.includes('--headless') || process.argv.includes('--h') || process.env.HEADLESS === 'true'
 
 export const getAppPath = async (): Promise<string> => {
   if (isHeadless) {

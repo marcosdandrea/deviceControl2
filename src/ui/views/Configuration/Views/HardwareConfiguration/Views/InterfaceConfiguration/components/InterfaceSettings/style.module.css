@@ -1,0 +1,19 @@
+.interfaceSettings{
+    
+}
+
+.label {
+    width: 10rem;
+    font-size: 0.9rem;
+    color: white
+}
+
+.form .body{
+    display: flex;
+    align-items: left;
+    flex-direction: column;
+}
+
+.item{
+    margin-bottom: 0.25rem !important;
+}

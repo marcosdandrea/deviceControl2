@@ -29,7 +29,13 @@
 .footer{
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer > *:first-child {
+    margin-right: auto;
 }

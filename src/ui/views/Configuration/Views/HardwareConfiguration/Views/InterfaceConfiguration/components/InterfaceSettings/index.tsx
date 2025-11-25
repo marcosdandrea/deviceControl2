@@ -1,33 +1,26 @@
-import React from "react";
+import React from 'react';
 import style from "./style.module.css";
 import { Form } from "antd";
-import LanContextProvider from "./context";
-import Gateway from "./components/LanGateway";
-import SubnetMask from "./components/LanSubnetMask";
-import EnableDhcp from "./components/LanEnableDhcp";
 import Text from "@components/Text";
-import StaticIp from "./components/LanStaticIp";
+import EnableDhcp from './components/LanEnableDhcp';
+import StaticIp from './components/LanStaticIp';
+import Gateway from './components/LanGateway';
+import SubnetMask from './components/LanSubnetMask';
 
-const LanConfiguration = () => {
+const InterfaceSettings = () => {
 
-    const LabelCap = (label: string) => (
-        <span
-            className={style.labels}>
-            {label}
-        </span>
-    );
+    const LabelCap = (label: string) => ( <Text className={style.label}>{label}</Text> );
 
-    return (
-        <LanContextProvider>
-            <div className={style.lanConfiguration}>
+    return (  <div className={style.interfaceSettings}>
                 <Text className={style.header}>
                     Configuracion de Red Cableada
                 </Text>
                 <div className={style.body}>
-                <Form>
+                <Form
+                    className={style.form}>
                     <Form.Item
                         className={style.item}
-                        label={LabelCap("Usar DHCP")}>
+                        label={LabelCap("Habilitar DHCP")}>
                         <EnableDhcp />
                     </Form.Item>
                     <Form.Item
@@ -47,8 +40,7 @@ const LanConfiguration = () => {
                     </Form.Item>
                 </Form>
                 </div>
-            </div>
-        </LanContextProvider >);
+            </div> );
 }
-
-export default LanConfiguration;
+ 
+export default InterfaceSettings;

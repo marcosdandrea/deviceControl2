@@ -5,7 +5,6 @@ export default {
     getServerPorts: "getServerPorts",
     checkUDPPortAvailability: "checkUDPPortAvailability",
     checkTCPPortAvailability: "checkTCPPortAvailability",
-    getNetworkInterfaces: "getNetworkInterfaces",
 
     getIsSignedHardware: "getIsSignedHardware",
     
