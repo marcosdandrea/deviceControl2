@@ -74,7 +74,7 @@ export default function PopoutWindow({
 
   return createPortal(
     <StyleProvider container={winRef.current.document.head} hashPriority="high">
-      {children}
+        {children}
     </StyleProvider>,
     container
   );

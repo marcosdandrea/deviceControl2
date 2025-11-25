@@ -1,0 +1,15 @@
+.hardwareTabNavigation {
+    padding: 0px;
+    height: 100%;
+    display: flex;
+}
+
+.ant-tabs-left {
+    width: 100% !important;
+}
+
+.label{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}

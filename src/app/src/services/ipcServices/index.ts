@@ -13,6 +13,8 @@ import executionsServices from './executions.services';
 import tasksCommands from '@common/commands/tasks.commands';
 import tasksServices from './tasks.services';
 import hardwareServices from './hardware.services';
+import wifiCommands from '@common/commands/wifi.commands';
+import wifiServices from './wifi.services';
 
 const log = Log.createInstance('IPC Services', false);
 
@@ -31,6 +33,15 @@ const init = (io: import('socket.io').Server) => {
         socket.on(systemCommands.checkTCPPortAvailability, checkTCPPortAvailability);
         socket.on(systemCommands.getNetworkInterfaces, getNetworkInterfaces);
         socket.on(systemCommands.getIsSignedHardware, hardwareServices.isSignedHarware);
+
+        //wifi
+        socket.on(wifiCommands.getAvailableNetworks, wifiServices.getAvailableNetworks);
+        socket.on(wifiCommands.connectToNetwork, wifiServices.connectToNetwork);
+        socket.on(wifiCommands.disconnectFromNetwork, wifiServices.disconnectFromNetwork);
+        socket.on(wifiCommands.getConnectionStatus, wifiServices.getConnectionStatus);
+        socket.on(wifiCommands.forgetNetwork, wifiServices.forgetNetwork);
+        socket.on(wifiCommands.startWiFiMonitoring, wifiServices.startWiFiMonitoring);
+        socket.on(wifiCommands.stopWiFiMonitoring, wifiServices.stopWiFiMonitoring);
 
         //app
         socket.on(appCommands.getTriggerTypes, appServices.getAvailableTriggers);

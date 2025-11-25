@@ -1,3 +1,10 @@
+.basicConfiguration {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
 .configurationView {
     position: absolute;
     display: flex;
@@ -8,4 +15,12 @@
     box-sizing: border-box;
     background-color: var(--app-background);
     row-gap: 0.5rem;
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.5rem;
+    overflow-y: auto;
+    padding-right: 10px;
 }

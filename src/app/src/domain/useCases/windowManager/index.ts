@@ -55,10 +55,10 @@ export const createMainWindow = async () => {
     const addresses = mainServer.getNetworkInterfaces()
 
     if (isDev()) {
-        win.loadURL('http://localhost:5123/control');
+        win.loadURL('http://localhost:5123/#/control');
         win.webContents.openDevTools({ mode: "detach" })
     } else {
-        win.loadURL(`http://${addresses[0]}:${mainServer.port}/control`);
+        win.loadURL(`http://${addresses[0]}:${mainServer.port}/#/control`);
         if (fullscreen) {
             win.maximize()
             win.setFullScreen(true)

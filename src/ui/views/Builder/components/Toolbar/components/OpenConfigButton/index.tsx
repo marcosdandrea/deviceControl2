@@ -13,13 +13,16 @@ const OpenConfigButton = () => {
   const [open, setOpen] = useState(false);
 
   return (
-    <Tooltip placement="bottom" title="Abrir configuración del proyecto" arrow>
     <>
-      <ToolbarButton
-        disabled={!project}
-        icon={<FaGear size={15} />}
-        onClick={() => setOpen(true)}
-      />
+      <Tooltip placement="bottom" title="Abrir configuración del proyecto" arrow>
+        <div>
+          <ToolbarButton
+            disabled={!project}
+            icon={<FaGear size={15} />}
+            onClick={() => setOpen(true)}
+          />
+        </div>
+      </Tooltip>
       {open && (
         <PopoutWindow
           title="Configuración del Proyecto"
@@ -31,7 +34,6 @@ const OpenConfigButton = () => {
         </PopoutWindow>
       )}
     </>
-    </Tooltip>
   );
 };
 

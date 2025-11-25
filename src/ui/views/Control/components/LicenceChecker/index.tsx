@@ -9,7 +9,7 @@ const LicenseChecker = ({ children }) => {
     const port = location.port ? `:${location.port}` : '';
 
     const handleOpenBuilder = () => {
-        const url = `http://localhost${port}/builder`;
+        const url = `http://localhost${port}/#/builder`;
 
         // Si estamos en Electron, usar la API de Electron
         if (window.electronAPI?.openExternal) {

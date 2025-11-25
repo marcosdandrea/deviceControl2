@@ -1,0 +1,23 @@
+.configurationTabs {
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.5rem;
+    overflow-y: auto;
+    padding-right: 10px;
+    height: 100%;
+}
+
+.tabButtons {
+    display: flex;
+    gap: 0.5rem;
+    user-select: none;
+}
+
+:global(.ant-tabs),
+:global(.ant-tabs-content-holder),
+:global(.ant-tabs-tabpane),
+:global(.ant-tabs-tabpane-active),
+:global(.ant-tabs-content),
+:global(.ant-tabs-content-top) {
+    height: 100% !important;
+}

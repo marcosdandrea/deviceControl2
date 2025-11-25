@@ -6,6 +6,8 @@ const isSignedHarware = (payload: any, callback: Function): boolean => {
     return result;
 }
 
+
+
 export default {
     isSignedHarware
 }

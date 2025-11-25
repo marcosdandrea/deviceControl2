@@ -1,0 +1,21 @@
+.screenConfiguration{
+    display: flex;
+    flex-direction: column;
+}
+
+.header{
+    color: white !important;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-decoration: underline;
+}
+
+.item{
+    margin-bottom: 0.5rem !important;
+}
+
+.labels{
+    min-width: 8rem;
+    text-align: left;
+}
