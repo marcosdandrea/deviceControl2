@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export const InterfaceContext = React.createContext({});
 
@@ -29,16 +29,46 @@ export type interfaceContextType = {
         value: string,
         set: (value: string) => void,
         isValid: boolean
-    }
+    },
+    applyInterfaceSettings: () => void
 }
 
-const InterfaceContextProvider = ({children, netInterface}) => {
-    const [useDhcp, setUseDhcp] = useState(netInterface.useDhcp);
-    const [ipv4, setIpv4] = useState(netInterface.ipv4);
-    const [subnetMaskIpv4, setSubnetMaskIpv4] = useState(netInterface.subnetMaskIpv4);
-    const [gatewayIpv4, setGatewayIpv4] = useState(netInterface.gatewayIpv4);
-    const [defaultDnsIpv4, setDefaultDnsIpv4] = useState(netInterface.defaultDnsIpv4);
-    const [alternateDnsIpv4, setAlternateDnsIpv4] = useState(netInterface.alternateDnsIpv4);
+const InterfaceContextProvider = ({children, netInterface, onApplyChanges}) => {
+    const [useDhcp, setUseDhcp] = useState(netInterface.dhcp);
+    const [ipv4, setIpv4] = useState(netInterface.ipv4.address);
+    const [subnetMaskIpv4, setSubnetMaskIpv4] = useState("0.0.0.0");
+    const [gatewayIpv4, setGatewayIpv4] = useState(netInterface.ipv4.gateway);
+    const [defaultDnsIpv4, setDefaultDnsIpv4] = useState(netInterface.ipv4.dns[0] || "0.0.0.0");
+    const [alternateDnsIpv4, setAlternateDnsIpv4] = useState(netInterface.ipv4.dns[1] || "0.0.0.0");
+
+    useEffect(() =>{
+        //calculate subnet mask from ipv4 address
+        if (ipv4) {
+            const cidr = ipv4.split("/")[1];
+            if (cidr) {
+                const mask = [];
+                let cidrNum = parseInt(cidr, 10);
+                for (let i = 0; i < 4; i++) {
+                    if (cidrNum >= 8) {
+                        mask.push(255);
+                        cidrNum -= 8;
+                    } else {
+                        let val = 0;
+                        for (let j = 0; j < cidrNum; j++) {
+                            val += Math.pow(2, 7 - j);
+                        }
+                        mask.push(val);
+                        cidrNum = 0;
+                    }
+                }
+                setSubnetMaskIpv4(mask.join("."));
+            } else {
+                setSubnetMaskIpv4("0.0.0.0");
+            }
+        } else {
+            setSubnetMaskIpv4("0.0.0.0");
+        }
+    },[netInterface])
 
     const updateIpv4 = (value: string) => {
         setIpv4(value);
@@ -87,7 +117,17 @@ const InterfaceContextProvider = ({children, netInterface}) => {
             value: alternateDnsIpv4,
             set: updateAlternateDnsIpv4,
             isValid: true
+        },
+        applyInterfaceSettings: () => {
+            const settings = {
+                dhcp: useDhcp,
+                ipv4: ipv4,
+                gateway: gatewayIpv4,
+                dns: [defaultDnsIpv4, alternateDnsIpv4].filter(dns => dns !== "0.0.0.0")
+            };
+            onApplyChanges(netInterface.device, settings);
         }
+
     };
 
     return ( 

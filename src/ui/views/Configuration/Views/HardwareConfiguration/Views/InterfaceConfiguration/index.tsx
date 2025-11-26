@@ -7,7 +7,7 @@ import InterfaceSettings from "./components/InterfaceSettings";
 
 const NetInterfaceConfiguration = () => {
 
-    const {networkInterfaces} = useNetworkInterfaces()
+    const {networkInterfaces, applyChanges} = useNetworkInterfaces()
 
     console.log ("Network Interfaces:", networkInterfaces);
 
@@ -16,7 +16,9 @@ const NetInterfaceConfiguration = () => {
         <Tabs>
             {networkInterfaces.map((netInterface) => (
                 <Tabs.TabPane tab={netInterface.device} key={netInterface.device}>
-                    <InterfaceContextProvider netInterface={netInterface}>
+                    <InterfaceContextProvider 
+                        onApplyChanges={applyChanges}
+                        netInterface={netInterface}>
                         <InterfaceSettings />
                     </InterfaceContextProvider>
                 </Tabs.TabPane>

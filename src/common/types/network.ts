@@ -13,6 +13,10 @@ export interface NetworkDeviceSummary {
   type: NetworkDeviceType; // ethernet, wifi, loopback
   state: NetworkDeviceState;
   connection: string | null; // nombre de la conexión NM, o null
+  dhcp: boolean;        // si DHCP está habilitado
+  ipv4: NetworkIPv4Config;
+  gateway?: string;        // puerta de enlace predeterminada, si está disponible
+  dns?: string[];          // servidores DNS, si están disponibles
 }
 
 export interface NetworkIPv4Config {

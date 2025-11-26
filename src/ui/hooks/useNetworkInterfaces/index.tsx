@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import { SocketIOContext } from "@components/SocketIOProvider";
 import { NetworkDeviceSummary } from "@common/types/network";
 import netCommands from "@common/commands/net.commands";
+import { message } from "antd";
 
 const useNetworkInterfaces = () => {
     const { socket, emit } = useContext(SocketIOContext)
@@ -19,6 +20,24 @@ const useNetworkInterfaces = () => {
         });
     }
 
+    type interfaceSettings = {
+        dhcp: boolean;
+        ipv4: string;
+        gateway: string;
+        dns: string[];
+    }
+
+    const applyChanges = (interfaceName: String, settings: interfaceSettings) => {
+        message.info(`Intentando aplicar cambios. Si se encontraba conectado mediante esta interfaz podría quedar desconectado.`)
+        emit(netCommands.applyInterfaceSettings, { interfaceName, settings }, (response: { success: boolean; error?: string }) => {
+            if (!response.success) {
+                message.error(`Se ha producido un error intentando aplicar la configuración. ${response.error}`)
+            } else {
+                message.success(`Los cambios fueron aplicados correctamente`)
+            }
+        });
+    }
+
     useEffect(() => {
         if (!socket) return;
         getNetworkInterfaces();
@@ -26,7 +45,8 @@ const useNetworkInterfaces = () => {
 
     return {
         networkInterfaces, 
-        refreshNetworkInterfaces: getNetworkInterfaces
+        refreshNetworkInterfaces: getNetworkInterfaces,
+        applyChanges
     };
 }
 

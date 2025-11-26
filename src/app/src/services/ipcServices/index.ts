@@ -37,6 +37,7 @@ const init = (io: import('socket.io').Server) => {
 
         //network
         socket.on(netCommands.getNetworkInterfaces, networkServices.getNetworkInterfaces);
+        socket.on(netCommands.applyInterfaceSettings, networkServices.applyInterfaceSettings);
 
         //wifi
         socket.on(wifiCommands.getAvailableNetworks, wifiServices.getAvailableNetworks);

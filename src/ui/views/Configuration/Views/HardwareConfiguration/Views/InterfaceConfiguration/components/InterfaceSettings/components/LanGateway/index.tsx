@@ -11,7 +11,7 @@ const Gateway = () => {
             setIpv4Compound([0, 0, 0, 0]);
             return;
         }
-        const segments = gatewayIpv4.value.split(".").map(segment => parseInt(segment, 10));
+        const segments = gatewayIpv4.value?.split(".").map(segment => parseInt(segment, 10));
         if (segments.length === 4 && segments.every(segment => !isNaN(segment) && segment >= 0 && segment <= 255)) {
             setIpv4Compound(segments);
         } else {

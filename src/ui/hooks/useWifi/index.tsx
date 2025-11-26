@@ -2,6 +2,7 @@ import wifiCommands from "@common/commands/wifi.commands";
 import wifiEvents from "@common/events/wifi.events";
 import { WiFiConnectionStatus, WiFiNetwork } from "@common/types/wifi.types";
 import { SocketIOContext } from "@components/SocketIOProvider";
+import { message } from "antd";
 import { useContext, useEffect, useState } from "react";
 
 const useWifi = () => {
@@ -42,12 +43,19 @@ const useWifi = () => {
 
     const disconnectWifi = () => {
         if (!socket) return;
+        message.warning(`Se va a desconectar el Wifi`)
         socket.emit(wifiCommands.disconnectFromNetwork);
     }
 
     const connectWifi = (ssid: string, password: string, callback?: (result: any) => void) => {
         if (!socket) return;
-        socket.emit(wifiCommands.connectToNetwork, { ssid, password }, callback);
+        socket.emit(wifiCommands.connectToNetwork, { ssid, password }, (result) => {
+            if (result?.error){
+                message.error(`Error conectando a la red Wifi`)
+            }
+            message.success(`Conexión exitosa a la red Wifi`)
+            callback(result)
+        });
     }
 
     return { wifiStatus, availableNetworks, disconnectWifi, connectWifi };

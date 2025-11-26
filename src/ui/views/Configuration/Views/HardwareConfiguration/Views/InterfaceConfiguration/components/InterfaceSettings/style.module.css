@@ -1,5 +1,6 @@
 .interfaceSettings{
-    
+    height: 100%;
+    width: 100%;
 }
 
 .label {
@@ -8,12 +9,33 @@
     color: white
 }
 
-.form .body{
+.body{
+    /* let the parent flexbox control sizing, avoid fixed 100% height */
+    flex: 1;
+    width: 100%;
     display: flex;
-    align-items: left;
+    align-items: flex-start;
     flex-direction: column;
 }
 
 .item{
     margin-bottom: 0.25rem !important;
+}
+
+.footer{
+    /* Fixed to viewport bottom-right so button is always visible */
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    z-index: 1000;
+}
+
+@media (max-width: 480px) {
+    .footer{
+        right: 0.5rem;
+        bottom: 0.5rem;
+    }
 }
