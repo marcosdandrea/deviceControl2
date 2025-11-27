@@ -27,7 +27,6 @@ export class TcpTrigger extends Trigger {
             type: TriggerTypes.tcp,
         });
 
-        this.validateParams();
         /*
 
         if (typeof options.port !== 'number' || options.port <= 0 || options.port > 65535)

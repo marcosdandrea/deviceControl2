@@ -26,8 +26,6 @@ export class CronTrigger extends Trigger {
             type: TriggerTypes.cron
         });
 
-        this.validateParams();
-
         this.day = props.params.day.value;
         this.time = props.params.time.value || 0;
 

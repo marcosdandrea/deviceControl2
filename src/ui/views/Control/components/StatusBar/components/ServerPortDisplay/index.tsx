@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from "react";
 import Text from "@components/Text";
 import useSystemServerPorts from "@hooks/useSystemServerPorts";
-import useGetNetworkInterfaces from "@hooks/useGetNetworkInterfaces";
+import useNetworkInterfaces from "@hooks/useNetworkInterfaces";
 
 const ServerPortDisplay = () => {
-    const {networkInterfaces} = useGetNetworkInterfaces()
+    const {networkInterfaces} = useNetworkInterfaces()
     const {generalServerPort} = useSystemServerPorts()
-    const [url, setUrl] = useState("")
+    const [url, setUrl] = useState("Disconnected")
 
     useEffect(() => {
         if (!networkInterfaces) return
-        const url = networkInterfaces[0] 
-        setUrl(`http://${url}:${generalServerPort}`)
+        const connectedInterfaces = networkInterfaces.filter((iface) => iface.state == "connected");
+        if (connectedInterfaces.length === 0) {
+            setUrl(`Disconnected`);
+            return;
+        }
+        const connectedURL = connectedInterfaces.map((iface) => {
+            return `${iface.ipv4.address.split("/")[0]}`
+        })
+        setUrl(`${connectedURL.join(", ")}`)
     }, [networkInterfaces, generalServerPort])
 
     return (

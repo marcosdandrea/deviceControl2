@@ -26,8 +26,6 @@ export class UdpTrigger extends Trigger {
             type: TriggerTypes.udp,
         });
 
-        this.validateParams();
-
         this.ip = options.params.ip?.value || '0.0.0.0';
         this.port = options.params.port?.value;
         this.expectedMessage = options.params.message?.value;

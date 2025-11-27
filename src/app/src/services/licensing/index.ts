@@ -190,7 +190,15 @@ export const setSystemLicense = async (licenseKey: string): Promise<boolean> => 
   await fs.writeFile(filePath, JSON.stringify(storedLicense, null, 2), "utf8");
   broadcastToClients(systemEvents.appLicenseUpdated, {isValid: true});
   eventManager.emit(systemEvents.appLicenseUpdated, {isValid: true});
-  loadLastProject()
+  
+  // Intentar cargar el último proyecto si existe, pero no fallar si no hay ninguno
+  try {
+    await loadLastProject();
+  } catch (error) {
+    // Silenciosamente ignorar si no hay proyecto previo para cargar
+    console.log("No previous project to load after license activation");
+  }
+  
   return true;
 };
 

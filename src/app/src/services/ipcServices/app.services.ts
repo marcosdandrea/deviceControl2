@@ -9,7 +9,7 @@ import { loadLastProject } from "@src/domain/useCases/project"
 const log = new Log("AppServices", true)
 
 const getAvailableTriggers = async (_args: any, callback: Function) => {
-    const triggerClasses = getTriggerTypes()
+    const triggerClasses = await getTriggerTypes()
     let triggers: Record<string, any> = {}
 
     for (const [key, modulePromise] of Object.entries(await triggerClasses)) {
@@ -18,7 +18,7 @@ const getAvailableTriggers = async (_args: any, callback: Function) => {
             easyName: module.default.easyName,
             moduleDescription: module.default.moduleDescription,
             disableRearming: module.default.disableRearming,
-            params: module.default.prototype.requiredParams(),
+            params: await module.default.prototype.requiredParams(),
         }
     }
     callback?.(triggers)

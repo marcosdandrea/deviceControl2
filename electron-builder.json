@@ -17,7 +17,7 @@
     "icon": "resources/icons/mac/icon.icns",
     "category": "public.app-category.utilities",
     "target": ["zip", { "target": "dmg" }],
-    "artifactName": "mac/${productName}-${version}.${ext}",
+    "artifactName": "mac.${productName}-${version}.${ext}",
     "extendInfo": {
       "CFBundleIconFile": "icon.icns"
     }
@@ -29,11 +29,11 @@
     "icon": "./resources/icons/png/512x512.png",
     "target": ["AppImage"],
     "category": "Utility",
-    "artifactName": "linux/${productName}-${version}.${ext}"
+    "artifactName": "linux.${productName}-${version}.${ext}"
   },
   "win": {
     "icon": "./resources/icons/win/icon.ico",
     "target": ["portable", "msi"],
-    "artifactName": "win/${productName}-${version}-${arch}.${ext}"
+    "artifactName": "win.${productName}-${version}-${arch}.${ext}"
   }
 }

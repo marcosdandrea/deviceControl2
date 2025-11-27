@@ -15,7 +15,7 @@ const ExecutionsTimelineButton = () => {
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
     window.open(
-      "/executions",
+      "#/executions",
       "Linea de Tiempo de Ejecuciones",
       `width=${width},height=${height},left=${left},top=${top},location=no`
     );

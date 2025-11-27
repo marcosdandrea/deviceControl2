@@ -23,7 +23,6 @@ export class OnStartTrigger extends Trigger {
             type: TriggerTypes.onStart,
         });
 
-        this.validateParams();
         /*
         if (options.delay !== undefined && (typeof options.delay !== 'number' || options.delay < 0))
             throw new Error('delay must be a non-negative number');

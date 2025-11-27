@@ -21,5 +21,7 @@ export const createNewTriggerByType = async (type: string, params: any): Promise
     if (!triggerModule) 
         throw new Error(`Trigger module "${type}" not found`);
 
-    return new triggerModule.default(params);
+    const trigger = new triggerModule.default(params);
+    await trigger.validateParams();
+    return trigger;
 }

@@ -21,16 +21,18 @@ import networkServices from './network.services';
 const log = Log.createInstance('IPC Services', false);
 
 const init = (io: import('socket.io').Server) => {
-
+    
     io.on('connection', (socket) => {
         log.info('New client connected:', socket.id);
-
+        
         socket.on('disconnect', () => log.info('Client disconnected:', socket.id));
         
         //system
         socket.on(systemCommands.getSystemTime, getSystemTime)
         socket.on(systemCommands.getAppVersion, getAppVersion)
         socket.on(systemCommands.getServerPorts, getServerPorts);
+        socket.on(appCommands.checkLicense, appServices.checkLicense);
+        socket.on(appCommands.setLicense, appServices.setLicense);
         socket.on(systemCommands.checkUDPPortAvailability, checkUDPPortAvailability);
         socket.on(systemCommands.checkTCPPortAvailability, checkTCPPortAvailability);
         socket.on(systemCommands.getIsSignedHardware, hardwareServices.isSignedHarware);
@@ -52,8 +54,6 @@ const init = (io: import('socket.io').Server) => {
         socket.on(appCommands.getTriggerTypes, appServices.getAvailableTriggers);
         socket.on(appCommands.getConditionTypes, appServices.getAvailableConditions);
         socket.on(appCommands.getJobTypes, appServices.getAvailableJobs);
-        socket.on(appCommands.checkLicense, appServices.checkLicense);
-        socket.on(appCommands.setLicense, appServices.setLicense);
         socket.on(appCommands.blockMainControl, (args: any, callback: Function) => appServices.blockMainControlView(socket, callback));
         socket.on(appCommands.unblockMainControl, (args: any, callback: Function) => appServices.unblockMainControlView(socket, callback));
 

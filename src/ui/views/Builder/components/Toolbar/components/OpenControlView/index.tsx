@@ -6,7 +6,7 @@ import { Tooltip } from "antd";
 const OpenControlView = () => {
   const handleOnClick = () => {
     window.open(
-      "/controlPreview",
+      "#/controlPreview",
       "controlWindow",
       "width=800,height=500,location=no"
     );

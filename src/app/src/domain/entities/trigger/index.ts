@@ -53,8 +53,8 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         this.emit(eventName, ...args);
     }
 
-    validateParams() {
-        const requiredParams = this.requiredParams();
+    async validateParams() {
+        const requiredParams = await this.requiredParams();
         if (!requiredParams || Object.keys(requiredParams).length === 0)
             return;
 
@@ -73,7 +73,7 @@ export class Trigger extends EventEmitter implements TriggerInterface {
         }
     }
 
-    requiredParams(): Record<string, requiredTriggerParamType> {
+    async requiredParams(): Promise<Record<string, requiredTriggerParamType>> {
         throw new Error("Required parameters must be implemented in subclasses.");
     }
 

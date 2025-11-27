@@ -2,6 +2,8 @@ import { Trigger } from "../..";
 import { requiredTriggerParamType, TriggerType } from "@common/types/trigger.type";
 import triggerEvents from "@common/events/trigger.events";
 import { ServerManager } from "@src/services/server/serverManager";
+import networkServices from "@src/services/ipcServices/network.services";
+import { NetworkManagerService } from "@src/services/hardwareManagement/net";
 
 interface ApiInterface extends TriggerType {
     endpoint?: string; // Endpoint to listen for API requests
@@ -20,18 +22,27 @@ export class APITrigger extends Trigger {
             ...options,
             type: APITrigger.type,
         })
-        
-        this.validateParams();        
 
         this.endpoint = options.params?.endpoint?.value || "";
 
         this.#initListeners()
     }
 
-    requiredParams(): Record<string, requiredTriggerParamType> {
+    async requiredParams(): Promise<Record<string, requiredTriggerParamType>> {
+
+        const networkInterfaces = await NetworkManagerService.listDevices()
+        const connectedInterfaces = networkInterfaces.length > 0 
+        ? networkInterfaces
+            .filter((iface) => iface.state == "connected")
+            .map((iface) => iface.ipv4.address.split("/")[0])
+            .join(", ")
+        : "<IP>";
+        const mainServer = ServerManager.getInstance("general");
+        const route = `http://${connectedInterfaces}:${mainServer.port}`;
+
         return {
             endpoint: {
-                easyName: "Ruta",
+                easyName: route,
                 type: "string",
                 validationMask: "^\\/([a-zA-Z0-9-_\\/]*)$",
                 description: "API endpoint to listen for requests (e.g., /api/trigger)",

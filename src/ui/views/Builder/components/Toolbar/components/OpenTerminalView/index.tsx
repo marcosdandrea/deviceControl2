@@ -6,7 +6,7 @@ import { Tooltip } from "antd";
 const OpenTerminalView = () => {
   const handleOnClick = () => {
     window.open(
-      "/terminal",
+      "#/terminal",
       "terminalWindow",
       "width=800,height=500,location=no"
     );

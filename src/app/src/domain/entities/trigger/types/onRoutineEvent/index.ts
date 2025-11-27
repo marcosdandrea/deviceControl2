@@ -29,7 +29,6 @@ export class OnRoutineEventTrigger extends Trigger {
             type: TriggerTypes.onRoutineEvent,
         });
 
-        this.validateParams();
         /*
         if (!options.params.routineId || typeof options.params.routineId !== 'string')
             throw new Error('routineId must be a string');
