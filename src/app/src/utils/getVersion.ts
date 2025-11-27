@@ -3,18 +3,18 @@ import { Log } from "@src/utils/log.js";
 
 const log = Log.createInstance("getVersion", true);
 
+const isHeadless = process.argv.includes('--headless') || process.argv.includes('--h') || process.env.HEADLESS === 'true';
+
 // Obtener la versión del package.json
 export const getVersion = async () => {
     try {
         const fs = require('fs');
         const path = require('path');
         
-        // En modo desarrollo, el package.json está en el directorio raíz del proyecto
-        // Necesitamos subir varios niveles desde la ubicación actual del archivo
+        // En modo desarrollo o headless, el package.json está en el directorio raíz del proyecto
         let packagePath;
-        if (isDev()) {
-            // Desde windowManager/index.ts subir hasta la raíz
-            packagePath = path.resolve(__dirname, '../../../../../package.json');
+        if (isDev() || isHeadless) {
+            packagePath = path.join(process.cwd(), 'package.json');
         } else {
             const { app } = await import('electron');
             packagePath = path.join(app.getAppPath(), 'package.json');
@@ -32,9 +32,8 @@ export const getVersion = async () => {
             const fs = require('fs');
             const path = require('path');
             const alternativePaths = [
-                'D:\\Proyecciones\\deviceControl\\package.json',
-                path.join(__dirname, '../../../../../../package.json'),
-                path.join(process.cwd(), 'package.json')
+                path.join(process.cwd(), 'package.json'),
+                path.join(process.cwd(), '..', 'package.json'),
             ];
             
             for (const altPath of alternativePaths) {

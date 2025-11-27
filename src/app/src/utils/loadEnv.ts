@@ -5,10 +5,12 @@ import {Log} from '@src/utils/log';
 const log = Log.createInstance('loadEnv', true);
 
 const isDevelopment = process.env.NODE_ENV === 'development' || process.argv.includes('--dev');
+const isHeadless = process.argv.includes('--headless') || process.argv.includes('--h') || process.env.HEADLESS === 'true';
 
 function loadEnv() {
   const isDev = isDevelopment;
-  const base = isDev ? process.cwd() : process.resourcesPath;
+  // In headless mode or development, use cwd. In packaged Electron, use resourcesPath
+  const base = isDev || isHeadless ? process.cwd() : (process as any).resourcesPath;
 
   // Prioriza .env.local si existe
   const candidates = [

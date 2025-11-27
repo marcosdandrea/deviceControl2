@@ -53,6 +53,10 @@ module.exports = {
     electron: 'commonjs2 electron',
   },
   externalsPresets: { node: true },
+  node: {
+    __dirname: false,
+    __filename: false,
+  },
   plugins: [
     new DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production'),

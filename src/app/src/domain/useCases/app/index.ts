@@ -1,14 +1,21 @@
 import App from "@domain/entities/app/index.js"
 import { Log } from "@utils/log.js"
-import { app, nativeImage } from "electron"
 import path from "node:path"
 const log = Log.createInstance("appUseCase", true)
 
+const isHeadless = process.argv.includes('--headless') || process.argv.includes('--h') || process.env.HEADLESS === 'true';
+
 // Resolve resources both in dev and in production
-const resolveResource = (...segments: string[]) => {
+const resolveResource = async (...segments: string[]) => {
+  if (isHeadless) {
+    // In headless mode, resources are in the cwd/resources directory
+    return path.join(process.cwd(), "resources", ...segments);
+  }
+  
+  const { app } = await import("electron");
   if (app.isPackaged) {
     // electron-builder places extraResources under process.resourcesPath
-    return path.join(process.resourcesPath, ...segments)
+    return path.join((process as any).resourcesPath, ...segments)
   }
   // dev: read from project /resources
   return path.join(process.cwd(), "resources", ...segments)
@@ -17,9 +24,18 @@ const resolveResource = (...segments: string[]) => {
 export const createApp = async () => {
     try {
         App.getInstance()
+        
+        // Skip Electron-specific setup in headless mode
+        if (isHeadless) {
+          log.info("App created successfully (headless mode)");
+          return;
+        }
+        
+        const { app, nativeImage } = await import("electron");
+        
         // Prefer .icns on macOS; fallback to PNG if missing
-        const macIcnsPath = resolveResource("icons", "mac", "icon.icns")
-        const macPngFallback = resolveResource("png", "512x512.png")
+        const macIcnsPath = await resolveResource("icons", "mac", "icon.icns")
+        const macPngFallback = await resolveResource("png", "512x512.png")
         if (process.platform === "darwin") {
           let img = nativeImage.createFromPath(macIcnsPath)
           if (img.isEmpty()) {
