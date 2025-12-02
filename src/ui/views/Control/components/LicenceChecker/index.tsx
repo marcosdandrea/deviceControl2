@@ -3,9 +3,13 @@ import styles from "./styles.module.css";
 import useLicense from "@hooks/useLicense";
 import { Button } from "antd";
 import { FaKey } from "react-icons/fa6";
+import usePropietaryHardware from "@hooks/usePropietaryHardware";
+import useNetworkInterfaces from "@hooks/useNetworkInterfaces";
 
 const LicenseChecker = ({ children }) => {
     const { isLicensed, fetching } = useLicense();
+    const { isSignedHardware } = usePropietaryHardware()
+    const { networkInterfaces } = useNetworkInterfaces()
     const port = location.port ? `:${location.port}` : '';
 
     const handleOpenBuilder = () => {
@@ -20,7 +24,7 @@ const LicenseChecker = ({ children }) => {
         }
     };
 
-    if (isLicensed==undefined || isLicensed) {
+    if (isLicensed == undefined || isLicensed) {
         return <>{children}</>;
     }
 
@@ -43,12 +47,16 @@ const LicenseChecker = ({ children }) => {
                 flexDirection: "column",
                 rowGap: "1rem"
             }}>
-                <p>Active la licencia de <strong>Device Control 2</strong>.</p>
-                <Button
-                    type="primary"
-                    onClick={handleOpenBuilder}>
-                    Abrir Builder
-                </Button>
+                <p>Active la licencia de <strong>Device Control 2</strong></p>
+                {
+                    !isSignedHardware 
+                    ? <Button
+                        type="primary"
+                        onClick={handleOpenBuilder}>
+                        Abrir Builder
+                    </Button>
+                    : <p>{`conectándose al panel builder en ${networkInterfaces.filter((iface) => iface.state === "connected").map((iface) => iface.ipv4.address.split("/")[0]).join(", ")}${port}`}</p>
+                }
             </p>
         </div>
     );

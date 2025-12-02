@@ -7,6 +7,7 @@ import BlockedControl from "./components/BlockedControl";
 import LicenseChecker from "./components/LicenceChecker";
 import RoutineGroups from "./components/RoutineGroups";
 import { ConfigProvider, theme } from "antd";
+import RoutinesView from "./components/RoutinesView";
 
 const Control = ({ isPreview }: { isPreview: boolean }) => {
 
@@ -18,7 +19,7 @@ const Control = ({ isPreview }: { isPreview: boolean }) => {
           <LicenseChecker>
             <BlockedControl disabled={isPreview}>
               <PasswordProtection>
-                <RoutineGroups />
+                <RoutinesView />
               </PasswordProtection>
               <StatusBar />
             </BlockedControl>
