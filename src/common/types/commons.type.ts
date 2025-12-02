@@ -9,3 +9,8 @@ export type RunCtx = {
         hierarchy?: {type: string, name: string}[];
         baseLogger: Log;
     };
+
+export type GroupType = {
+    id: id;
+    name: name;
+}

@@ -1,5 +1,5 @@
 import projectEvents from "@common/events/project.events";
-import { id } from "@common/types/commons.type";
+import { GroupType, id } from "@common/types/commons.type";
 import { projectInterface as ProjectInterface, projectType } from "@common/types/project.types";
 import { TaskInterface } from "@common/types/task.type";
 import { TriggerInterface } from "@common/types/trigger.type";
@@ -11,6 +11,7 @@ import { Task } from "../task";
 import App from "../app";
 import { ServerManager } from "@src/services/server/serverManager";
 import {removeRoutine} from "@useCases/routine"
+import { nanoid } from "nanoid";
 
 
 export interface ProjectConstructor {
@@ -18,6 +19,7 @@ export interface ProjectConstructor {
     id?: string; // Unique identifier for the project
     name?: string;
     description?: string;
+    groups: GroupType[]; // array of groups associated with the project
     createdBy?: string;
     createdAt?: Date; // Timestamp when the project was created
     updatedAt?: Date; // Timestamp when the project was last updated
@@ -26,6 +28,7 @@ export interface ProjectConstructor {
     tasks?: Task[];
     filePath?: string; // Optional file path for the project
     password?: string | null; // Optional password for the project
+    showGroupsInControlView: boolean; // Flag to show groups in control view
 }
 
 export class Project extends EventEmitter implements ProjectInterface {
@@ -34,6 +37,7 @@ export class Project extends EventEmitter implements ProjectInterface {
     appVersion: string;
     createdBy: string;
     name: string;
+    groups: GroupType[]; // array of groups associated with the project
     description: string;
     createdAt: Date;
     updatedAt: Date;
@@ -42,6 +46,7 @@ export class Project extends EventEmitter implements ProjectInterface {
     tasks: Task[];
     filePath?: string; // Optional file path for the project
     password?: string | null;
+    showGroupsInControlView: boolean;
 
     private static readonly appVersion: string = App.getAppVersion()
     private unsavedChanges: boolean = false; // Flag to track unsaved changes
@@ -69,10 +74,12 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.createdAt = props?.createdAt || new Date();
         this.updatedAt = props?.updatedAt || new Date();
         this.routines = props.routines || [];
+        this.groups = props.groups || [{ id: nanoid(9), name: "ungrouped" }];
         this.triggers = props.triggers || []; // Replace 'any' with actual TriggerType
         this.tasks = props.tasks || []; // Replace 'any' with actual TaskType
         this.password = props.password || null;
         this.logger = Log.createInstance(`Project "${this.name}" (${this.id})`, true);
+        this.showGroupsInControlView = props.showGroupsInControlView || false;
 
         this.logger.info("Project instance created");
 
@@ -262,6 +269,8 @@ export class Project extends EventEmitter implements ProjectInterface {
             createdAt: this.createdAt,
             updatedAt: this.updatedAt,
             password: this.password,
+            groups: this.groups,
+            showGroupsInControlView: this.showGroupsInControlView,
             routines: this.routines.map(routine => routine.toJson()),
             triggers: this.getTrigger().map(trigger => trigger.toJson()),
             tasks: this.getTask().map(task => task.toJson())

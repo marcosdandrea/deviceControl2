@@ -1,3 +1,4 @@
+import { GroupType } from "./commons.type";
 import { RoutineInterface, RoutineType } from "./routine.type";
 import { TaskType } from "./task.type";
 import { TriggerType } from "./trigger.type";
@@ -13,7 +14,9 @@ export type projectType = {
     routines?: RoutineType[];
     triggers?: TriggerType[];
     tasks?: TaskType[];
+    groups: GroupType[]; // array of groups associated with the project
     password?: string | null; // Optional password for the project
+    showGroupsInControlView: boolean; // Flag to show groups in control view
 }
 
 

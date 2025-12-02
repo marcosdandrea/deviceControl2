@@ -10,4 +10,6 @@ export default {
     unsavedChanges: "project:unsavedChanges",
     error: "project:error",
     executionsUpdated: "project:executionsUpdated",
+    groupAdded: "project:groupAdded",
+    groupRemoved: "project:groupRemoved",
 } as const;

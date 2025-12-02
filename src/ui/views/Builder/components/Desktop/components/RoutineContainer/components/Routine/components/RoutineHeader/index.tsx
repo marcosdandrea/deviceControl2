@@ -9,14 +9,14 @@ import RoutineEnabledIcon from './components/RoutineEnabledIcon';
 
 const RoutineHeader = () => {
 
-    const { routineData } = useContext(routineContext)
-
+    const { routineData, isShiftPressed } = useContext(routineContext)
     return (
         <div 
             title={routineData?.name || 'Routine name'}
             className={style.routineHeader}>
-            <SortableKnob>
-                <div className={style.title}>
+            {!isShiftPressed ? (
+                <SortableKnob>
+                    <div className={style.title}>
                     <div className={style.iconsContainer}>
                     <RoutineVisibilityIcon />
                     <RoutineEnabledIcon />
@@ -28,7 +28,22 @@ const RoutineHeader = () => {
                         {routineData?.name || 'Routine name'}
                     </Text>
                 </div>
-            </SortableKnob>
+                </SortableKnob>
+            ) : (
+                <div 
+                    className={style.title}>
+                    <div className={style.iconsContainer}>
+                    <RoutineVisibilityIcon />
+                    <RoutineEnabledIcon />
+                    </div>
+                    <Text
+                        style={{ userSelect: 'none', pointerEvents: 'none' }}
+                        size={14}
+                        color='white'>
+                        {routineData?.name || 'Routine name'}
+                    </Text>
+                </div>
+            )}
             <RoutineQuickOptionsButton />
         </div>
     );

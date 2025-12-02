@@ -1,5 +1,5 @@
 import { Context } from "@src/domain/entities/context";
-import { description, id, name } from "./commons.type";
+import { description, GroupType, id, name } from "./commons.type";
 import { TaskInterface, TaskType } from "./task.type";
 import { TriggerInterface, TriggerType } from "./trigger.type";
 
@@ -7,6 +7,7 @@ type commonRoutineProps = {
     id?: id;
     name: name;
     description?: description;
+    groupId: GroupType['id'] | null;
     
     enabled: boolean;
     runInSync?: boolean;

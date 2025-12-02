@@ -8,6 +8,7 @@ const useSystemServerPorts = () => {
     const [generalServerPort, setGeneralServerPort] = useState<number | undefined>(undefined);
 
     useEffect(() => {
+
         emit(systemCommands.getServerPorts, null, (answer: {main: number, general: number, error?: string}) => {
             if (answer?.error || answer?.main === undefined || answer?.general === undefined) {
                 console.error(answer.error);

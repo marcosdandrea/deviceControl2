@@ -1,0 +1,25 @@
+.grabAndMoveMessage {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    pointer-events: none;
+    border: 1px solid var(--component-border);
+    border-radius: 5px;
+    padding: 2rem;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.message {
+    color: white;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    width: 100%;
+    word-break: break-word;
+    text-overflow: clip;
+    overflow: visible;
+    white-space: normal;
+
+}

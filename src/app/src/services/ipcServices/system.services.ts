@@ -18,6 +18,15 @@ export const getServerPorts = (_data: null, cb: Function) => {
     });
 }
 
+export const getServerIp = (_data: null, cb: Function) => {
+    const mainServer = ServerManager.getInstance("main");
+    const generalServer = ServerManager.getInstance("general");
+    cb({
+        main: mainServer.ip,
+        general: generalServer.ip
+    });
+}
+
 export const checkUDPPortAvailability = async (data: { port: number }, cb: Function) => {
     const { port } = data;
     const { isUdpPortAvailable } = await import('@src/utils/checkIfPortIsInUse.js');

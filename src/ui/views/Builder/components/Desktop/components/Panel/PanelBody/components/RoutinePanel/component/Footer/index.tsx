@@ -7,11 +7,12 @@ import { routineConfigurationContext } from '../..';
 import useProject from '@hooks/useProject';
 import RoutineId from './components/RoutineId';
 import { nanoid } from 'nanoid';
+import { RoutineType } from '@common/types/routine.type';
 
 const Footer = () => {
-    const { routineId } = useParams()
+    const { routineId, groupId } = useParams()
     const { project, setProject } = useProject({ fetchProject: false })
-    const { routine, setRoutine } = useContext(routineConfigurationContext)
+    const { routine, setRoutine } = useContext(routineConfigurationContext) as { routine: RoutineType, setRoutine: React.Dispatch<React.SetStateAction<RoutineType>> }
     const [enableSave, setEnableSave] = React.useState(false)
     const navigate = useNavigate()
 
@@ -25,14 +26,24 @@ const Footer = () => {
 
 
     const handleOnSave = () => {
-        const routineIndex = project?.routines?.findIndex(r => r.id === routine.id)
-        if (routineIndex === -1 || routineIndex === undefined) {
-            setProject({ ...project, routines: [...project.routines, routine] })
+        
+        const updatedRoutine = { ...routine, groupId: groupId } as RoutineType
+        
+        if (routineId === 'newRoutine') {
+
+            setProject({ ...project, routines: [...project.routines, updatedRoutine] })
+            console.log ({ ...project, routines: [...project.routines, updatedRoutine] })
+            
         } else {
-            setProject({ ...project, routines: [...project.routines.slice(0, routineIndex), routine, ...project.routines.slice(routineIndex + 1)] })
+            const routineIndex = project?.routines?.findIndex(r => r.id === routine.id)
+            if (routineIndex === -1 || routineIndex === undefined) {
+                console.error('Routine not found in project routines')
+                return;
+            }
+            setProject({ ...project, routines: [...project.routines.slice(0, routineIndex), updatedRoutine, ...project.routines.slice(routineIndex + 1)] })
         }
-        message.success(`Rutina ${routineIndex === -1 || routineIndex === undefined ? 'creada' : 'actualizada'} correctamente`)
-        navigate(`/builder/${routine.id}`, { replace: true })
+        message.success(`Rutina ${routineId === 'newRoutine' ? 'creada' : 'actualizada'} correctamente`)
+        navigate(`/builder/${groupId}/${routine.id}`, { replace: true })
     }
 
     const handleOnDeleteRoutine = () => {
@@ -50,7 +61,7 @@ const Footer = () => {
         if (routine?.id) {
             const newRoutine = { ...routine, id: nanoid(10), name: `${routine.name} (Copia)` }
             setProject({ ...project, routines: [...project.routines, newRoutine] })
-            navigate(`/builder/newRoutine`, { replace: true })
+            navigate(`/builder/${groupId}/newRoutine`, { replace: true })
             message.success('Rutina duplicada correctamente')
         }
     }

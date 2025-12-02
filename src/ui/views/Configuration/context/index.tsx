@@ -20,6 +20,7 @@ interface ConfigContextProps {
     appVersion: string;
     labelFlex?: number;
     inputFlex?: number;
+    showGroupsInControlView: boolean;
 }
 
 export const configContext = createContext<ConfigContextProps | undefined>(undefined);
@@ -70,7 +71,7 @@ export const ConfigContextProvider = ({ children }) => {
 
     const value = {
         labelFlex: 1,
-        inputFlex: 4,
+        inputFlex: 2.5,
         project,
         setProject,
         password,
@@ -86,6 +87,7 @@ export const ConfigContextProvider = ({ children }) => {
         appVersion,
         projectName,
         setProjectName,
+        showGroupsInControlView: project?.showGroupsInControlView || false,
     };
 
     return (

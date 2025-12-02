@@ -1,0 +1,15 @@
+.routineGroupsContainer {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+
+
+
+.routineGroupsContainer :global(.ant-collapse-content-box) {
+    padding: 0 !important
+}
+
+.routineGroupsContainer :global(.ant-collapse-header){
+    align-items: center;
+}

@@ -1,6 +1,5 @@
 .minifiedStatusView{
     width: 0.4rem;
-    height: 100vh;
     display: flex;
     flex-direction: column;
 }

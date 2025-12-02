@@ -21,13 +21,15 @@ const MinifiedTag = ({routineId, id}) => {
     );
 }
 
-const MinifiedStatusView = () => {
+const MinifiedStatusView = ({groupId}) => {
     const { routines } = useRoutines()
     const [routineList, setRoutineList] = React.useState<any[]>([]);
 
     React.useEffect(() => {
-        setRoutineList(routines.filter(r => !r.hidden));
-    }, [routines]);
+        setRoutineList(routines
+                .filter(r => r.groupId === groupId)
+                .filter(r => !r.hidden));
+    }, [routines, groupId]);
 
     return (
         <div className={style.minifiedStatusView}>

@@ -1,6 +1,6 @@
 import { RoutineType } from "@common/types/routine.type";
 import { Project } from "@src/domain/entities/project";
-import {Log} from "@src/utils/log";
+import { Log } from "@src/utils/log";
 import { nanoid } from "nanoid";
 
 const log = Log.createInstance("RoutineService", true);
@@ -11,12 +11,12 @@ export const abortRoutine = (routineId: string, callback?: Function) => {
     const routine = project.getRoutines(routineId)?.[0];
     if (!routine) {
         log.warn(`Routine with ID: ${routineId} not found`);
-        callback?.({error: "Routine not found"});
+        callback?.({ error: "Routine not found" });
         return;
     }
     routine.abort("aborted by user");
     log.info(`Routine with ID: ${routineId} aborted`);
-    callback?.({success: true});
+    callback?.({ success: true });
 };
 
 export const getRoutineTemplate = (args: any, callback: Function) => {
@@ -46,5 +46,5 @@ export const getRoutineTemplate = (args: any, callback: Function) => {
 
 export default {
     getRoutineTemplate,
-    abortRoutine
+    abortRoutine,
 }

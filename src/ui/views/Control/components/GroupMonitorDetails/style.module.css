@@ -1,0 +1,12 @@
+.groupMonitorDetails {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.groupStatus {
+    height: 0.75rem;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}

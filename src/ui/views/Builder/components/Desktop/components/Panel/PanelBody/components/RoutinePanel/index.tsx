@@ -16,21 +16,21 @@ const RoutinePanel = ({ routineId }) => {
 
     const navigate = useNavigate()
     const { routines, getRoutineTemplate } = useRoutines()
-    const { routineId: paramRoutineId } = useParams()
+    const { routineId: paramRoutineId, groupName } = useParams()
     const { project } = useProject({ fetchProject: false });
     const [routine, setRoutine] = useState<RoutineType | { id: string }>({ id: nanoid(10) });
     const [routineTemplate, setRoutineTemplate] = useState<RoutineType | null>(null)
 
     useEffect(() => {
         getRoutineTemplate(setRoutineTemplate);
-    }, []);
+    }, [routineId]);
 
     useEffect(() => {
         if (paramRoutineId == "newRoutine") return
         if (paramRoutineId && routines) {
             const routine = routines.find(r => r.id === paramRoutineId)
             if (!routine) {
-                navigate('/builder')
+                navigate(`/builder/${groupName}`)
             }
         }
     }, [paramRoutineId, routines])
@@ -38,11 +38,11 @@ const RoutinePanel = ({ routineId }) => {
     useEffect(() => {
         if (routineId && project) {
             const foundRoutine = project.routines.find(r => r.id === routineId);
-            if (foundRoutine)
+            if (foundRoutine) {
                 setRoutine(foundRoutine);
-            else 
-            setRoutine(routineTemplate);
-
+            } else {
+                setRoutine(routineTemplate);
+            }
         }
     }, [routineId, project, routineTemplate])
 

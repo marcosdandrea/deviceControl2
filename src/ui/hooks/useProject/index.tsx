@@ -90,7 +90,7 @@ const useProject = (params: { fetchProject?: boolean }) => {
   const createNewProject = async () => {
     if (!socket) return;
 
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<projectType>((resolve, reject) => {
       emit(
         projectCommands.create,
         null,
@@ -107,7 +107,7 @@ const useProject = (params: { fetchProject?: boolean }) => {
               setProject(response.projectData);
               setUnsavedChanges(false);
             }
-            resolve();
+            resolve(response.projectData);
           }
         }
       );

@@ -16,9 +16,10 @@ const Navigation = () => {
                 <Route path='/terminal' element={<Terminal />} />
                 <Route path='/executions' element={<Executions />} />
                 <Route path='/notAllowed' element={<NotAllowed />} />
-                <Route path='/builder/:routineId' element={<Builder />} />
-                <Route path='/builder/:routineId/task/:taskId' element={<Builder />} />
-                <Route path='/builder/:routineId/trigger/:triggerId' element={<Builder />} />
+                <Route path='/builder/:groupId' element={<Builder />} />
+                <Route path='/builder/:groupId/:routineId' element={<Builder />} />
+                <Route path='/builder/:groupId/:routineId/task/:taskId' element={<Builder />} />
+                <Route path='/builder/:groupId/:routineId/trigger/:triggerId' element={<Builder />} />
                 <Route path='*' element={<Builder />} />
             </Routes>
         </HashRouter>

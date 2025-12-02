@@ -21,6 +21,13 @@ const eventManager = new EventManager();
 
 const EXECUTIONS_LOG_DEPTH_PER_ROUTINE = Number(process.env.EXECUTIONS_LOG_DEPTH_PER_ROUTINE || "0");
 
+// Registro: por cada rutina guardamos sólo WeakRef y disposers (no retenemos fuerte la instancia)
+type RoutineCleanup = {
+  ref: WeakRef<Routine>;
+  disposers: Array<() => void>;
+};
+const routineRegistry = new Map<string, RoutineCleanup>();
+
 const enforceExecutionLogDepthForRoutine = async (routineId: string) => {
   if (!EXECUTIONS_LOG_DEPTH_PER_ROUTINE || EXECUTIONS_LOG_DEPTH_PER_ROUTINE <= 0) {
     return;
@@ -59,13 +66,6 @@ const enforceExecutionLogDepthForRoutine = async (routineId: string) => {
     }
   }
 };
-
-// Registro: por cada rutina guardamos sólo WeakRef y disposers (no retenemos fuerte la instancia)
-type RoutineCleanup = {
-  ref: WeakRef<Routine>;
-  disposers: Array<() => void>;
-};
-const routineRegistry = new Map<string, RoutineCleanup>();
 
 export const createRoutine = async (routineData, projectData): Promise<Routine> => {
   const currentProject = Project.getInstance();

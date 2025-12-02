@@ -11,6 +11,7 @@
     flex-direction: column;
     row-gap: .5rem;
     border: 1px solid transparent;
+    transition: opacity 1s ease;
 }
 
 .body{
@@ -25,4 +26,9 @@
 .selected{
     border: 1px solid var(--accent-color);
     box-shadow: 0 0 10px var(--accent-color);
+}
+
+.aboutToDrag{
+    opacity: 0.5;
+    pointer-events: none12;
 }

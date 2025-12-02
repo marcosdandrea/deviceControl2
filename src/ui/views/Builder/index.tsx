@@ -10,8 +10,6 @@ const Builder = () => {
 
   const {isLicensed} = useLicense();
 
-  console.log ("isLicensed", isLicensed);
-
   return (
     <ConfigProvider
       theme={{

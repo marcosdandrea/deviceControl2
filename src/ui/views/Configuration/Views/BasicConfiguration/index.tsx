@@ -8,6 +8,7 @@ import LastModified from "./components/LastModified";
 import PasswordField from "./components/Password";
 import style from "./style.module.css";
 import Footer from "./components/Footer";
+import ShowGroupsInControlView from "./components/ShowGroupsInControlView";
 
 const BasicConfiguration = () => {
     const onSaved = () => {
@@ -24,6 +25,7 @@ const BasicConfiguration = () => {
                 <CreatedAt />
                 <LastModified />
                 <PasswordField />
+                <ShowGroupsInControlView />
             </div>
             <Footer onSaved={onSaved} />
         </div>

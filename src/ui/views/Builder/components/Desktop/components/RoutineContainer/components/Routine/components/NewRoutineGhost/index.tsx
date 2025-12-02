@@ -1,14 +1,15 @@
 import React from 'react';
 import style from './style.module.css';
 import { MdAdd } from 'react-icons/md';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
-const NewRoutineGhost = React.forwardRef<HTMLDivElement, {}>((props, ref) => {
+const NewRoutineGhost = React.forwardRef<HTMLDivElement>((props, ref) => {
 
     const navigate = useNavigate()
+    const {groupId} = useParams()
 
     const handleOnCreateNewRoutine = () => {
-        navigate('/builder/newRoutine')
+        navigate(`/builder/${groupId}/newRoutine`)
     }
 
     return (<div

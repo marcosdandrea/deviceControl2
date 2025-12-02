@@ -31,6 +31,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
     id: RoutineType["id"];
     name: RoutineType["name"];
     description: RoutineType["description"];
+    groupId: RoutineType["groupId"];
     enabled: RoutineType["enabled"];
     runInSync: RoutineType["runInSync"];
     continueOnError: RoutineType["continueOnError"];
@@ -65,6 +66,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.enabled = props.enabled;
         this.runInSync = props.runInSync;
         this.continueOnError = props.continueOnError;
+        this.groupId = props.groupId || null;
         this.triggers = [];
         this.isRunning = false;
         this.failed = false;
@@ -609,6 +611,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
             id: this.id,
             name: this.name,
             description: this.description,
+            groupId: this.groupId,
             status: this.status,
             enabled: this.enabled,
             runInSync: this.runInSync,
