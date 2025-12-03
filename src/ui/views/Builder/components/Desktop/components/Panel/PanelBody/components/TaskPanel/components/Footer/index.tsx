@@ -8,7 +8,7 @@ import { nanoid } from 'nanoid';
 
 const Footer = () => {
     const Navigation = useNavigate()
-    const { routineId, taskId } = useParams()
+    const { routineId, taskId, groupId } = useParams()
     const { project, setProject } = useContext(ProjectContext)
     const { task, taskInstanceId } = useContext(taskContext)
     const [allowSaving, setAllowSaving] = useState(false)
@@ -74,7 +74,7 @@ const Footer = () => {
         thisRoutine.tasksId.push({ id: instanceId, taskId })
         setProject({ ...project })
         message.success('Tarea agregada a la rutina correctamente')
-        Navigation(`/builder/${routineId}/task/${taskId}?instanceId=${instanceId}`)
+        Navigation(`/builder/${groupId}/${routineId}/task/${taskId}?instanceId=${instanceId}`)
     }
 
     const handleOnAddTaskToRoutine = () => {

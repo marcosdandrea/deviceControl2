@@ -18,12 +18,12 @@ const Trigger = ({ triggerData }) => {
     const handleOnMoreOptionsClick = (e) => {
         e.stopPropagation();
         const queryParams = triggerData.instanceId ? `?instanceId=${triggerData.instanceId}` : "";
-        Navigate(`/builder/${routineData.id}/trigger/${triggerData.id}${queryParams}`)
+        Navigate(`/builder/${routineData.groupId}/${routineData.id}/trigger/${triggerData.id}${queryParams}`)
     }
 
     const handleOnAddNewTrigger = (e) => {
         e.stopPropagation();
-        Navigate(`/builder/${routineData.id}/trigger/newTrigger`)
+        Navigate(`/builder/${routineData.groupId}/${routineData.id}/trigger/newTrigger`)
     }
 
     const getTriggerIcon = (triggerType) => {

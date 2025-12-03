@@ -3,6 +3,8 @@ import style from "./style.module.css";
 import Toolbar from "@views/Builder/components/Toolbar";
 import ToolbarButton from "@views/Builder/components/Toolbar/components/ToolbarButton";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { IoTrash } from "react-icons/io5";
+import { Tooltip } from "antd";
 
 type Level = "error" | "warning" | "info";
 
@@ -145,11 +147,15 @@ export default function LogsView() {
                 <div
                     ref={endRef} />
             </div>
-                <Toolbar>
+            <Toolbar
+                style={{
+                    padding: "0.3rem"
+                }}>
                     <ToolbarButton
                         onClick={clearLogView}
-                        icon={<span style={{ fontSize: 20 }}>🗑️</span>} />
-                </Toolbar>
-        </div>
+                        icon={<IoTrash />
+                        } />
+            </Toolbar>
+        </div >
     );
 }

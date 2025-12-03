@@ -58,13 +58,13 @@ const Task = ({ taskData }) => {
 
     const handleOnCreateNewTask = (e) => {
         e.stopPropagation();
-        Navigate(`/builder/${routineData.id}/task/newTask`)
+        Navigate(`/builder/${routineData.groupId}/${routineData.id}/task/newTask`)
     }
 
     const handleOnMoreOptionsClick = (e) => {
         e.stopPropagation();
         const queryParams = taskData.instanceId ? `?instanceId=${taskData.instanceId}` : "";
-        Navigate(`/builder/${routineData.id}/task/${taskData.id}${queryParams}`)
+        Navigate(`/builder/${routineData.groupId}/${routineData.id}/task/${taskData.id}${queryParams}`)
     }
 
 

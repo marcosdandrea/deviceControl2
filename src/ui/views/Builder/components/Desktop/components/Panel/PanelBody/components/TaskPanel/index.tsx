@@ -17,7 +17,7 @@ export const taskContext = createContext({ task: undefined, setTask: (task) => {
 
 const TaskPanel = () => {
     const navigate = useNavigate()
-    const { taskId, routineId } = useParams()
+    const { taskId, routineId, groupId } = useParams()
     const { routines } = useRoutines()
     const [searchParams] = useSearchParams();
     const { project } = useProject({ fetchProject: false })
@@ -35,7 +35,7 @@ const TaskPanel = () => {
         if (routines && routineId) {
             const routine = routines.find(r => r.id === routineId)
             if (!routine) {
-                navigate('/builder')
+                navigate(`/builder/${groupId}`)
             }
         }
     }, [routines, routineId])

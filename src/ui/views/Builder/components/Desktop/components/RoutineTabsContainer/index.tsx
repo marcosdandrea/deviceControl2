@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState, useRef } from 'react';
 import style from './style.module.css';
-import { Popconfirm, Tabs, Input, ConfigProvider, theme } from 'antd';
+import { Popconfirm, Tabs, Input, ConfigProvider, theme, Modal, Button, Tooltip } from 'antd';
 import { ProjectContext, ProjectContextType } from '@contexts/projectContextProvider';
 import RoutineContainer from '../RoutineContainer';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -30,11 +30,11 @@ const RoutineTabsContainer = () => {
         const handleDragOver = (e: React.DragEvent, tabGroupId: string) => {
             const shiftKey = e.dataTransfer.types.includes('routineid');
             if (!shiftKey) return;
-            
+
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             setDragOverTabId(tabGroupId);
-            
+
             // Agregar clase al tab
             const tabElement = (e.currentTarget as HTMLElement).closest('.ant-tabs-tab');
             if (tabElement) {
@@ -44,7 +44,7 @@ const RoutineTabsContainer = () => {
 
         const handleDragLeave = (e: React.DragEvent) => {
             setDragOverTabId(null);
-            
+
             // Remover clase del tab
             const tabElement = (e.currentTarget as HTMLElement).closest('.ant-tabs-tab');
             if (tabElement) {
@@ -55,13 +55,13 @@ const RoutineTabsContainer = () => {
         const handleDrop = (e: React.DragEvent, targetGroupId: string) => {
             e.preventDefault();
             setDragOverTabId(null);
-            
+
             // Remover clase del tab
             const tabElement = (e.currentTarget as HTMLElement).closest('.ant-tabs-tab');
             if (tabElement) {
                 tabElement.classList.remove('drag-over');
             }
-            
+
             const routineId = e.dataTransfer.getData('routineId');
             const currentGroupId = e.dataTransfer.getData('currentGroupId');
             const shiftKey = e.dataTransfer.getData('shiftKey');
@@ -69,8 +69,8 @@ const RoutineTabsContainer = () => {
             if (!shiftKey || !routineId || currentGroupId === targetGroupId) return;
 
             // Actualizar el groupId de la rutina en el array de rutinas
-            const updatedRoutines = project.routines?.map(routine => 
-                routine.id === routineId 
+            const updatedRoutines = project.routines?.map(routine =>
+                routine.id === routineId
                     ? { ...routine, groupId: targetGroupId }
                     : routine
             ) || [];
@@ -113,6 +113,27 @@ const RoutineTabsContainer = () => {
             }
         }
         setPopconfirmOpen(false);
+    }
+
+    const handleOnDeleteGroup = () => {
+        if (!selectedTabGroup) return;
+        const routinesInGroup = project.routines.filter(r => r.groupId === selectedTabGroup.id);
+
+        if (routinesInGroup.length > 0) {
+            alert('No se puede eliminar un grupo que contiene rutinas. Por favor, mueva o elimine las rutinas antes de eliminar el grupo.');
+            return;
+        }
+
+        const updatedGroups = project.groups.filter(g => g.id !== selectedTabGroup.id);
+        setProject({ ...project, groups: updatedGroups });
+        setPopconfirmOpen(false);
+
+        // Navigate to another group or default route
+        if (updatedGroups.length > 0) {
+            navigate(`/builder/${updatedGroups[0].id}`);
+        } else {
+            navigate(`/builder`);
+        }
     }
 
     const handleCancelAddGroup = () => {
@@ -160,24 +181,54 @@ const RoutineTabsContainer = () => {
                     transform: 'translate(-50%, -50%)',
                     zIndex: 10
                 }} >
-                <Popconfirm
-                    title="Agregar nuevo grupo de rutinas"
-                    arrow={false}
-                    description={
+                <Modal
+                    className={style.modal}
+                    open={popconfirmOpen}
+                    closable={false}
+                    footer={
+                        <div
+                            style={{
+                                justifyContent: isCreatingGroup ? 'flex-end' : 'space-between',
+                                columnGap: isCreatingGroup ? ".5rem" : 0,
+                            }}
+                            className={style.modalFooter}>
+                            <Button
+                                onClick={handleConfirmEditGroupName}
+                                type="primary"
+                                style={{ marginLeft: 8 }}>
+                                Confirmar
+                            </Button>
+                            <Tooltip
+                                title={project.routines.some(r => r.groupId === selectedTabGroup?.id) && !isCreatingGroup ? 'No se puede eliminar un grupo que contiene rutinas' : ''}>
+                                {
+                                    isCreatingGroup ? null :
+                                    <Button
+                                        onClick={handleOnDeleteGroup}
+                                        danger
+                                        disabled={(project.routines.some(r => r.groupId === selectedTabGroup?.id))}
+                                        style={{ marginLeft: 8 }}>
+                                        Eliminar grupo
+                                    </Button>
+                                }
+                            </Tooltip>
+                            <Button
+                                onClick={handleCancelAddGroup}>
+                                Cancelar
+                            </Button>
+                        </div>
+                    }
+                    title={isCreatingGroup ? 'Crear nuevo grupo' : 'Editar nombre del grupo'}>
+                    <div className={style.modalContent}>
                         <Input
-                            placeholder="Ingrese el nombre del grupo"
                             value={editingGroupName}
                             onChange={(e) => setEditingGroupName(e.target.value)}
-                            onPressEnter={handleConfirmEditGroupName} />
-                    }
-                    open={popconfirmOpen}
-                    onConfirm={handleConfirmEditGroupName}
-                    onCancel={handleCancelAddGroup}
-                    okText="Agregar"
-                    cancelText="Cancel"
-                    getPopupContainer={() => centerDivRef.current}>
+                            onPressEnter={handleConfirmEditGroupName}
+                            autoFocus
+                            placeholder="Nombre del grupo"
+                        />
+                    </div>
                     <div />
-                </Popconfirm>
+                </Modal>
             </div>
             <Tabs
                 className={style.routineTabsContainer}
@@ -185,6 +236,7 @@ const RoutineTabsContainer = () => {
                 removeIcon={<MdEdit size={16} />}
                 tabPosition='bottom'
                 activeKey={groupId}
+                size='small'
                 onChange={handleOnChangeTab}
                 onEdit={handleOnEditTab}
                 style={{ width: '100%', height: '100%' }}

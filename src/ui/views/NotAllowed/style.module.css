@@ -14,11 +14,6 @@
     font-family: "Open Sans Semibold";
     font-size: 1.5rem;
     width: auto;
-    white-space: break-spaces;
-    overflow: visible;
-    text-overflow: clip;
-    text-align: center;
-
 }
 
 .p{
@@ -26,7 +21,7 @@
     font-family: "Open Sans Regular";
     font-size: 1rem;
     width: auto;
-    max-width: 22rem;
+    max-width: 18rem;
     white-space: break-spaces;
     overflow: visible;
     text-overflow: clip;

@@ -1,5 +1,5 @@
 import style from './style.module.css';
-import React, { createContext, forwardRef } from 'react';
+import React, { createContext, forwardRef, useState } from 'react';
 import RoutineHeader from './components/RoutineHeader';
 import TaskContainer from './components/TaskContainer';
 import TriggersContainer from './components/TriggerContainer';
@@ -17,6 +17,7 @@ interface RoutineProps {
 const Routine = forwardRef<HTMLDivElement, RoutineProps>(({ routineData, isShiftPressed }, ref) => {
 
     const { routineId } = useParams();
+    const [isHovering, setIsHovering] = useState(false);
 
     const handleOnDragStart = (e: React.DragEvent) => {
         console.log('🎯 Drag started, Shift:', e.shiftKey, 'routine:', routineData.id);
@@ -37,13 +38,15 @@ const Routine = forwardRef<HTMLDivElement, RoutineProps>(({ routineData, isShift
         <routineContext.Provider value={{ routineData, isShiftPressed }}>
             <div
                 ref={ref}
+                onMouseEnter={()=>setIsHovering(true)}
+                onMouseLeave={()=>setIsHovering(false)}
                 draggable={isShiftPressed}
                 onDragStart={handleOnDragStart}
                 style={{ cursor: isShiftPressed ? "grab" : "default" }}
                 className={`${style.routine} ${routineId === routineData.id ? style.selected : ''}`} >
                 <RoutineHeader />
                 {
-                    isShiftPressed
+                    isShiftPressed && isHovering
                         ? <GrabAndMoveMessage />
                         : <>
                             <div className={style.body} >

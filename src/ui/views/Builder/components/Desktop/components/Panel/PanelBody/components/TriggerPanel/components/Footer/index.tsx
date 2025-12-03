@@ -8,7 +8,7 @@ import { nanoid } from 'nanoid';
 
 const Footer = () => {
     const { trigger, invalidParams, triggerInstanceId } = useContext(triggerContext)
-    const { routineId } = useParams()
+    const { routineId, groupId } = useParams()
     const { project, setProject } = useProject({ fetchProject: false })
     const [isLastTrigger, setIsLastTrigger] = useState(false)
     const [isANewTrigger, setIsANewTrigger] = useState(false)
@@ -99,7 +99,7 @@ const Footer = () => {
         } 
         //actualiza la rutina en el proyecto
 
-        navigate(`/builder/${routineId}/trigger/${trigger.id}?instanceId=${instanceId}`)
+        navigate(`/builder/${groupId}/${routineId}/trigger/${trigger.id}?instanceId=${instanceId}`)
     }
 
     const handleOnClickDelete = () => {

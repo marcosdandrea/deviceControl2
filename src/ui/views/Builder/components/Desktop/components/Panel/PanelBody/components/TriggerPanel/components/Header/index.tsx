@@ -9,7 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 const Header = () => {
 
-    const { routineId, triggerId } = useParams()
+    const { routineId, groupId } = useParams()
     const { trigger, setTrigger } = useContext(triggerContext)
     const { project, setProject } = useProject({ fetchProject: false })
     const [isANewTrigger, setIsANewTrigger] = React.useState(false)
@@ -32,7 +32,7 @@ const Header = () => {
         }
         project.triggers.push(newTrigger)
         setProject({ ...project })
-        navigate(`/builder/${routineId}/trigger/${newTrigger.id}?instanceId=${triggerInstanceId}`)
+        navigate(`/builder/${groupId}/${routineId}/trigger/${newTrigger.id}?instanceId=${triggerInstanceId}`)
     }
 
     return (

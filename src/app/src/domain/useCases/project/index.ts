@@ -149,6 +149,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
       log.info("Loading triggers...");
 
       for (const triggerData of projectData.triggers || []) {
+         log.info(`Creating trigger '${triggerData.name}' of type '${triggerData.type}'...`);
          const newTrigger = await createNewTriggerByType(triggerData.type, triggerData);
 
          if (!newTrigger) {

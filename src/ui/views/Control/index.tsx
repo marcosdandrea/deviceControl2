@@ -5,7 +5,6 @@ import StatusBar from "./components/StatusBar";
 import PasswordProtection from "./components/PasswordProtection";
 import BlockedControl from "./components/BlockedControl";
 import LicenseChecker from "./components/LicenceChecker";
-import RoutineGroups from "./components/RoutineGroups";
 import { ConfigProvider, theme } from "antd";
 import RoutinesView from "./components/RoutinesView";
 

@@ -30,3 +30,38 @@
     border-color: rgba(24, 144, 255, 0.6) !important;
     transition: background-color 0.2s ease, border-color 0.2s ease;
 }
+
+.routineTabsContainer :global(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
+    color: var(--secondary) !important;
+}
+
+.routineTabsContainer :global(.ant-tabs-nav-wrap) {
+    background-color: var(--component-background) !important;
+    padding: 0rem 0.5rem 0.5rem; 
+    box-sizing: border-box;
+    user-select: none;
+}
+
+.modal{
+    max-width: 25rem;
+}
+
+.modalContent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: white;
+    margin-bottom: 1.5rem;
+}
+
+.modalText{
+    width: auto;
+    font-size: 0.9rem;
+    color: white;
+}
+
+.modalFooter{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}

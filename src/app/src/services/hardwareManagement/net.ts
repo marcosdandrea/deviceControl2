@@ -56,6 +56,9 @@ const mapState = (state: string): NetworkDeviceState => {
 };
 
 export class NetworkManagerService {
+  // Cache para listDevices (persistente durante toda la ejecución)
+  private static devicesCache: NetworkDeviceSummary[] | null = null;
+
   /**
    * Detects the current operating system platform
    */
@@ -454,20 +457,43 @@ export class NetworkManagerService {
 
   /**
    * Lista todos los dispositivos de red según la plataforma.
+   * Usa caché persistente durante toda la ejecución de la aplicación.
    */
-  static async listDevices(): Promise<NetworkDeviceSummary[]> {
+  static async listDevices(forceRefresh: boolean = false): Promise<NetworkDeviceSummary[]> {
+    // Si hay caché y no se fuerza el refresh, retornar caché
+    if (!forceRefresh && this.devicesCache !== null) {
+      return this.devicesCache;
+    }
+
     const platform = this.getPlatform();
+    let devices: NetworkDeviceSummary[];
     
     switch (platform) {
       case "linux":
-        return this.listDevicesLinux();
+        devices = await this.listDevicesLinux();
+        break;
       case "windows":
-        return this.listDevicesWindows();
+        devices = await this.listDevicesWindows();
+        break;
       case "darwin":
-        return this.listDevicesMac();
+        devices = await this.listDevicesMac();
+        break;
       default:
         throw new Error(`Plataforma no soportada: ${platform}`);
     }
+
+    // Actualizar caché
+    this.devicesCache = devices;
+    
+    return devices;
+  }
+
+  /**
+   * Limpia el caché de dispositivos de red.
+   * Útil cuando se realizan cambios en la configuración de red.
+   */
+  static clearDevicesCache(): void {
+    this.devicesCache = null;
   }
 
   /**

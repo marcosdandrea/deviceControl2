@@ -10,7 +10,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 const Header = () => {
 
-    const {routineId, taskId} = useParams()
+    const {routineId, groupId} = useParams()
     const { task, setTask } = useContext<any>(taskContext)
     const { project, setProject } = useProject({ fetchProject: false })
     const [isANewTask, setIsANewTask] = React.useState(false)
@@ -33,8 +33,8 @@ const Header = () => {
         }
         project.tasks.push(newTask)
         setProject({ ...project })
-        navigate(`/builder/${routineId}/task/${newTask.id}?instanceId=${taskInstanceId}`)
-        console.log(`/builder/${routineId}/task/${newTask.id}?instanceId=${taskInstanceId}`)
+        navigate(`/builder/${groupId}/${routineId}/task/${newTask.id}?instanceId=${taskInstanceId}`)
+        console.log(`/builder/${groupId}/${routineId}/task/${newTask.id}?instanceId=${taskInstanceId}`)
         message.success('Componente duplicado correctamente.')
     }
 

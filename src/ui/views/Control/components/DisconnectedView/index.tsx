@@ -1,11 +1,24 @@
-import React from "react";
-import style from "./style.module.css";
+import React from 'react';
+import style from './style.module.css'
+import Text from '@components/Text';
+import { Image } from 'antd';
 
 const DisconnectedView = () => {
     return (
-        <div className={style.disconnectedView}>
-            <p className={style.title}>Este panel está actualmente desconectado de Device Control</p>
-            <p className={style.message}>Por favor, verifique su conexión e intente nuevamente</p>
+        <div className={style.notAllowed}>
+            <Image
+                draggable={false}
+                preview={false}
+                height={"25rem"}
+                src="/resources/images/404.gif"
+                alt="Not Allowed"
+            />
+            <Text className={style.h}>
+                Este panel está desconectado de Device Control
+            </Text>
+            <Text className={style.p}>
+                Por favor, verifique que el dispositivo esté encendido y conectado a la red.
+            </Text>
         </div>
     );
 }
