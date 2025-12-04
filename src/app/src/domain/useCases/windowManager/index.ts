@@ -42,6 +42,7 @@ export const createMainWindow = async () => {
     const WM = WindowManager.getInstance()
     const win = await WM.createWindow({
         name: "main",
+        show: false,
         webPreferences: {
             preload: await import('path').then(path => path.join(__dirname, "preload.js")),
             contextIsolation: true,
@@ -72,10 +73,45 @@ export const createMainWindow = async () => {
     win.setTitle(title)
     log.info("Main window created")
 
+    win.once("ready-to-show", () => {
+        log.info("Main window ready to show")
+        win.show()
+        WM.closeWindow("splash")
+    })
+
     win.on("close", async (event) => {
         event.preventDefault()
         const appUseCases = await import('@src/domain/useCases/app/index.js');
         win.destroy()
         appUseCases.closeApp()
     })
+}
+
+export const createSplashWindow = async () => {
+    log.info("Creating splash window")
+    const isPropietaryHardware = await import('@src/services/hardwareManagement/utils.js').then(mod => mod.isPropietaryHardware())
+
+    if (isPropietaryHardware) {
+        log.info("Skipping splash window creation on proprietary hardware")
+        return
+    }
+
+    const WM = WindowManager.getInstance()
+    const win = await WM.createWindow({
+        name: "splash",
+        width: 600,
+        height: 400,
+        resizable: false,
+        frame: false,
+        alwaysOnTop: true,
+        webPreferences: {
+            preload: await import('path').then(path => path.join(__dirname, "preload.js")),
+            contextIsolation: true,
+            nodeIntegration: false,
+        }
+    })
+
+    win.loadFile('resources/splash/index.html');
+    win.setMenu(null)
+    log.info("Splash window created")
 }

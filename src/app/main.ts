@@ -11,7 +11,6 @@ const enableHeapSnapshoot = false
 const isHeadless = process.argv.includes('--headless') || process.argv.includes('--h') || process.env.HEADLESS === 'true'
 const isDevelopment = process.env.NODE_ENV === 'development' || process.argv.includes('--dev');
 
-
 const log = Log.createInstance('main', true);
 
 if (isDevelopment) log.info('Running in development mode');
@@ -127,7 +126,11 @@ const coreProcesses = async () => {
       electronApp = app;
       app.whenReady().then(async () => {
         try {
+          const { createSplashWindow } = await import('@src/domain/useCases/windowManager/index.js')
+          await createSplashWindow();
+
           await coreProcesses();
+          
           const { createMainWindow } = await import('@src/domain/useCases/windowManager/index.js')
           await createMainWindow()
 

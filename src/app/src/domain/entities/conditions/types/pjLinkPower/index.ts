@@ -125,7 +125,7 @@ export class ConditionPJLinkPower extends Condition {
                 const piece = typeof chunk === "string" ? chunk : chunk.toString("utf8");
                 buffer += piece;
                 const visible = piece.replace(/\r/g, "\\r").replace(/\n/g, "\\n");
-                this.logger.debug(`PJLink RX: "${visible}"`);
+                this.logger.debug(`PJLink RX: "${visible}" | Buffer acumulado: "${buffer.replace(/\r/g, "\\r").replace(/\n/g, "\\n")}"`);
 
                 if (!handshakeCompleted) {
                     if (buffer.includes("PJLINK 1")) {
@@ -136,25 +136,53 @@ export class ConditionPJLinkPower extends Condition {
                     if (buffer.includes("PJLINK 0")) {
                         handshakeCompleted = true;
                         buffer = "";
-                        client.write("%1POWR ?\r");
-                        this.logger.debug("Consulta de estado enviada: %1POWR ?");
+                        this.logger.debug("Handshake completado, enviando consulta de estado...");
+                        const query = "%1POWR ?\r";
+                        client.write(query, (error) => {
+                            if (error) {
+                                safeReject(error);
+                                return;
+                            }
+                            this.logger.debug(`Consulta de estado enviada: ${query.replace(/\r/g, "\\r")}`);
+                        });
                     }
 
                     return;
                 }
 
+                // Ya completamos el handshake, procesamos la respuesta
+                this.logger.debug(`Procesando respuesta post-handshake. Buffer: "${buffer}"`);
+                
+                // Normalizar el buffer para análisis
                 const normalized = buffer.replace(/\r/g, "").replace(/\n/g, "").trim();
+                this.logger.debug(`Buffer normalizado: "${normalized}"`);
 
-                if (normalized.includes(expected.expectedResponse)) {
-                    safeResolve();
-                    return;
-                }
+                // Verificar si tenemos una respuesta completa (termina con \r o \n en el buffer original)
+                if (buffer.includes("\r") || buffer.includes("\n")) {
+                    this.logger.debug(`Respuesta completa detectada: "${normalized}"`);
+                    
+                    if (normalized.includes(expected.expectedResponse)) {
+                        this.logger.info(`✓ Estado confirmado: ${expected.label}`);
+                        safeResolve();
+                        return;
+                    }
 
-                if (/^%\d?ERR\d/.test(normalized)) {
-                    safeReject(new Error(dictionary("app.domain.entities.condition.pjlinkErrorResponse", normalized)));
+                    if (/^%\d?ERR\d/.test(normalized)) {
+                        safeReject(new Error(dictionary("app.domain.entities.condition.pjlinkErrorResponse", normalized)));
+                        return;
+                    }
+
+                    // Si recibimos una respuesta diferente a la esperada, la condición falla
+                    if (normalized.startsWith("%1POWR=")) {
+                        this.logger.info(`✗ Estado no coincide. Esperado: ${expected.expectedResponse}, Recibido: ${normalized}`);
+                        cleanup();
+                        safeReject(new Error(dictionary("app.domain.entities.condition.pjlinkStatusMismatch", expected.label, normalized)));
+                        return;
+                    }
                 }
             });
 
+            this.logger.debug(`Conectando al dispositivo PJLink en ${ip}:${PJLINK_PORT}...`);
             client.connect(PJLINK_PORT, ip);
         });
     }

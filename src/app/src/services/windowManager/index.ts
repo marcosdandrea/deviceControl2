@@ -39,11 +39,11 @@ export class WindowManager {
                     title: options.title || name || "App Window",
                     ...options,
                 });
-                this.windows.set(id, window);
+                this.windows.set(name, window);
 
                 window.on('closed', () => {
                     log.info(`Window ${name && id} closed`);
-                    this.windows.delete(id);
+                    this.windows.delete(name);
                 });
 
                 window.once('ready-to-show', () => {
@@ -58,15 +58,17 @@ export class WindowManager {
         });
     }
 
-    getWindow(id: string): BrowserWindow | undefined {
-        return this.windows.get(id);
+    getWindow(name: string): BrowserWindow | undefined {
+        return this.windows.get(name);
     }
 
-    closeWindow(id: string): void {
-        const window = this.windows.get(id);
+    closeWindow(name: string): void {
+        const window = this.windows.get(name);
         if (window) {
             window.close();
-              this.windows.delete(id);
+              this.windows.delete(name);
+        } else {
+            log.warn(`Window with name ${name} not found`);
         }
     }
 
