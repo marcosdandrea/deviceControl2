@@ -17,6 +17,7 @@
     "icon": "resources/icons/mac/icon.icns",
     "category": "public.app-category.utilities",
     "target": ["zip", { "target": "dmg" }],
+    "identity": null,
     "artifactName": "mac.${productName}-${version}.${ext}",
     "extendInfo": {
       "CFBundleIconFile": "icon.icns"
