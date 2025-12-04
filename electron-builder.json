@@ -5,7 +5,7 @@
   "asar": true,
 
   "extraResources": [
-    { "from": "resources/png", "to": "png" },
+    { "from": "resources/splash", "to": "splash" },
     { "from": ".env", "to": ".env" }
   ],
 

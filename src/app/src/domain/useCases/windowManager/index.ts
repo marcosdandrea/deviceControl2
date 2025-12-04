@@ -111,7 +111,13 @@ export const createSplashWindow = async () => {
         }
     })
 
-    win.loadFile('resources/splash/index.html');
+    const path = await import('path');
+    const splashPath = isDev() 
+        ? path.join(process.cwd(), 'resources/splash/index.html')
+        : path.join(process.resourcesPath, 'splash/index.html');
+    
+    log.info(`Loading splash from: ${splashPath}`);
+    win.loadFile(splashPath);
     win.setMenu(null)
     log.info("Splash window created")
 }
