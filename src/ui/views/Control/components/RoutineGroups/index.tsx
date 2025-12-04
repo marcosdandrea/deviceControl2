@@ -35,7 +35,7 @@ const RoutineGroups = () => {
 
         // Abrir el primer grupo por defecto si hay grupos disponibles
         if (mappedGroups.length > 0 && activeKey.length === 0) {
-            setActiveKey([mappedGroups[0].key]);
+            setActiveKey([mappedGroups[0]?.key]);
         }
 
     }, [project]);
