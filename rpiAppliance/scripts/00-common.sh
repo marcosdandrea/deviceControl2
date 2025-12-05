@@ -1,24 +1,31 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENV_FILE="$ROOT_DIR/.env"
-
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo "[ERROR] .env file not found at $ENV_FILE" >&2
-  exit 1
-fi
-
-# shellcheck disable=SC1090
-source "$ENV_FILE"
-
-log_info()  { echo "[INFO]  $*"; }
-log_warn()  { echo "[WARN]  $*"; }
-log_error() { echo "[ERROR] $*" >&2; }
-
-require_root() {
-  if [[ "$EUID" -ne 0 ]]; then
-    log_error "This script must be run as root (use sudo)."
+check_os_version() {
+  if [[ ! -f /etc/os-release ]]; then
+    log_error "/etc/os-release not found. Cannot determine OS version."
     exit 1
+  fi
+
+  # Parseamos los valores reales del sistema
+  . /etc/os-release
+
+  ACTUAL_VERSION_ID="${VERSION_ID:-unknown}"
+  ACTUAL_CODENAME="${VERSION_CODENAME:-unknown}"
+
+  log_info "Detected system: Debian $ACTUAL_VERSION_ID ($ACTUAL_CODENAME)"
+
+  # Comparamos con lo soportado
+  if [[ "$ACTUAL_VERSION_ID" != "$SUPPORTED_DEBIAN_VERSION" ]] || \
+     [[ "$ACTUAL_CODENAME" != "$SUPPORTED_RPIOS_CODENAME" ]]; then
+
+    log_warn "This script was designed for Debian $SUPPORTED_DEBIAN_VERSION ($SUPPORTED_RPIOS_CODENAME)."
+    log_warn "You are running Debian $ACTUAL_VERSION_ID ($ACTUAL_CODENAME)."
+
+    if [[ "$STRICT_OS_CHECK" == "true" ]]; then
+      log_error "OS mismatch — aborting due to STRICT_OS_CHECK=true."
+      exit 1
+    else
+      log_warn "Continuing anyway because STRICT_OS_CHECK=false."
+    fi
+  else
+    log_info "OS version matches expected Debian $SUPPORTED_DEBIAN_VERSION ($SUPPORTED_RPIOS_CODENAME)."
   fi
 }

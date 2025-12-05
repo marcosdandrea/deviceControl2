@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/00-common.sh"
 
 require_root
+check_os_version
 
 log_info "Creating DC2 system user: $DC2_USER"
 if ! id -u "$DC2_USER" >/dev/null 2>&1; then

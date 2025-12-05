@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/00-common.sh"
 
 require_root
+check_os_version
 
 log_info "Installing minimal X, Openbox, unclutter and browser..."
 
