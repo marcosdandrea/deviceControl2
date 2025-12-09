@@ -15,19 +15,25 @@ echo ""
 log_step "Removing password requirement for $DC2_USER..."
 passwd -d "$DC2_USER"
 
-# Configure autologin on TTY1
-AUTOLOGIN_DIR="/etc/systemd/system/getty@tty1.service.d"
-AUTOLOGIN_CONF="$AUTOLOGIN_DIR/autologin.conf"
+# Configure LightDM autologin
+LIGHTDM_CONF_DIR="/etc/lightdm/lightdm.conf.d"
+LIGHTDM_CONF="$LIGHTDM_CONF_DIR/50-autologin.conf"
 
-log_step "Configuring autologin on TTY1..."
-mkdir -p "$AUTOLOGIN_DIR"
+log_step "Configuring LightDM autologin..."
 
-cat > "$AUTOLOGIN_CONF" << EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin $DC2_USER --noclear %I \$TERM
-Type=idle
+# Create config directory if it doesn't exist
+mkdir -p "$LIGHTDM_CONF_DIR"
+
+# Create LightDM configuration for autologin
+cat > "$LIGHTDM_CONF" << EOF
+[Seat:*]
+autologin-user=$DC2_USER
+autologin-user-timeout=0
+user-session=openbox
+greeter-session=lightdm-gtk-greeter
+xserver-command=X -s 0 -dpms
 EOF
 
-log_info "Autologin configured for $DC2_USER on TTY1"
+log_info "LightDM autologin configured for $DC2_USER"
+log_info "Session: openbox"
 echo ""

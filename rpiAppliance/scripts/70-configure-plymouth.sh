@@ -53,6 +53,15 @@ sprite = Sprite(resized_image);
 sprite.SetPosition(0, 0, 0);
 EOF
 
+log_step "Configuring Plymouth daemon..."
+# Configure Plymouth for smooth transitions
+cat > /etc/plymouth/plymouthd.conf << EOF
+[Daemon]
+Theme=$PLYMOUTH_THEME_NAME
+ShowDelay=0
+DeviceTimeout=8
+EOF
+
 log_step "Setting Plymouth theme..."
 plymouth-set-default-theme -R "$PLYMOUTH_THEME_NAME"
 
@@ -109,6 +118,13 @@ log_info "Parameters: quiet splash plymouth.ignore-serial-consoles"
 log_step "Updating initramfs..."
 update-initramfs -u
 
+log_step "Configuring Plymouth integration with LightDM..."
+# LightDM will automatically handle Plymouth quit when X is ready
+# Unmask services to allow normal Plymouth behavior
+systemctl unmask plymouth-quit.service 2>/dev/null || true
+systemctl unmask plymouth-quit-wait.service 2>/dev/null || true
+
 log_info "Plymouth configured successfully"
+log_info "Plymouth will show during boot and LightDM will handle smooth transition"
 log_info "Boot splash will be shown on next reboot"
 echo ""
