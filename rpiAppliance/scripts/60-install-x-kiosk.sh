@@ -13,8 +13,13 @@ apt install -y --no-install-recommends   xserver-xorg   x11-xserver-utils   xini
 
 # Try to ensure browser is installed
 if ! command -v "$BROWSER_CMD" >/dev/null 2>&1; then
-  log_warn "Browser command $BROWSER_CMD not found, trying to install chromium-browser/chromium..."
-  apt install -y chromium-browser || apt install -y chromium || true
+  log_info "Browser command $BROWSER_CMD not found, installing browser..."
+  # Try chromium first (Debian 13+), fallback to chromium-browser (older)
+  if apt-cache show chromium >/dev/null 2>&1; then
+    apt install -y chromium
+  else
+    apt install -y chromium-browser
+  fi
 fi
 
 if ! command -v "$BROWSER_CMD" >/dev/null 2>&1; then

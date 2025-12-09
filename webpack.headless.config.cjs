@@ -29,6 +29,8 @@ module.exports = {
       '@entities': path.resolve(__dirname, 'src/app/src/domain/entities'),
       '@useCases': path.resolve(__dirname, 'src/app/src/domain/useCases'),
       '@root': path.resolve(__dirname, '.'),
+      // Mock de Electron para modo headless
+      'electron': path.resolve(__dirname, 'src/app/src/utils/electron-mock.ts'),
     },
     plugins: [
       new TsconfigPathsPlugin({
@@ -48,9 +50,6 @@ module.exports = {
         exclude: /node_modules/,
       },
     ],
-  },
-  externals: {
-    electron: 'commonjs2 electron',
   },
   externalsPresets: { node: true },
   node: {
