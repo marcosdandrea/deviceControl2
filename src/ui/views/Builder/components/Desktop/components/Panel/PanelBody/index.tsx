@@ -6,7 +6,7 @@ import RoutinePanel from './components/RoutinePanel';
 import TaskPanel from './components/TaskPanel';
 import TriggerPanel from './components/TriggerPanel';
 
-const PanelBody = () => {
+const PanelBody = React.memo(() => {
     const { project } = useProject({fetchProject: false});
     const { routineId, taskId, triggerId } = useParams()
 
@@ -26,6 +26,8 @@ const PanelBody = () => {
             }
         </div>
     );
-}
+});
+
+PanelBody.displayName = 'PanelBody';
 
 export default PanelBody;

@@ -1,11 +1,11 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useMemo, useCallback } from "react";
 import style from "./style.module.css";
 import { Input, List, message } from "antd";
 import { executionContext } from "@views/Executions";
 import useExecutions from "@views/Executions/hooks/useExecutions";
 import Text from "@components/Text";
 
-const ExecutionListItem = (data: {
+const ExecutionListItem = React.memo((data: {
   timestamp: any;
   executionId: any;
   onClick: Function;
@@ -13,20 +13,26 @@ const ExecutionListItem = (data: {
   onCheckboxChange?: Function;
   checked?: boolean;
 }) => {
-  const label = new Date(data.timestamp).toLocaleString();
+  const label = useMemo(() => 
+    new Date(data.timestamp).toLocaleString()
+  , [data.timestamp]);
 
-  const handleOnDelete = (e: React.MouseEvent) => {
+  const handleOnDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (data.onDelete) {
       data.onDelete(data.executionId);
     }
-  }
+  }, [data.onDelete, data.executionId]);
 
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCheckboxChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (data.onCheckboxChange) {
       data.onCheckboxChange(data.executionId, e.target.checked);
     }
-  };
+  }, [data.onCheckboxChange, data.executionId]);
+
+  const tagStyle = useMemo(() => ({
+    backgroundColor: data.origin === "trigger" ? "var(--trigger)" : "var(--routine)",
+  }), [data.origin]);
 
   return (
     <div
@@ -41,10 +47,7 @@ const ExecutionListItem = (data: {
         </div>
       <div
         className={style.tag}
-        style={{
-          backgroundColor:
-            data.origin === "trigger" ? "var(--trigger)" : "var(--routine)",
-        }}>
+        style={tagStyle}>
         <Text
           style={{ textTransform: "uppercase" }}
           color="white"
@@ -55,7 +58,9 @@ const ExecutionListItem = (data: {
       </div>
     </div>
   );
-};
+});
+
+ExecutionListItem.displayName = 'ExecutionListItem';
 
 const ExecutionsList = () => {
   const {
@@ -72,15 +77,17 @@ const ExecutionsList = () => {
 
   console.log("Selected Executions: ", selectedExecutions);
 
+  const filteredPreviousSelection = useMemo(() => {
+    return selectedExecutions.filter((id) =>
+      executionList.some((execution) => execution.executionId === id)
+    );
+  }, [selectedExecutions, executionList]);
+
   useEffect(() => {
     setExecutionsData(executionList);
     setSelectedExecutionId(null);
-    setSelectedExecutions((previousSelection) =>
-      previousSelection.filter((id) =>
-        executionList.some((execution) => execution.executionId === id)
-      )
-    );
-  }, [executionList, setSelectedExecutionId, setSelectedExecutions]);
+    setSelectedExecutions(filteredPreviousSelection);
+  }, [executionList, setSelectedExecutionId, setSelectedExecutions, filteredPreviousSelection]);
 
   useEffect(() => {
     if (executionsRefreshToken > 0) {
@@ -88,16 +95,23 @@ const ExecutionsList = () => {
     }
   }, [executionsRefreshToken, refreshExecutions]);
 
-  const handleDeleteExecution = (executionId: string) => {
+  const handleDeleteExecution = useCallback((executionId: string) => {
     if (deleteExecution) {
       deleteExecution(executionId)
         .then(() => {message.success("Registro eliminado")})
         .catch(() => {message.error("Error al eliminar el registro")});    
     }
-  };
+  }, [deleteExecution]);
 
-  const handleOnCheckboxChange = (executionId: string, checked: boolean) => {
+  const handleOnCheckboxChange = useCallback((executionId: string, checked: boolean) => {
     setSelectedExecutions((prev) => {
+      if (checked) {
+        return [...prev, executionId];
+      } else {
+        return prev.filter((id) => id !== executionId);
+      }
+    });
+  }, [setSelectedExecutions]);
       if (checked) {
         return [...prev, executionId];
       } else {

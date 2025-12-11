@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useMemo } from "react";
 import style from "./style.module.css";
 import { executionContext } from "@views/Executions";
 import useExecutions from "@views/Executions/hooks/useExecutions";
@@ -23,22 +23,13 @@ const TimelineView = () => {
   const { executionData } = useExecutions( selectedRoutineId, selectedExecutionId) as unknown as { executionData: Execution | null };
   const [timelineData, setTimelineData] = useState<null | any[]>(null);
 
-  useEffect(() => {
+  const processedLogs = useMemo(() => {
     if (!executionData || Object.keys(executionData).length === 0) {
-      setTimelineData(null);
-      return;
+      return null;
     }
 
-    let execution = [];
-
-    execution.push({
-      color: "green",
-      label: new Date(executionData.triggeredBy.ts).toLocaleString(),
-      children: `Rutina iniciada por "${executionData.triggeredBy.name}"`,
-    });
-
     let logs: TimelineLogItem[] = [];
-    //recorrer executionData.log.entries y agregar a logs, incluyendo sub-entries
+    
     const processLogEntry = (entry: ExecutionLog) => {
       logs = logs.concat(
         entry.logs.map((log) => ({
@@ -54,11 +45,14 @@ const TimelineView = () => {
     };
 
     processLogEntry(executionData.log);
-    logs.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+    return logs.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+  }, [executionData]);
 
-    const timelineDataRaw = {};
+  const timelineDataRaw = useMemo(() => {
+    if (!processedLogs) return {};
 
-    logs.forEach((log) => {
+    const rawData = {};
+    processedLogs.forEach((log) => {
       const logDate = new Date(log.ts);
       const truncatedDate = new Date(
         logDate.getFullYear(),
@@ -71,22 +65,36 @@ const TimelineView = () => {
       );
       log.ts = truncatedDate.toISOString();
       const { ts, ...rest } = log;
-      if (timelineDataRaw[ts]) {
-        timelineDataRaw[ts].push(rest);
+      if (rawData[ts]) {
+        rawData[ts].push(rest);
       } else {
-        timelineDataRaw[ts] = [rest];
+        rawData[ts] = [rest];
       }
     });
 
-    //elimina los duplicados de logs
-    Object.keys(timelineDataRaw).forEach((ts) => {
+    // Eliminar duplicados
+    Object.keys(rawData).forEach((ts) => {
       const uniqueLogs = Array.from(
-        new Set(timelineDataRaw[ts].map((log: TimelineLogItem) => JSON.stringify(log)))
+        new Set(rawData[ts].map((log: TimelineLogItem) => JSON.stringify(log)))
       ).map((logStr: string) => JSON.parse(logStr));
-      timelineDataRaw[ts] = uniqueLogs;
+      rawData[ts] = uniqueLogs;
     });
 
-    const timelineData = Object.keys(timelineDataRaw).map((ts) => {
+    return rawData;
+  }, [processedLogs]);
+
+  const finalTimelineData = useMemo(() => {
+    if (!executionData || Object.keys(timelineDataRaw).length === 0) {
+      return null;
+    }
+
+    const execution = [{
+      color: "green",
+      label: new Date(executionData.triggeredBy.ts).toLocaleString(),
+      children: `Rutina iniciada por "${executionData.triggeredBy.name}"`,
+    }];
+
+    const timelineItems = Object.keys(timelineDataRaw).map((ts) => {
       const date = new Date(ts);
       const truncatedDate = new Date(
         date.getFullYear(),
@@ -152,8 +160,12 @@ const TimelineView = () => {
       };
     });
 
-    setTimelineData(timelineData);
-  }, [executionData]);
+    return [...execution, ...timelineItems];
+  }, [executionData, timelineDataRaw]);
+
+  useEffect(() => {
+    setTimelineData(finalTimelineData);
+  }, [finalTimelineData]);
 
   if (!timelineData)
     return (

@@ -3,7 +3,7 @@ import style from './style.module.css'
 import { MdOutlineWarning } from 'react-icons/md';
 import { Tooltip } from 'antd';
 
-const WarningIcon = ({ message, blink }) => {
+const WarningIcon = React.memo(({ message, blink }) => {
     return (
         <Tooltip 
             color='var(--warning)'
@@ -15,6 +15,8 @@ const WarningIcon = ({ message, blink }) => {
                     size={18} />
         </Tooltip>
     );
-}
+});
+
+WarningIcon.displayName = 'WarningIcon';
 
 export default WarningIcon;

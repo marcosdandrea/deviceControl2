@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import style from './style.module.css';
 import Button from '@components/Button';
 import { MdArrowBack, MdCheck } from 'react-icons/md';
@@ -8,34 +8,37 @@ import Text from '@components/Text';
 const PasswordPad = ({ onConfirm, onCancel }: { onConfirm: (password: string) => void, onCancel: () => void }) => {
     const [input, setInput] = React.useState<string>("");
 
-    const handleOnInput = (value: string, e: React.MouseEvent<HTMLDivElement>) => {
+    const handleOnInput = useCallback((value: string, e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         setInput(prev => prev + value);
-    }
+    }, []);
 
-    const handleOnCancel = (e: React.MouseEvent<HTMLDivElement>) => {
+    const handleOnCancel = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         setInput("");
         onCancel();
-    }
+    }, [onCancel]);
 
-    const handleOnConfirm = (e: React.MouseEvent<HTMLDivElement>) => {
+    const handleOnConfirm = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         onConfirm(input);
-    }
+    }, [input, onConfirm]);
+
+    const titleStyle = useMemo(() => ({ width: "auto" }), []);
+
+    const stopPropagation = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
+    const stopPropagationTouch = useCallback((e: React.TouchEvent) => e.stopPropagation(), []);
 
     return (
         <div
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
+            onMouseDown={stopPropagation}
+            onTouchEnd={stopPropagationTouch}
             className={style.passwordPad}>
             <div className={style.padContainer}>
                 <div className={style.titleContainer}>
                 <Text
                     text="Password"
-                    style={{
-                        width: "auto"
-                    }}
+                    style={titleStyle}
                     color={Color.white}/>
                 </div>
                 <div className={style.padRow}>

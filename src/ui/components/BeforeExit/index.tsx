@@ -1,7 +1,7 @@
 import useProject from '@hooks/useProject'
 import React, { useEffect } from 'react'
 
-const BeforeExit = () => {
+const BeforeExit = React.memo(() => {
   const { unsavedChanges } = useProject({ fetchProject: false })
 
   useEffect(() => {
@@ -18,6 +18,8 @@ const BeforeExit = () => {
   }, [unsavedChanges]) // 👈 importante
 
   return null
-}
+})
+
+BeforeExit.displayName = 'BeforeExit';
 
 export default BeforeExit

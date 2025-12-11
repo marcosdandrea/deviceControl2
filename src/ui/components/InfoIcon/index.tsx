@@ -3,7 +3,7 @@ import style from './style.module.css'
 import { MdOutlineInfo } from 'react-icons/md';
 import { Tooltip } from 'antd';
 
-const InfoIcon = ({ message, blink }:{message: string, blink?: boolean}) => {
+const InfoIcon = React.memo(({ message, blink }:{message: string, blink?: boolean}) => {
     return (
         <Tooltip 
             color='var(--info)'
@@ -15,6 +15,8 @@ const InfoIcon = ({ message, blink }:{message: string, blink?: boolean}) => {
                     size={18} />
         </Tooltip>
     );
-}
+});
+
+InfoIcon.displayName = 'InfoIcon';
 
 export default InfoIcon;

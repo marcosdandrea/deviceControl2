@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useMemo } from "react";
 import styles from "./style.module.css";
 import useRoutines from "@hooks/useRoutines";
 import { Select } from "antd";
@@ -12,15 +12,17 @@ const RoutineSelector = () => {
   const { routines } = useRoutines();
   const [options, setOptions] = useState([]);
 
+  const routineOptions = useMemo(() => {
+    return routines.map((routine) => ({
+      label: routine.name,
+      value: routine.id,
+    }));
+  }, [routines]);
+
   useEffect(() => {
     console.log(routines);
-    setOptions(
-      routines.map((routine) => ({
-        label: routine.name,
-        value: routine.id,
-      }))
-    );
-  }, [routines]);
+    setOptions(routineOptions);
+  }, [routineOptions]);
 
   const handleOnSelectionChange = (value: string) => {
     setSelectedRoutineId(value);
