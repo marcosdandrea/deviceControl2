@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useMemo, useCallback } from "react";
+import React, { useContext, useEffect, useState, useMemo, useCallback, useRef } from "react";
 import style from "./style.module.css";
 import { Input, List, message } from "antd";
 import { executionContext } from "@views/Executions";
@@ -12,6 +12,7 @@ const ExecutionListItem = React.memo((data: {
   onDelete: Function;
   onCheckboxChange?: Function;
   checked?: boolean;
+  origin: string;
 }) => {
   const label = useMemo(() => 
     new Date(data.timestamp).toLocaleString()
@@ -74,20 +75,21 @@ const ExecutionsList = () => {
     selectedRoutineId
   );
   const [executionsData, setExecutionsData] = useState(executionList);
-
-  console.log("Selected Executions: ", selectedExecutions);
-
-  const filteredPreviousSelection = useMemo(() => {
-    return selectedExecutions.filter((id) =>
-      executionList.some((execution) => execution.executionId === id)
-    );
-  }, [selectedExecutions, executionList]);
+  const previousExecutionListRef = useRef<any[]>([]);
 
   useEffect(() => {
     setExecutionsData(executionList);
     setSelectedExecutionId(null);
-    setSelectedExecutions(filteredPreviousSelection);
-  }, [executionList, setSelectedExecutionId, setSelectedExecutions, filteredPreviousSelection]);
+    
+    // Solo actualizar selectedExecutions si la lista de ejecuciones cambió
+    if (previousExecutionListRef.current !== executionList) {
+      const filteredSelection = selectedExecutions.filter((id) =>
+        executionList.some((execution) => execution.executionId === id)
+      );
+      setSelectedExecutions(filteredSelection);
+      previousExecutionListRef.current = executionList;
+    }
+  }, [executionList, setSelectedExecutionId, setSelectedExecutions]);
 
   useEffect(() => {
     if (executionsRefreshToken > 0) {
@@ -112,13 +114,7 @@ const ExecutionsList = () => {
       }
     });
   }, [setSelectedExecutions]);
-      if (checked) {
-        return [...prev, executionId];
-      } else {
-        return prev.filter((id) => id !== executionId);
-      }
-    });
-  };
+
 
   return (
     <div className={style.executionsList}>

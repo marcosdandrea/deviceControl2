@@ -48,5 +48,10 @@ const copyIfExists = async (source, destination) => {
     await fs.promises.copyFile(envFile, path.join(webpackDir, '.env'));
   }
 
+  const splashFile = path.join(projectRoot, 'resources', 'splash', 'splash.png');
+  if (fs.existsSync(splashFile)) {
+    await fs.promises.copyFile(splashFile, path.join(webpackDir, 'splash.png'));
+  }
+
   console.log('\nHeadless bundle generated at dist/webpack');
 })();
