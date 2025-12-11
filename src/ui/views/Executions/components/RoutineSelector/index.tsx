@@ -20,7 +20,6 @@ const RoutineSelector = () => {
   }, [routines]);
 
   useEffect(() => {
-    console.log(routines);
     setOptions(routineOptions);
   }, [routineOptions]);
 

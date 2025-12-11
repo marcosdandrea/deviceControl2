@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/00-common.sh"
 
 # Parse arguments
+CLEAN_INSTALL="false"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --force-download)
@@ -20,13 +21,19 @@ while [[ $# -gt 0 ]]; do
       export DC2_VERSION="beta"
       shift
       ;;
+    --clean-install)
+      CLEAN_INSTALL="true"
+      export FORCE_DOWNLOAD="true"
+      shift
+      ;;
     *)
-      echo "Usage: $0 [--force-download] [--beta] [--version=X.Y.Z]"
+      echo "Usage: $0 [--force-download] [--beta] [--version=X.Y.Z] [--clean-install]"
       echo ""
       echo "Options:"
       echo "  --force-download     Force re-download even if DC2 is installed"
       echo "  --beta               Install latest beta/pre-release"
       echo "  --version=X.Y.Z      Install specific version"
+      echo "  --clean-install      Remove all existing installation (logs, license, etc) and reinstall"
       exit 1
       ;;
   esac
@@ -45,6 +52,31 @@ echo ""
 require_root
 check_os_version
 check_required_user
+
+# Clean installation if requested
+if [[ "$CLEAN_INSTALL" == "true" ]]; then
+  log_info "Clean installation requested"
+  if [[ -d "$DC2_INSTALL_DIR" ]]; then
+    log_warn "Removing existing installation directory: $DC2_INSTALL_DIR"
+    log_warn "This will delete all logs, license, and configuration files"
+    echo ""
+    read -p "Are you sure you want to continue? (yes/no): " -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
+      log_step "Stopping DeviceControl2 service if running..."
+      systemctl stop devicecontrol.service 2>/dev/null || true
+      log_step "Removing installation directory..."
+      rm -rf "$DC2_INSTALL_DIR"
+      log_info "Clean installation directory removed"
+    else
+      log_error "Clean installation cancelled by user"
+      exit 1
+    fi
+  else
+    log_info "No existing installation found at $DC2_INSTALL_DIR"
+  fi
+  echo ""
+fi
 
 log_info "Starting installation process..."
 echo ""
