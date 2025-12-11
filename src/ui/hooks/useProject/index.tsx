@@ -1,6 +1,6 @@
 import { projectType } from "@common/types/project.types";
 import { SocketIOContext } from "@components/SocketIOProvider";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useCallback } from "react";
 import { Logger } from "@helpers/logger";
 import projectCommands from "@common/commands/project.commands";
 import projectEvents from "@common/events/project.events";
@@ -15,7 +15,7 @@ const useProject = (params: { fetchProject?: boolean }) => {
     setUnsavedChanges,
   } = useContext(ProjectContext);
 
-  const setProject = (
+  const setProject = useCallback((
     value:
       | ((prev: projectType | null) => projectType | null)
       | (projectType | null)
@@ -30,48 +30,48 @@ const useProject = (params: { fetchProject?: boolean }) => {
         : updatedProject;
     });
     setUnsavedChanges(true);
-  };
+  }, [setProjectInContext, setUnsavedChanges]);
+
+  const updateProject = useCallback(({
+    projectData,
+    error,
+  }: {
+    projectData: projectType;
+    error?: string;
+  }) => {
+    if (error) Logger.error("Error fetching project:", error);
+    else if (!projectData) {
+      Logger.warn("No project data found");
+      setProject(null);
+    } else {
+      Logger.log("Project data loaded:", projectData);
+      setProject(projectData);
+    }
+    setUnsavedChanges(false);
+  }, [setProject, setUnsavedChanges]);
+
+  const handleOnProjectChanged = useCallback((payload) => {
+    Logger.log("Project changed:", payload);
+    updateProject(payload);
+  }, [updateProject]);
+
+  const handleOnGetProject = useCallback((payload) => {
+    Logger.log("Project fetched:", payload);
+    updateProject(payload);
+  }, [updateProject]);
+
+  const handleOnProjectLoaded = useCallback((payload) => {
+    Logger.log("Project loaded:", payload);
+    updateProject(payload);
+  }, [updateProject]);
+
+  const handleOnProjectClosed = useCallback((payload) => {
+    Logger.log("Project closed:", payload);
+    updateProject({ projectData: null });
+  }, [updateProject]);
 
   useEffect(() => {
     if (!socket) return;
-
-    const updateProject = ({
-      projectData,
-      error,
-    }: {
-      projectData: projectType;
-      error?: string;
-    }) => {
-      if (error) Logger.error("Error fetching project:", error);
-      else if (!projectData) {
-        Logger.warn("No project data found");
-        setProject(null);
-      } else {
-        Logger.log("Project data loaded:", projectData);
-        setProject(projectData);
-      }
-      setUnsavedChanges(false);
-    };
-
-    const handleOnProjectChanged = (payload) => {
-      Logger.log("Project changed:", payload);
-      updateProject(payload);
-    };
-
-    const handleOnGetProject = (payload) => {
-      Logger.log("Project fetched:", payload);
-      updateProject(payload);
-    };
-
-    const handleOnProjectLoaded = (payload) => {
-      Logger.log("Project loaded:", payload);
-      updateProject(payload);
-    };
-
-    const handleOnProjectClosed = (payload) => {
-      Logger.log("Project closed:", payload);
-      updateProject({ projectData: null });
-    };
 
     if (params?.fetchProject)
       emit(projectCommands.getCurrent, null, handleOnGetProject);
@@ -85,9 +85,9 @@ const useProject = (params: { fetchProject?: boolean }) => {
       socket.off(projectEvents.loaded, handleOnProjectLoaded);
       socket.off(projectEvents.closed, handleOnProjectClosed);
     };
-  }, [socket]);
+  }, [socket, emit, params?.fetchProject, handleOnGetProject, handleOnProjectChanged, handleOnProjectLoaded, handleOnProjectClosed]);
 
-  const createNewProject = async () => {
+  const createNewProject = useCallback(async () => {
     if (!socket) return;
 
     return new Promise<projectType>((resolve, reject) => {
@@ -112,7 +112,28 @@ const useProject = (params: { fetchProject?: boolean }) => {
         }
       );
     });
-  };
+  }, [socket, emit, setProject, setUnsavedChanges]);
+
+  const unloadProject = useCallback(async () => {
+    return new Promise<void>((resolve, reject) => {
+      if (!socket) return;
+
+      emit(
+        projectCommands.close,
+        null,
+        (response: { success?: boolean; error?: string }) => {
+          if (response.error) {
+            reject(new Error(response.error));
+            Logger.error("Error unloading project:", response.error);
+          } else {
+            setProjectInContext(null);
+            setUnsavedChanges(false);
+            resolve();
+          }
+        }
+      );
+    });
+  }, [socket, emit, setProjectInContext, setUnsavedChanges]);
 
   const loadProjectFile = async (fileData: ArrayBuffer | String) => {
     if (!socket) return;
@@ -146,27 +167,6 @@ const useProject = (params: { fetchProject?: boolean }) => {
         }
       }
     );
-  };
-
-  const unloadProject = async () => {
-    return new Promise<void>((resolve, reject) => {
-      if (!socket) return;
-
-      emit(
-        projectCommands.close,
-        null,
-        (response: { success?: boolean; error?: string }) => {
-          if (response.error) {
-            reject(new Error(response.error));
-            Logger.error("Error unloading project:", response.error);
-          } else {
-            setProjectInContext(null);
-            setUnsavedChanges(false);
-            resolve();
-          }
-        }
-      );
-    });
   };
 
   const getProjectFile = async (): Promise<string | null> => {

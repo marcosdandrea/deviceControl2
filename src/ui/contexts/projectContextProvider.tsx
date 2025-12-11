@@ -1,5 +1,5 @@
 import { projectType } from '@common/types/project.types';
-import React, { createContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState, useMemo, useCallback } from 'react';
 
 export const ProjectContext = createContext<ProjectContextType | null>(null);
 
@@ -14,13 +14,20 @@ const ProjectContextProvider = ({children}) => {
     const [project, _setProject] = useState<projectType | null>(null);
     const [unsavedChanges, setUnsavedChanges] = useState(false);
 
-    const setProject = (project) => {
+    const setProject = useCallback((project) => {
         setUnsavedChanges(true);
         _setProject(project);
-    }
+    }, []);
+
+    const contextValue = useMemo(() => ({
+        project,
+        setProject,
+        unsavedChanges,
+        setUnsavedChanges
+    }), [project, setProject, unsavedChanges]);
 
     return (
-        <ProjectContext.Provider value={{ project, setProject, unsavedChanges, setUnsavedChanges }}>
+        <ProjectContext.Provider value={contextValue}>
             {children}
         </ProjectContext.Provider>
     );

@@ -1,17 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import style from './style.module.css';
 import useRoutines from '@hooks/useRoutines';
 import { globalRoutineStatusContext } from '../RoutineList';
 
 
-const MinifiedTag = ({routineId, id}) => {
+const MinifiedTag = React.memo(({routineId, id}) => {
     const {globalRoutineStatus} = React.useContext<any>(globalRoutineStatusContext);
     const [color, setColor] = React.useState<string>("#888888");
 
     React.useEffect(() => {
         const routineStatus = globalRoutineStatus?.find((r:{routineId:string, status:string}) => r.routineId === routineId);
         setColor(routineStatus?.status)
-    }, [globalRoutineStatus]);
+    }, [globalRoutineStatus, routineId]);
 
     return (<div
         id={id}
@@ -19,16 +19,15 @@ const MinifiedTag = ({routineId, id}) => {
         style={{ backgroundColor: color }}
         className={style.routineTagMinified} />
     );
-}
+});
 
-const MinifiedStatusView = ({groupId}) => {
+const MinifiedStatusView = React.memo(({groupId}) => {
     const { routines } = useRoutines()
-    const [routineList, setRoutineList] = React.useState<any[]>([]);
-
-    React.useEffect(() => {
-        setRoutineList(routines
-                .filter(r => r.groupId === groupId)
-                .filter(r => !r.hidden));
+    
+    const routineList = useMemo(() => {
+        return routines
+            .filter(r => r.groupId === groupId)
+            .filter(r => !r.hidden);
     }, [routines, groupId]);
 
     return (
@@ -40,6 +39,6 @@ const MinifiedStatusView = ({groupId}) => {
             }
         </div>
     );
-}
+});
 
 export default MinifiedStatusView;

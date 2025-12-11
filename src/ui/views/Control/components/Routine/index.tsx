@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import style from "./style.module.css";
 import { Color } from "@common/theme/colors";
 import Text from "@components/Text";
@@ -15,11 +15,11 @@ type Props = {
     routineData: RoutineType;
 };
 
-const Routine = ({ routineData }: Props) => {
+const Routine = React.memo(({ routineData }: Props) => {
 
     const containerRef = React.useRef<HTMLDivElement | null>(null);
 
-    const lastEvent = useRoutineEvents(routineData.id, [
+    const eventsToListen = useMemo(() => [
         routineEvents.routineCompleted,
         routineEvents.routineAborted,
         routineEvents.routineRunning,
@@ -27,7 +27,9 @@ const Routine = ({ routineData }: Props) => {
         routineEvents.routineAutoCheckingConditions,
         routineEvents.routineIdle,
         routineEvents.routineTimeout
-    ]);
+    ], []);
+
+    const lastEvent = useRoutineEvents(routineData.id, eventsToListen);
 
     return (
         <RoutineContextProvider routine={routineData}>
@@ -59,6 +61,6 @@ const Routine = ({ routineData }: Props) => {
             </div>
         </RoutineContextProvider>
     );
-};
+});
 
 export default Routine;

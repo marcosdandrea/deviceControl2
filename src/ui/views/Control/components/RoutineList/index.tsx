@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import style from "./style.module.css";
 import Routine from "../Routine";
 import useProject from "@hooks/useProject";
@@ -12,22 +12,24 @@ export const globalRoutineStatusContext = React.createContext<{
   >;
 }>({ globalRoutineStatus: [], setGlobalRoutineStatus: () => { } });
 
-const RoutineList = ({ groupId }: { groupId?: string }) => {
+const RoutineList = React.memo(({ groupId }: { groupId?: string }) => {
   const { project } = useProject({ fetchProject: false });
   const [globalRoutineStatus, setGlobalRoutineStatus] = React.useState<{ routineId: string; status: string }[]>([]);
-  const [routines, setRoutines] = useState<any[]>([]);
-
-  React.useEffect(() => {
-    if (!project) return;
-    setRoutines(project.routines
+  
+  const filteredRoutines = useMemo(() => {
+    if (!project) return [];
+    return project.routines
       .filter(r => (groupId ? r.groupId === groupId : true))
-      .filter((r) => !r.hidden));
+      .filter((r) => !r.hidden);
   }, [project, groupId]);
 
+  const contextValue = useMemo(() => ({
+    globalRoutineStatus,
+    setGlobalRoutineStatus
+  }), [globalRoutineStatus]);
+
   return (
-    <globalRoutineStatusContext.Provider
-      value={{ globalRoutineStatus, setGlobalRoutineStatus }}
-    >
+    <globalRoutineStatusContext.Provider value={contextValue}>
       {!project ? (
         <div className={style.noRoutines}>
           <p className={style.noRoutinesTitle}>No hay proyecto</p>
@@ -47,8 +49,8 @@ const RoutineList = ({ groupId }: { groupId?: string }) => {
           <div className={style.routineList}>
             <div className={style.routinesContainer}>
               {
-                routines.length > 0
-                  ? routines.map((routine) => (
+                filteredRoutines.length > 0
+                  ? filteredRoutines.map((routine) => (
                     <Routine key={routine.id} routineData={routine} />
                   )) 
                   : <Empty description="No hay rutinas en este grupo." />}
@@ -59,6 +61,6 @@ const RoutineList = ({ groupId }: { groupId?: string }) => {
       )}
     </globalRoutineStatusContext.Provider>
   );
-};
+});
 
 export default RoutineList;

@@ -1,17 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import style from './style.module.css';
 import { Collapse, ConfigProvider } from 'antd';
 import useProject from '@hooks/useProject';
 import RoutineList from '../RoutineList';
 import GroupMonitorDetails from '../GroupMonitorDetails';
 
-const RoutineGroups = () => {
+const RoutineGroups = React.memo(() => {
     const { project } = useProject({ fetchProject: true });
-    const [groups, setGroups] = React.useState([]);
     const [activeKey, setActiveKey] = React.useState<string | string[]>([]);
 
-    useEffect(() => {
-        if (!project) return;
+    const groups = useMemo(() => {
+        if (!project) return [];
 
         const projectGroups = project.groups;
 
@@ -31,14 +30,15 @@ const RoutineGroups = () => {
             })
         });
 
-        setGroups(mappedGroups.filter(group => group !== null));
-
-        // Abrir el primer grupo por defecto si hay grupos disponibles
-        if (mappedGroups.length > 0 && activeKey.length === 0) {
-            setActiveKey([mappedGroups[0]?.key]);
-        }
-
+        return mappedGroups.filter(group => group !== null);
     }, [project]);
+
+    useEffect(() => {
+        // Abrir el primer grupo por defecto si hay grupos disponibles
+        if (groups.length > 0 && activeKey.length === 0) {
+            setActiveKey([groups[0]?.key]);
+        }
+    }, [groups, activeKey.length]);
 
     return (
         <ConfigProvider
@@ -68,7 +68,7 @@ const RoutineGroups = () => {
                 }} />
         </ConfigProvider>
     );
-}
+});
 
 
 export default RoutineGroups;

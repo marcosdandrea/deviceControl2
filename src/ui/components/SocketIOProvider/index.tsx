@@ -1,5 +1,5 @@
 
-import React, { createContext } from 'react';
+import React, { createContext, useMemo, useCallback } from 'react';
 import { io } from "socket.io-client";
 import { useEffect, useState } from 'react';
 import { Logger } from '@helpers/logger';
@@ -42,7 +42,7 @@ const SocketIOProvider = ({ children, mountComponentsOnlyWhenConnect = false, di
         };
     }, []);
 
-    const emit = (event: string, data?: any, cb?: Function) => {
+    const emit = useCallback((event: string, data?: any, cb?: Function) => {
         if (socket) {
             Logger.log(`Emitting event: ${event}, including callback?: ${!!cb}, data:`, data);
             socket.emit(event, data, (response: any) => {
@@ -54,10 +54,16 @@ const SocketIOProvider = ({ children, mountComponentsOnlyWhenConnect = false, di
         } else {
             Logger.error("Socket is not connected");
         }
-    };
+    }, [socket]);
+
+    const contextValue = useMemo(() => ({
+        socket,
+        emit,
+        isConnected
+    }), [socket, emit, isConnected]);
 
     return (
-        <SocketIOContext.Provider value={{ socket, emit, isConnected }}>
+        <SocketIOContext.Provider value={contextValue}>
             {
                 mountComponentsOnlyWhenConnect && !socket
                     ? disconnectionViewComponent

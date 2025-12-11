@@ -6,7 +6,7 @@ import Terminal from '@views/Terminal';
 import React from 'react';
 import { HashRouter, Routes, Route } from "react-router-dom";
 
-const Navigation = () => {
+const Navigation = React.memo(() => {
     return (
         <HashRouter>
             <Routes>
@@ -24,6 +24,6 @@ const Navigation = () => {
             </Routes>
         </HashRouter>
     )
-}
+});
 
 export default Navigation;
