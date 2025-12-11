@@ -2,15 +2,18 @@ import React from 'react';
 import style from './style.module.css'
 import Text from '@components/Text';
 import { Image } from 'antd';
+import { usePreloadedImages } from '@contexts/PreloadedImagesProvider';
 
 const DisconnectedView = () => {
+    const { disconnectedImage } = usePreloadedImages();
+    
     return (
         <div className={style.notAllowed}>
             <Image
                 draggable={false}
                 preview={false}
                 height={"25rem"}
-                src="/resources/images/404.gif"
+                src={disconnectedImage.dataUrl || "/resources/images/404.gif"}
                 alt="Not Allowed"
             />
             <Text className={style.h}>

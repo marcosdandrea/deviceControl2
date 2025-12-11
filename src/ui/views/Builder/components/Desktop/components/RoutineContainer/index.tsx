@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import style from './style.module.css';
 import Routine from './components/Routine';
 import SortableList, { SortableItem } from 'react-easy-sort'
-import arrayMove from 'array-move'
+import {arrayMoveImmutable} from 'array-move'
 import useRoutines from '@hooks/useRoutines';
 import Panel from '../Panel';
 import { useParams } from 'react-router-dom';
@@ -57,7 +57,7 @@ const RoutineContainer = () => {
     }, [routineId]);
 
     const onSortEnd = (oldIndex: number, newIndex: number) => {
-        const newRoutinesOrder = arrayMove(routines, routines
+        const newRoutinesOrder = arrayMoveImmutable(routines, routines
             .findIndex(r => r.id === routinesToShow[oldIndex].id && r.groupId === routinesToShow[oldIndex].groupId), 
             routines.findIndex(r => r.id === routinesToShow[newIndex].id && r.groupId === routinesToShow[newIndex].groupId));
         setRoutines(newRoutinesOrder);
