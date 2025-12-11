@@ -3,7 +3,7 @@ import wifiEvents from "@common/events/wifi.events";
 import { WiFiConnectionStatus, WiFiNetwork } from "@common/types/wifi.types";
 import { SocketIOContext } from "@components/SocketIOProvider";
 import { message } from "antd";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 
 const useWifi = () => {
     
@@ -11,52 +11,57 @@ const useWifi = () => {
     const [wifiStatus, setWifiStatus] = useState<WiFiConnectionStatus>({ connected: false });
     const [availableNetworks, setAvailableNetworks] = useState<WiFiNetwork[]>([])
 
+    const handleNetworksUpdate = useCallback((networks: WiFiNetwork[]) => {
+        setAvailableNetworks(networks);
+    }, []);
+
+    const handleStatusChange = useCallback((status: WiFiConnectionStatus) => {
+        setWifiStatus(status);
+    }, []);
+
+    const handleInitialStatus = useCallback((status: WiFiConnectionStatus) => {
+        setWifiStatus(status);
+    }, []);
+
+    const handleInitialNetworks = useCallback((networks: WiFiNetwork[]) => {
+        setAvailableNetworks(networks);
+    }, []);
+
     useEffect(() => {
         if (!socket) return;
 
         socket.emit(wifiCommands.startWiFiMonitoring);
 
-        socket.on(wifiEvents.wifiNetworksUpdated, (networks: WiFiNetwork[]) => {
-            setAvailableNetworks(networks);
-        });
-
-        socket.on(wifiEvents.wifiStatusChanged, (status: WiFiConnectionStatus) => {
-            setWifiStatus(status);
-        });
+        socket.on(wifiEvents.wifiNetworksUpdated, handleNetworksUpdate);
+        socket.on(wifiEvents.wifiStatusChanged, handleStatusChange);
 
         // Obtener el estado inicial de la conexión WiFi
-        socket.emit(wifiCommands.getConnectionStatus, null, (status: WiFiConnectionStatus) => {
-            setWifiStatus(status);
-        });
-
-        socket.emit(wifiCommands.getAvailableNetworks, null, (networks: WiFiNetwork[]) => {
-            setAvailableNetworks(networks);
-        });
+        socket.emit(wifiCommands.getConnectionStatus, null, handleInitialStatus);
+        socket.emit(wifiCommands.getAvailableNetworks, null, handleInitialNetworks);
 
         return () => {
-            socket.off(wifiEvents.wifiNetworksUpdated);
-            socket.off(wifiEvents.wifiStatusChanged);
+            socket.off(wifiEvents.wifiNetworksUpdated, handleNetworksUpdate);
+            socket.off(wifiEvents.wifiStatusChanged, handleStatusChange);
             socket.emit(wifiCommands.stopWiFiMonitoring);
         }
+    }, [socket, handleNetworksUpdate, handleStatusChange, handleInitialStatus, handleInitialNetworks]);
 
-    }, [socket]);
-
-    const disconnectWifi = () => {
+    const disconnectWifi = useCallback(() => {
         if (!socket) return;
         message.warning(`Se va a desconectar el Wifi`)
         socket.emit(wifiCommands.disconnectFromNetwork);
-    }
+    }, [socket]);
 
-    const connectWifi = (ssid: string, password: string, callback?: (result: any) => void) => {
+    const connectWifi = useCallback((ssid: string, password: string, callback?: (result: any) => void) => {
         if (!socket) return;
         socket.emit(wifiCommands.connectToNetwork, { ssid, password }, (result) => {
             if (result?.error){
                 message.error(`Error conectando a la red Wifi`)
             }
             message.success(`Conexión exitosa a la red Wifi`)
-            callback(result)
+            callback?.(result)
         });
-    }
+    }, [socket]);
 
     return { wifiStatus, availableNetworks, disconnectWifi, connectWifi };
 }

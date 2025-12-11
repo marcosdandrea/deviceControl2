@@ -1,36 +1,43 @@
 import { SocketIOContext } from "@components/SocketIOProvider";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback, useMemo } from "react";
 
 const useRoutineEvents = (routineId: string, events: string[]) => {
 
     const {socket} = useContext(SocketIOContext);
     const [lastEvent, setLastEvent] = useState<{time: number, event: string, data: any} | null>(null);
 
-    useEffect(()=>{
-        if (!socket || !routineId || !events) return;
+    const routineChannelBasename = useMemo(() => 
+        routineId ? `routine.${routineId}` : null
+    , [routineId]);
 
-        const routineChannelBasename = `routine.${routineId}`;
+    const handleEvent = useCallback((event: string) => (data: any) => {
+        setLastEvent({
+            time: Date.now(),
+            event,
+            data
+        });
+    }, []);
+
+    useEffect(()=>{
+        if (!socket || !routineChannelBasename || !events?.length) return;
+
+        const handlers = new Map();
 
         for (const event of events) {
             const eventName = `${routineChannelBasename}.${event}`;
-            socket.on(eventName, (data) => {
-                setLastEvent({
-                    time: Date.now(),
-                    event,
-                    data
-                });
-            });
+            const handler = handleEvent(event);
+            handlers.set(eventName, handler);
+            socket.on(eventName, handler);
         }
 
-
         return () => {
-            for (const event of events) {
-                const eventName = `${routineChannelBasename}.${event}`;
-                socket.off(eventName);
+            for (const [eventName, handler] of handlers) {
+                socket.off(eventName, handler);
             }
+            handlers.clear();
         };
 
-    },[events, routineId]);
+    }, [socket, routineChannelBasename, events, handleEvent]);
 
     return lastEvent;
 }

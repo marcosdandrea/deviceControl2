@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import style from './style.module.css';
 import { Color } from '@common/theme/colors';
 
-const Button = ({ color, icon, text, onClick, styles, enabled = true }: {
+const Button = React.memo(({ color, icon, text, onClick, styles, enabled = true }: {
     color?: string;
     icon?: React.ReactNode;
     text?: string;
@@ -10,6 +10,11 @@ const Button = ({ color, icon, text, onClick, styles, enabled = true }: {
     styles?: React.CSSProperties;
     enabled?: boolean;
 }) => {
+
+    const buttonStyle = useMemo(() => ({
+        backgroundColor: color ?? Color.primary,
+        ...styles
+    }), [color, styles]);
 
     const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -20,11 +25,11 @@ const Button = ({ color, icon, text, onClick, styles, enabled = true }: {
     return (
         <div
             className={`${style.button} ${enabled ? style.enabled : style.disabled}`}
-            style={{ backgroundColor: color ?? Color.primary, ...styles }} onClick={handleClick}>
+            style={buttonStyle} onClick={handleClick}>
             {icon}
             {text}
         </div>
     );
-}
+});
 
 export default Button;

@@ -1,22 +1,36 @@
 import { Input } from 'antd';
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { routineConfigurationContext } from '../..';
+import useDebounce from '@hooks/useDebounce';
 
 const RoutineName = () => {
     const { routine, setRoutine } = useContext(routineConfigurationContext)
+    const [localName, setLocalName] = useState(routine?.name || '');
+    const debouncedName = useDebounce(localName, 300);
+
+    // Sincronizar el valor debounced con el contexto
+    useEffect(() => {
+        if (debouncedName !== routine?.name) {
+            setRoutine({ ...routine, name: debouncedName });
+        }
+    }, [debouncedName, routine, setRoutine]);
+
+    // Sincronizar cuando cambie la rutina externamente
+    useEffect(() => {
+        setLocalName(routine?.name || '');
+    }, [routine?.name]);
 
     const handleOnChangeName = (e) => {
-        const newName = e.target.value;
-        setRoutine({ ...routine, name: newName })
+        setLocalName(e.target.value);
     }
 
     return (
         <Input
             tabIndex={1}
             placeholder="Nombre de la rutina"
-            status={!routine?.name ? "error" : routine && routine.name.trim() === '' ? 'error' : ''}
+            status={!localName ? "error" : localName.trim() === '' ? 'error' : ''}
             addonBefore="Nombre"
-            value={routine ? routine.name : ''}
+            value={localName}
             onChange={handleOnChangeName}
         />
     );

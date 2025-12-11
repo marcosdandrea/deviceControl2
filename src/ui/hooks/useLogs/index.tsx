@@ -1,6 +1,6 @@
 import logEvents from "@common/events/log.events";
 import { SocketIOContext } from "@components/SocketIOProvider";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 
 type logEntry = {
     message: string;
@@ -14,32 +14,34 @@ const useLogs = () => {
     const [lastErrorLog, setLastErrorLog] = useState<logEntry>(null);
     const [lastWarningLog, setLastWarningLog] = useState<logEntry>(null);
 
-    const addToInfoLog = (message: string, data?: any) => {
+    const addToInfoLog = useCallback((message: string, data?: any) => {
         const newLog = { message, data };
         setLogs((prevLogs) => [...prevLogs, newLog]);
         setLastInfoLog(newLog);
-    }
+    }, []);
 
-    const addToWarningLog = (message: string, data?: any) => {
+    const addToWarningLog = useCallback((message: string, data?: any) => {
         const newLog = { message, data };
         setLogs((prevLogs) => [...prevLogs, newLog]);
         setLastWarningLog(newLog);
-    }
+    }, []);
 
-    const addToErrorLog = (message: string, data?: any) => {
+    const addToErrorLog = useCallback((message: string, data?: any) => {
         const newLog = { message, data };
         setLogs((prevLogs) => [...prevLogs, newLog]);
         setLastErrorLog(newLog);
-    }
+    }, []);
 
-    const clearLogs = () => {
+    const clearLogs = useCallback(() => {
         setLogs([]);
         setLastInfoLog(null);
         setLastWarningLog(null);
         setLastErrorLog(null);
-    };
+    }, []);
 
     useEffect(()=>{
+        if (!socket) return;
+
         socket.on(logEvents.logInfo, addToInfoLog);
         socket.on(logEvents.logWarning, addToWarningLog);
         socket.on(logEvents.logError, addToErrorLog);
@@ -49,7 +51,7 @@ const useLogs = () => {
             socket.off(logEvents.logWarning, addToWarningLog);
             socket.off(logEvents.logError, addToErrorLog);
         };
-    }, [socket]);
+    }, [socket, addToInfoLog, addToWarningLog, addToErrorLog]);
 
     return { logs, clearLogs, lastInfoLog, lastWarningLog, lastErrorLog };
 }
