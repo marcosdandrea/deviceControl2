@@ -109,6 +109,11 @@ PORT=8080
 EOF
 fi
 
+# Save version information for other scripts
+log_step "Saving version information..."
+echo "$RELEASE_TAG" > "$DC2_INSTALL_DIR/.version"
+log_info "Installed version: $RELEASE_TAG"
+
 # Set ownership
 log_step "Setting ownership to $DC2_USER..."
 chown -R "$DC2_USER:$DC2_USER" "$DC2_INSTALL_DIR"

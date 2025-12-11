@@ -41,17 +41,46 @@ ImageDir=$PLYMOUTH_THEME_DIR
 ScriptFile=$PLYMOUTH_THEME_DIR/$PLYMOUTH_THEME_NAME.script
 EOF
 
-# Create script file for image display
+# Create script file for image display with version text
 cat > "$PLYMOUTH_THEME_DIR/$PLYMOUTH_THEME_NAME.script" << 'EOF'
-# Simple script to display splash image
+# Script to display splash image with version text at the bottom
 
+# Load and display splash image
 splash_image = Image("splash.png");
 screen_width = Window.GetWidth();
 screen_height = Window.GetHeight();
 resized_image = splash_image.Scale(screen_width, screen_height);
 sprite = Sprite(resized_image);
 sprite.SetPosition(0, 0, 0);
+
+# Display version text at the bottom
+version_text = "Device Control VERSION_PLACEHOLDER - Proyecciones Digitales YEAR_PLACEHOLDER";
+version_image = Image.Text(version_text, 1, 1, 1, 1, "Sans 16");
+version_sprite = Sprite(version_image);
+
+# Position text at bottom center with some margin
+text_x = (screen_width - version_image.GetWidth()) / 2;
+text_y = screen_height - version_image.GetHeight() - 30;
+version_sprite.SetPosition(text_x, text_y, 10);
 EOF
+
+# Extract version from .version file saved during installation
+DC2_VERSION_FILE="$DC2_INSTALL_DIR/.version"
+CURRENT_YEAR=$(date +%Y)
+
+if [[ -f "$DC2_VERSION_FILE" ]]; then
+  DC2_INSTALLED_VERSION=$(cat "$DC2_VERSION_FILE")
+  # Remove 'v' prefix if present (e.g., v2.0.97 -> 2.0.97)
+  DC2_INSTALLED_VERSION=${DC2_INSTALLED_VERSION#v}
+  sed -i "s/VERSION_PLACEHOLDER/v$DC2_INSTALLED_VERSION/g" "$PLYMOUTH_THEME_DIR/$PLYMOUTH_THEME_NAME.script"
+  sed -i "s/YEAR_PLACEHOLDER/$CURRENT_YEAR/g" "$PLYMOUTH_THEME_DIR/$PLYMOUTH_THEME_NAME.script"
+  log_info "Plymouth configured with Device Control v$DC2_INSTALLED_VERSION - Proyecciones Digitales $CURRENT_YEAR"
+else
+  log_warn "Version file not found at $DC2_VERSION_FILE"
+  sed -i "s/VERSION_PLACEHOLDER/v2.x/g" "$PLYMOUTH_THEME_DIR/$PLYMOUTH_THEME_NAME.script"
+  sed -i "s/YEAR_PLACEHOLDER/$CURRENT_YEAR/g" "$PLYMOUTH_THEME_DIR/$PLYMOUTH_THEME_NAME.script"
+  log_warn "Plymouth configured with generic version text"
+fi
 
 log_step "Configuring Plymouth daemon..."
 # Configure Plymouth for smooth transitions
