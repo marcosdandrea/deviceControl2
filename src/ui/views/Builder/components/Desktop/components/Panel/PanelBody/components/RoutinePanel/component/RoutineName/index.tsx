@@ -10,11 +10,13 @@ const RoutineName = () => {
 
     // Sincronizar el valor debounced con el contexto
     useEffect(() => {
+        console.log ('Debounced Name Effect Triggered:', debouncedName);
+        if (debouncedName == "") return
         if (debouncedName !== routine?.name) {
             setRoutine({ ...routine, name: debouncedName });
         }
     }, [debouncedName, routine, setRoutine]);
-
+    
     // Sincronizar cuando cambie la rutina externamente
     useEffect(() => {
         setLocalName(routine?.name || '');

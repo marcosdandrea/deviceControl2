@@ -9,7 +9,7 @@ import { Breadcrumb } from "antd";
 const PanelHeader = () => {
     const navigation = useNavigate();
     const { project } = useProject({ fetchProject: false });
-    const { routineId, taskId, triggerId } = useParams()
+    const { routineId, taskId, triggerId, groupId } = useParams()
     const [routineName, setRoutineName] = useState('Rutina');
     const [taskName, setTaskName] = useState('Tarea');
     const [triggerName, setTriggerName] = useState('Disparador');
@@ -36,7 +36,7 @@ const PanelHeader = () => {
     }, [routineId, taskId, project, triggerId]);
 
     const handleOnClosePanel = () => {
-        navigation('/builder')
+        navigation(`/builder/${groupId}`);
     }
 
     useEffect(() => {

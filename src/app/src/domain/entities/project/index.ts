@@ -74,7 +74,7 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.createdAt = props?.createdAt || new Date();
         this.updatedAt = props?.updatedAt || new Date();
         this.routines = props.routines || [];
-        this.groups = props.groups || [{ id: nanoid(9), name: "ungrouped" }];
+        this.groups = props.groups || [{ id: nanoid(9), name: "Sin agrupar" }];
         this.triggers = props.triggers || []; // Replace 'any' with actual TriggerType
         this.tasks = props.tasks || []; // Replace 'any' with actual TaskType
         this.password = props.password || null;
