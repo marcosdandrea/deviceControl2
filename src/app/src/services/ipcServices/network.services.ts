@@ -72,9 +72,12 @@ const applyInterfaceSettings = async (
             );
         }
 
+        // Limpiar caché de dispositivos para que se refresque en la próxima consulta
+        NetworkManagerService.clearDevicesCache();
+
         if (typeof callback === 'function') callback({ success: true });
     } catch (error) {
-        log.error('Error applying interface settings:', error);
+        log.error(`Error applying settings to interface ${interfaceName}: ${error}`);
         if (typeof callback === 'function') callback({ success: false, error: (error as Error).message });
     }
 };

@@ -4,6 +4,7 @@ import { MdDownload } from "react-icons/md";
 import { executionContext } from "@views/Executions";
 import useExecutions from "@views/Executions/hooks/useExecutions";
 import { message } from "antd";
+import { Logger } from "@helpers/logger";
 
 const DownloadSelectedExecutionButtons = () => {
 
@@ -37,7 +38,7 @@ const DownloadSelectedExecutionButtons = () => {
 
             message.success("Descarga completada correctamente.");
         } catch (error) {
-            console.error(error);
+            Logger.error(error);
             message.error("No se pudieron descargar las ejecuciones seleccionadas.");
         }
     };

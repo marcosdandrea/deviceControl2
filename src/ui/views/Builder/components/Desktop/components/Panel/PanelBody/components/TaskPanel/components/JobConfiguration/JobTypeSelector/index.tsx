@@ -3,6 +3,7 @@ import style from './style.module.css'
 import useGetAvailableJobs from '@views/Builder/hooks/useGetAvailableJobs';
 import { Input, Select } from 'antd';
 import { taskContext } from '../../..';
+import { Logger } from '@helpers/logger';
 
 const JobTypeSelector = () => {
     const { task, setTask } = useContext(taskContext)
@@ -12,7 +13,7 @@ const JobTypeSelector = () => {
         const thisJob = availableJobs[value]
         const params = thisJob.params.map(param => ({ [param.name]: param.defaultValue || undefined }))
         const invalidParams = thisJob.params.filter(param => param.required).map(param => param.name)
-        console.log (params)
+        Logger.log (params)
         setTask({
             ...task,
             job: {

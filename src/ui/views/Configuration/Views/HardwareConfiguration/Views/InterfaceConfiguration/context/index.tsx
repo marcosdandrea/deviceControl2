@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Logger } from '@helpers/logger';
 
 export const InterfaceContext = React.createContext({});
 
@@ -41,6 +42,15 @@ const InterfaceContextProvider = ({children, netInterface, onApplyChanges}) => {
     const [defaultDnsIpv4, setDefaultDnsIpv4] = useState(netInterface.ipv4.dns[0] || "0.0.0.0");
     const [alternateDnsIpv4, setAlternateDnsIpv4] = useState(netInterface.ipv4.dns[1] || "0.0.0.0");
 
+    // Actualizar estados cuando cambie la interfaz de red
+    useEffect(() => {
+        setUseDhcp(netInterface.dhcp);
+        setIpv4(netInterface.ipv4.address);
+        setGatewayIpv4(netInterface.ipv4.gateway);
+        setDefaultDnsIpv4(netInterface.ipv4.dns[0] || "0.0.0.0");
+        setAlternateDnsIpv4(netInterface.ipv4.dns[1] || "0.0.0.0");
+    }, [netInterface.device, netInterface.dhcp, netInterface.ipv4.address, netInterface.ipv4.gateway, netInterface.ipv4.dns.join(',')]); // Actualizar cuando cambien propiedades relevantes
+
     useEffect(() =>{
         //calculate subnet mask from ipv4 address
         if (ipv4) {
@@ -68,7 +78,7 @@ const InterfaceContextProvider = ({children, netInterface, onApplyChanges}) => {
         } else {
             setSubnetMaskIpv4("0.0.0.0");
         }
-    },[netInterface])
+    },[ipv4]) // Cambiar dependencia de netInterface a ipv4
 
     const updateIpv4 = (value: string) => {
         setIpv4(value);
@@ -125,6 +135,7 @@ const InterfaceContextProvider = ({children, netInterface, onApplyChanges}) => {
                 gateway: gatewayIpv4,
                 dns: [defaultDnsIpv4, alternateDnsIpv4].filter(dns => dns !== "0.0.0.0")
             };
+            Logger.log('Applying interface settings:', settings);
             onApplyChanges(netInterface.device, settings);
         }
 

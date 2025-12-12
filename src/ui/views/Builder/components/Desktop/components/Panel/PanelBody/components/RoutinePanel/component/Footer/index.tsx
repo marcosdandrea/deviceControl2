@@ -8,6 +8,7 @@ import useProject from '@hooks/useProject';
 import RoutineId from './components/RoutineId';
 import { nanoid } from 'nanoid';
 import { RoutineType } from '@common/types/routine.type';
+import { Logger } from '@helpers/logger';
 
 const Footer = () => {
     const { routineId, groupId } = useParams()
@@ -32,12 +33,12 @@ const Footer = () => {
         if (routineId === 'newRoutine') {
 
             setProject({ ...project, routines: [...project.routines, updatedRoutine] })
-            console.log ({ ...project, routines: [...project.routines, updatedRoutine] })
+            Logger.log ({ ...project, routines: [...project.routines, updatedRoutine] })
             
         } else {
             const routineIndex = project?.routines?.findIndex(r => r.id === routine.id)
             if (routineIndex === -1 || routineIndex === undefined) {
-                console.error('Routine not found in project routines')
+                Logger.error('Routine not found in project routines')
                 return;
             }
             setProject({ ...project, routines: [...project.routines.slice(0, routineIndex), updatedRoutine, ...project.routines.slice(routineIndex + 1)] })

@@ -56,7 +56,7 @@ const usePreloadImage = (imagePath: string): PreloadedImage => {
           isLoaded: true,
         });
       } catch (error) {
-        console.error('Error precargando imagen:', error);
+        Logger.error('Error precargando imagen:', error);
         setPreloadedImage({
           dataUrl: null,
           isLoaded: false,

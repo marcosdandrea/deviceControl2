@@ -12,6 +12,7 @@ import Footer from "./components/Footer";
 import Header from "./components/Header";
 import useGetAvailableTriggers from "@views/Builder/hooks/useGetAvailableTriggers";
 import useRoutines from "@hooks/useRoutines";
+import { Logger } from "@helpers/logger";
 
 export const triggerContext = createContext({ trigger: undefined, setTrigger: (trigger: TriggerType) => { }, defaultTrigger: undefined, setInvalidParams: (params: string[]) => { }, invalidParams: [] as string[], triggerInstanceId: undefined });
 
@@ -57,13 +58,13 @@ const TriggerPanel = () => {
 
             trigger = project.triggers.find(t => t.id === triggerId)
             if (!trigger){
-                console.error(`El disparador con ID '${triggerId}' no fue encontrado.`)
+                Logger.error(`El disparador con ID '${triggerId}' no fue encontrado.`)
                 return
             }
 
             triggerType = availableTriggers[trigger.type]
             if (!triggerType) {
-                console.error(`El tipo de disparador '${trigger.type}' no es válido.`)
+                Logger.error(`El tipo de disparador '${trigger.type}' no es válido.`)
                 return
             }
 

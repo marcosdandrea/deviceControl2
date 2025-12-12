@@ -5,6 +5,7 @@ import useProject from "@hooks/useProject";
 import { message } from "antd";
 import e from "cors";
 import { useContext, useEffect, useState, useCallback } from "react";
+import { Logger } from "@helpers/logger";
 
 const useRoutines = () => {
     const {emit} = useContext(SocketIOContext)
@@ -18,7 +19,7 @@ const useRoutines = () => {
     },[project])
 
     const handleSetRoutines = useCallback((routines: any[]) => {
-        console.log ('Setting routines', routines);
+        Logger.log ('Setting routines', routines);
         updateRoutines(routines);   
         if (project) {
             project.routines = routines;
@@ -27,7 +28,7 @@ const useRoutines = () => {
 
     const getRoutineTemplate = useCallback((callback: (routineTemplate: RoutineType) => void) => {
         emit(routineCommands.getRoutineTemplate, null, (routineTemplate : RoutineType) => {
-            console.log('Received routine template', routineTemplate);
+            Logger.log('Received routine template', routineTemplate);
             callback(routineTemplate);
         });
     }, [emit]);

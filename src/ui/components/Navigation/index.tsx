@@ -1,3 +1,4 @@
+import { LoadingMessage } from '@components/LoadingMessage';
 import React, { Suspense, useMemo } from 'react';
 import { HashRouter, Routes, Route } from "react-router-dom";
 
@@ -20,7 +21,7 @@ const Navigation = React.memo(() => {
 
     return (
         <HashRouter>
-            <Suspense fallback={<div style={fallbackStyle}>Cargando...</div>}>
+            <Suspense fallback={<LoadingMessage />}>
                 <Routes>
                     <Route path="/control" element={<Control isPreview={false} />} />
                     <Route path="/controlPreview" element={<Control isPreview={true} />} />

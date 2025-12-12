@@ -4,6 +4,7 @@ import useProject from "@hooks/useProject";
 import { Popconfirm, Tooltip } from "antd";
 import { HiDocument } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
+import { Logger } from "@helpers/logger";
 
 
 const NewProjectButton = () => {
@@ -19,7 +20,7 @@ const NewProjectButton = () => {
             const project = await createNewProject()
             navigate(`/builder/${project?.groups[0].id}`)
         } catch (error) {
-            console.error("Error closing project:", error);
+            Logger.error("Error closing project:", error);
         }
     }
 

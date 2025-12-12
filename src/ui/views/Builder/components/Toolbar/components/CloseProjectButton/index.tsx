@@ -4,6 +4,7 @@ import { MdOutlineClose } from "react-icons/md";
 import useProject from "@hooks/useProject";
 import { Popconfirm, Tooltip } from "antd";
 import { useNavigate } from "react-router-dom";
+import { Logger } from "@helpers/logger";
 
 const CloseProjectButton = () => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const CloseProjectButton = () => {
       unloadProject();
       navigate("/builder");
     } catch (error) {
-      console.error("Error closing project:", error);
+      Logger.error("Error closing project:", error);
     }
   };
 

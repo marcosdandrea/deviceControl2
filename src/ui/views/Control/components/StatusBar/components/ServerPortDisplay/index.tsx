@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Text from "@components/Text";
 import useSystemServerPorts from "@hooks/useSystemServerPorts";
 import useNetworkInterfaces from "@hooks/useNetworkInterfaces";
+import { Logger } from "@helpers/logger";
 
 const ServerPortDisplay = () => {
     const { networkInterfaces } = useNetworkInterfaces()
@@ -10,7 +11,7 @@ const ServerPortDisplay = () => {
 
     useEffect(() => {
         if (!networkInterfaces) return
-        console.log ("🌐 ServerPortDisplay - networkInterfaces changed:", networkInterfaces);
+        Logger.log ("🌐 ServerPortDisplay - networkInterfaces changed:", networkInterfaces);
         const connectedInterfaces = networkInterfaces.filter((iface) => iface.state == "connected");
 
         if (connectedInterfaces.length === 0) {

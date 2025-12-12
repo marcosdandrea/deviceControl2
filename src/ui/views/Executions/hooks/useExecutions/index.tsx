@@ -2,6 +2,7 @@ import projectCommands from "@common/commands/project.commands";
 import projectEvents from "@common/events/project.events";
 import { SocketIOContext } from "@components/SocketIOProvider";
 import { useCallback, useContext, useEffect, useState } from "react";
+import { Logger } from "@helpers/logger";
 
 type UseExecutionsOptions = {
   fetchOnMount?: boolean;
@@ -26,7 +27,7 @@ const useExecutions = (
     }
     emit(projectCommands.getExecutions, { routineId: normalizedRoutineId }, (payload) => {
       if (payload?.error) {
-        console.error(payload.error);
+        Logger.error(payload.error);
         return;
       }
       setExecutionList(payload);
@@ -45,7 +46,7 @@ const useExecutions = (
       (payload) => {
 
         if (payload?.error) {
-          console.error(payload.error);
+          Logger.error(payload.error);
           return;
         }
         setExecutionData(payload);

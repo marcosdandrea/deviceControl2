@@ -4,6 +4,7 @@ import { MdDeleteForever } from "react-icons/md";
 import { executionContext } from "@views/Executions";
 import { message, Popconfirm } from "antd";
 import useExecutions from "@views/Executions/hooks/useExecutions";
+import { Logger } from "@helpers/logger";
 
 const DeleteAllExecutionsButton = () => {
   const { selectedRoutineId, setSelectedExecutions, triggerExecutionsRefresh } =
@@ -23,7 +24,7 @@ const DeleteAllExecutionsButton = () => {
       triggerExecutionsRefresh();
       message.success("Todas las ejecuciones de la rutina fueron eliminadas.");
     } catch (error) {
-      console.error(error);
+      Logger.error(error);
       message.error("No se pudieron eliminar todas las ejecuciones de la rutina.");
     }
   };

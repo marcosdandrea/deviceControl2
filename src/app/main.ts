@@ -48,14 +48,40 @@ const handleFatalError = async (error: Error) => {
 };
 
 // Manejar excepciones no capturadas globalmente
-process.on('uncaughtException', async (error) => {
+process.on('uncaughtException', async (error: any) => {
   log.error('Uncaught Exception:', error);
+  
+  // No cerrar la app por errores de red transitorios (ej: al cambiar configuración de red)
+  const isTransientNetworkError = 
+    error.code === 'ENETUNREACH' || 
+    error.code === 'ENETDOWN' || 
+    error.code === 'EHOSTUNREACH' ||
+    (error.syscall === 'send' && error.address === '255.255.255.255');
+  
+  if (isTransientNetworkError) {
+    log.warn('Transient network error detected, continuing execution:', error.message);
+    return;
+  }
+  
   await handleFatalError(error);
 });
 
 process.on('unhandledRejection', async (reason, promise) => {
   log.error(`Unhandled Rejection at: ${promise} reason: ${reason}`);
+  
+  // Verificar si es un error de red transitorio
   if (reason instanceof Error) {
+    const isTransientNetworkError = 
+      (reason as any).code === 'ENETUNREACH' || 
+      (reason as any).code === 'ENETDOWN' || 
+      (reason as any).code === 'EHOSTUNREACH' ||
+      ((reason as any).syscall === 'send' && (reason as any).address === '255.255.255.255');
+    
+    if (isTransientNetworkError) {
+      log.warn('Transient network error in promise, continuing execution:', reason.message);
+      return;
+    }
+    
     await handleFatalError(reason);
   } else {
     await handleFatalError(new Error(String(reason)));

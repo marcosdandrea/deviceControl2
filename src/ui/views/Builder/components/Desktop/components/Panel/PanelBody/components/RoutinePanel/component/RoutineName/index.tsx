@@ -2,6 +2,7 @@ import { Input } from 'antd';
 import React, { useContext, useState, useEffect } from 'react';
 import { routineConfigurationContext } from '../..';
 import useDebounce from '@hooks/useDebounce';
+import { Logger } from '@helpers/logger';
 
 const RoutineName = () => {
     const { routine, setRoutine } = useContext(routineConfigurationContext)
@@ -10,7 +11,7 @@ const RoutineName = () => {
 
     // Sincronizar el valor debounced con el contexto
     useEffect(() => {
-        console.log ('Debounced Name Effect Triggered:', debouncedName);
+        Logger.log ('Debounced Name Effect Triggered:', debouncedName);
         if (debouncedName == "") return
         if (debouncedName !== routine?.name) {
             setRoutine({ ...routine, name: debouncedName });

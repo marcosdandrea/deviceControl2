@@ -1,7 +1,13 @@
 // PopoutWindow.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { StyleProvider } from "@ant-design/cssinjs";
+
+// Context para proporcionar la referencia de la ventana popup
+export const PopupWindowContext = createContext<Window | null>(null);
+
+// Hook para acceder a la ventana popup desde componentes hijos
+export const usePopupWindow = () => useContext(PopupWindowContext);
 
 type Props = {
   title?: string;
@@ -74,7 +80,9 @@ export default function PopoutWindow({
 
   return createPortal(
     <StyleProvider container={winRef.current.document.head} hashPriority="high">
+      <PopupWindowContext.Provider value={winRef.current}>
         {children}
+      </PopupWindowContext.Provider>
     </StyleProvider>,
     container
   );

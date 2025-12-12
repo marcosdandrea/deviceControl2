@@ -89,29 +89,37 @@ export class NetworkManagerService {
   }
 
   // Try to run a command, and if it fails for privilege reasons,
-  // use SYSTEM_USER_PASSWORD from .env with sudo -S (stdin password).
+  // first try with sudo (no password), then with SYSTEM_USER_PASSWORD from .env if needed
   private static async runPrivileged(cmd: string): Promise<string> {
     try {
       return await run(cmd);
     } catch (err: any) {
       const msg = String(err?.message || err);
-      // If the failure looks like insufficient privileges, use sudo with password from .env
+      // If the failure looks like insufficient privileges, try with sudo
       if (msg.toLowerCase().includes("insufficient privileges") || msg.toLowerCase().includes("permission denied") || msg.toLowerCase().includes("not authorized")) {
-        const password = process.env.SYSTEM_USER_PASSWORD;
-        if (!password) {
-          throw new Error(
-            `Insufficient privileges to run command and SYSTEM_USER_PASSWORD is not set in .env. Original error: ${msg}`
-          );
-        }
-
+        
+        // First attempt: try sudo without password (works if user has no password or sudoers is configured)
         try {
-          // Use sudo -S to read password from stdin
           const safe = cmd.replace(/'/g, "'\"'\"'");
-          return await run(`echo '${password}' | sudo -S bash -c '${safe}'`);
-        } catch (err3: any) {
-          throw new Error(
-            `Failed to run privileged command with sudo. Ensure SYSTEM_USER_PASSWORD is correct and user has sudo privileges. Original error: ${err3?.message || err3}`
-          );
+          return await run(`sudo bash -c '${safe}'`);
+        } catch (sudoErr: any) {
+          // If sudo without password fails, try with password from .env
+          const password = process.env.SYSTEM_USER_PASSWORD;
+          if (!password) {
+            throw new Error(
+              `Insufficient privileges. Configure sudoers to allow nmcli without password, or set SYSTEM_USER_PASSWORD in .env. Original error: ${msg}`
+            );
+          }
+
+          try {
+            // Use sudo -S to read password from stdin
+            const safe = cmd.replace(/'/g, "'\"'\"'");
+            return await run(`echo '${password}' | sudo -S bash -c '${safe}'`);
+          } catch (err3: any) {
+            throw new Error(
+              `Failed to run privileged command. Ensure SYSTEM_USER_PASSWORD is correct and user has sudo privileges. Original error: ${err3?.message || err3}`
+            );
+          }
         }
       }
 

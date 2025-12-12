@@ -7,6 +7,7 @@ import { message, Tooltip } from 'antd';
 import { nanoid } from 'nanoid';
 import useProject from '@hooks/useProject';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Logger } from '@helpers/logger';
 
 const Header = () => {
 
@@ -34,7 +35,7 @@ const Header = () => {
         project.tasks.push(newTask)
         setProject({ ...project })
         navigate(`/builder/${groupId}/${routineId}/task/${newTask.id}?instanceId=${taskInstanceId}`)
-        console.log(`/builder/${groupId}/${routineId}/task/${newTask.id}?instanceId=${taskInstanceId}`)
+        Logger.log(`/builder/${groupId}/${routineId}/task/${newTask.id}?instanceId=${taskInstanceId}`)
         message.success('Componente duplicado correctamente.')
     }
 

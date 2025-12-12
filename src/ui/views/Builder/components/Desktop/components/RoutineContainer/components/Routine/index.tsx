@@ -6,6 +6,7 @@ import TriggersContainer from './components/TriggerContainer';
 import NewRoutineGhost from './components/NewRoutineGhost';
 import { useParams } from 'react-router-dom';
 import GrabAndMoveMessage from './components/GrabAndMoveMessage';
+import { Logger } from '@helpers/logger';
 
 export const routineContext = createContext(null)
 
@@ -20,7 +21,7 @@ const Routine = forwardRef<HTMLDivElement, RoutineProps>(({ routineData, isShift
     const [isHovering, setIsHovering] = useState(false);
 
     const handleOnDragStart = (e: React.DragEvent) => {
-        console.log('🎯 Drag started, Shift:', e.shiftKey, 'routine:', routineData.id);
+        Logger.log('🎯 Drag started, Shift:', e.shiftKey, 'routine:', routineData.id);
 
         if (e.shiftKey) {
             e.stopPropagation();

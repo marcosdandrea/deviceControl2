@@ -143,7 +143,7 @@ const RoutineTabsContainer = () => {
     const handleOnEditTab = (groupId: string, action: string) => {
 
         if (action === 'add') {
-            console.log('Adding new group')
+            Logger.log('Adding new group')
             setIsCreatingGroup(true)
             setEditingGroupName('')
             setPopconfirmOpen(true)

@@ -22,7 +22,7 @@
 }
 
 .p{
-    color: var(--text) !important;
+    color: var(--text-secondary) !important;
     font-family: "Open Sans Regular" !important;
     font-size: 1rem !important;
     width: auto !important;

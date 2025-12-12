@@ -176,9 +176,9 @@ const TriggerParameters = () => {
                                     style={{ width: `calc(100% - ${warning ? '150px' : '200px'})` }}
                                     onChange={(time, timeString) => {
                                         if (!time) return;
-                                        console.log(time, timeString);
+                                        Logger.log(time, timeString);
                                         const millis = time.hour() * 3600000 + time.minute() * 60000 + time.second() * 1000;
-                                        console.log ({ millis });
+                                        Logger.log ({ millis });
                                         handleOnChangeParamValue(paramName, millis);
                                     }}
                                     defaultOpenValue={dayjs('00:00:00', 'HH:mm:ss')}

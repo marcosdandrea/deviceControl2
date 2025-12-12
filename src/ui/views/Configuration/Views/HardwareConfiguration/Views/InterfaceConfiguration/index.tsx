@@ -4,12 +4,13 @@ import useNetworkInterfaces from "@hooks/useNetworkInterfaces";
 import { Tabs } from "antd";
 import InterfaceContextProvider from "./context";
 import InterfaceSettings from "./components/InterfaceSettings";
+import { Logger } from "@helpers/logger";
 
 const NetInterfaceConfiguration = () => {
 
     const {networkInterfaces, applyChanges} = useNetworkInterfaces()
 
-    console.log ("Network Interfaces:", networkInterfaces);
+    Logger.log ("Network Interfaces:", networkInterfaces);
 
     return (
     <div className={style.interfaceSettings}>

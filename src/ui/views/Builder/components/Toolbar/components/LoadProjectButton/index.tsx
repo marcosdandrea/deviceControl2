@@ -3,6 +3,7 @@ import ToolbarButton from "../ToolbarButton";
 import useProject from "@hooks/useProject";
 import { HiFolderOpen } from "react-icons/hi2";
 import { Tooltip } from "antd";
+import { Logger } from "@helpers/logger";
 
 const LoadProjectButton = () => {
 
@@ -38,7 +39,7 @@ const LoadProjectButton = () => {
             const file = await openFile();
             loadProjectFile(file);
         } catch (error) {
-            console.error("Error loading file:", error);
+            Logger.error("Error loading file:", error);
         }
     }
 

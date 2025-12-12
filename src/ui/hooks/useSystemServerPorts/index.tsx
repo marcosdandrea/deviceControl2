@@ -1,6 +1,7 @@
 import systemCommands from "@common/commands/system.commands";
 import { SocketIOContext } from "@components/SocketIOProvider";
 import { useContext, useEffect, useState } from "react";
+import { Logger } from "@helpers/logger";
 
 const useSystemServerPorts = () => {
     const { emit } = useContext(SocketIOContext)
@@ -11,7 +12,7 @@ const useSystemServerPorts = () => {
 
         emit(systemCommands.getServerPorts, null, (answer: {main: number, general: number, error?: string}) => {
             if (answer?.error || answer?.main === undefined || answer?.general === undefined) {
-                console.error(answer.error);
+                Logger.error(answer.error);
                 return;
             }
             setMainServerPort(answer.main);

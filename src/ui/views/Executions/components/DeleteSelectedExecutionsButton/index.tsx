@@ -4,6 +4,7 @@ import { MdDelete } from "react-icons/md";
 import { executionContext } from "@views/Executions";
 import { message, Popconfirm } from "antd";
 import useExecutions from "@views/Executions/hooks/useExecutions";
+import { Logger } from "@helpers/logger";
 
 const DeleteSelectedExecutionsButton = () => {
   const {
@@ -27,7 +28,7 @@ const DeleteSelectedExecutionsButton = () => {
       triggerExecutionsRefresh();
       message.success("Ejecuciones seleccionadas eliminadas correctamente.");
     } catch (error) {
-      console.error(error);
+      Logger.error(error);
       message.error("No se pudieron eliminar las ejecuciones seleccionadas.");
     }
   };

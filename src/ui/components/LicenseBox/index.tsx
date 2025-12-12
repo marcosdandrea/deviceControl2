@@ -2,13 +2,14 @@ import React from 'react';
 import styles from './style.module.css';
 import { Button, Input, message, Modal } from 'antd';
 import useLicense from '@hooks/useLicense';
+import { Logger } from '@helpers/logger';
 
 const LicenseBox = () => {
 
     const { setLicense, systemFingerprint } = useLicense();
     const [newLicenseKey, setNewLicenseKey] = React.useState<string>("");
 
-    console.log("systemFingerprint", systemFingerprint);
+    Logger.log("systemFingerprint", systemFingerprint);
 
     const handleOnSetLicense = async () => {
         const result = await setLicense(newLicenseKey);

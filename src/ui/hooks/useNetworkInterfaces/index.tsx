@@ -4,6 +4,7 @@ import { SocketIOContext } from "@components/SocketIOProvider";
 import { NetworkDeviceSummary } from "@common/types/network";
 import netCommands from "@common/commands/net.commands";
 import { message } from "antd";
+import { Logger } from "@helpers/logger";
 
 const useNetworkInterfaces = () => {
     const { socket, emit } = useContext(SocketIOContext)
@@ -14,7 +15,8 @@ const useNetworkInterfaces = () => {
             if (Array.isArray(devices)) {
                 setNetworkInterfaces(devices);
             } else {
-                console.error("Error fetching network interfaces:", devices.error);
+                Logger.error("Error fetching network interfaces:", devices.error);
+                message.error(`Error fetching network interfaces: ${devices.error}`);
                 setNetworkInterfaces([]);
             }
         });
@@ -34,6 +36,12 @@ const useNetworkInterfaces = () => {
                 message.error(`Se ha producido un error intentando aplicar la configuración. ${response.error}`)
             } else {
                 message.success(`Los cambios fueron aplicados correctamente`)
+                // Refrescar la lista de interfaces después de aplicar cambios
+                // Esperar más tiempo para DHCP ya que puede tardar en obtener la dirección
+                const delay = settings.dhcp ? 3000 : 1500;
+                setTimeout(() => {
+                    getNetworkInterfaces();
+                }, delay);
             }
         });
     }

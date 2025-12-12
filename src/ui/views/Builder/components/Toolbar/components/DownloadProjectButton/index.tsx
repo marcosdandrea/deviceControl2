@@ -4,6 +4,7 @@ import { MdOutlineSaveAlt } from "react-icons/md";
 import useProject from "@hooks/useProject";
 import { HiDocumentArrowDown } from "react-icons/hi2";
 import { Popconfirm, Tooltip } from "antd";
+import { Logger } from "@helpers/logger";
 
 const DownloadProjectButton = () => {
   const { getProjectFile, loadProjectFile, project, unsavedChanges } =
@@ -24,7 +25,7 @@ const DownloadProjectButton = () => {
         URL.revokeObjectURL(url);
       }
     } catch (error) {
-      console.error("Error downloading project:", error);
+      Logger.error("Error downloading project:", error);
     }
   };
 

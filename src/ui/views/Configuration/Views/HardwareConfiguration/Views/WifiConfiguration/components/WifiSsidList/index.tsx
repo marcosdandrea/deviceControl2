@@ -5,12 +5,13 @@ import Text from "@components/Text";
 import { BsWifi, BsWifi1, BsWifi2, BsWifiOff } from "react-icons/bs";
 import { List, Skeleton } from "antd";
 import { FaLock } from "react-icons/fa6";
+import { Logger } from "@helpers/logger";
 
 const WifiSsidList = () => {
     const { availableNetworks, ssid } = React.useContext(WifiContext) as wifiContextType
 
     const handleOnClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-        console.log(e.currentTarget.getAttribute("data-value"))
+        Logger.log(e.currentTarget.getAttribute("data-value"));
 
     };
 
