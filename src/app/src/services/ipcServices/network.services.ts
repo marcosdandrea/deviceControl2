@@ -1,6 +1,8 @@
 import { NetworkDeviceSummary } from "@common/types/network";
-import { NetworkManagerService } from "../hardwareManagement/net";
+import { NetworkManagerService, networkEventEmitter, startNetworkMonitoring as initializeNetworkMonitoring, stopNetworkMonitoring as finalizeNetworkMonitoring } from "../hardwareManagement/net";
 import { Log } from "@src/utils/log";
+import networkEvents from "@common/events/network.events";
+import { broadcastToClients } from ".";
 
 const log = Log.createInstance("Network IPC Service", true);
 
@@ -82,4 +84,21 @@ const applyInterfaceSettings = async (
     }
 };
 
-export default { getNetworkInterfaces, applyInterfaceSettings };
+const startNetworkMonitoring = (payload: any, callback?: Function): void => {
+    initializeNetworkMonitoring();
+
+    networkEventEmitter.on(networkEvents.networkInterfacesChanged, (interfaces: NetworkDeviceSummary[]) => {
+        broadcastToClients(networkEvents.networkInterfacesChanged, interfaces);
+    });
+
+    if (callback) callback({ success: true });
+};
+
+const stopNetworkMonitoring = (payload: any, callback?: Function): void => {
+    finalizeNetworkMonitoring();
+    networkEventEmitter.removeAllListeners(networkEvents.networkInterfacesChanged);
+    
+    if (callback) callback({ success: true });
+};
+
+export default { getNetworkInterfaces, applyInterfaceSettings, startNetworkMonitoring, stopNetworkMonitoring };

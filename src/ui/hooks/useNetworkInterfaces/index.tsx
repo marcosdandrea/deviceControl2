@@ -1,8 +1,9 @@
 import "react";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { SocketIOContext } from "@components/SocketIOProvider";
 import { NetworkDeviceSummary } from "@common/types/network";
 import netCommands from "@common/commands/net.commands";
+import networkEvents from "@common/events/network.events";
 import { message } from "antd";
 import { Logger } from "@helpers/logger";
 
@@ -21,6 +22,11 @@ const useNetworkInterfaces = () => {
             }
         });
     }
+
+    const handleInterfacesChanged = useCallback((interfaces: NetworkDeviceSummary[]) => {
+        Logger.log("🌐 Network interfaces changed:", interfaces);
+        setNetworkInterfaces(interfaces);
+    }, []);
 
     type interfaceSettings = {
         dhcp: boolean;
@@ -48,8 +54,21 @@ const useNetworkInterfaces = () => {
 
     useEffect(() => {
         if (!socket) return;
+
+        // Iniciar monitoreo de interfaces de red
+        socket.emit(netCommands.startNetworkMonitoring);
+
+        // Escuchar eventos de cambios en las interfaces
+        socket.on(networkEvents.networkInterfacesChanged, handleInterfacesChanged);
+
+        // Obtener el estado inicial
         getNetworkInterfaces();
-    }, [socket]);
+
+        return () => {
+            socket.off(networkEvents.networkInterfacesChanged, handleInterfacesChanged);
+            socket.emit(netCommands.stopNetworkMonitoring);
+        };
+    }, [socket, handleInterfacesChanged]);
 
     return {
         networkInterfaces, 

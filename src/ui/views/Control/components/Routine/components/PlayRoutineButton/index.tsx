@@ -25,19 +25,19 @@ const PlayRoutineButton = ({ event, enabled }: { event: { event: string, data: a
     const updateIcon = (status: RoutineStatus) => {
         switch (status) {
             case routineEvents.routineRunning:
-                setIcon(<MdStop size={22} />);
+                setIcon(<MdStop size={22} color="white"/>);
                 break;
             case routineEvents.routineCompleted:
-                setIcon(<MdPlayArrow size={22} />);
+                setIcon(<MdPlayArrow size={22} color="white"/>);
                 break;
             case routineEvents.routineAborted:
-                setIcon(<MdPlayArrow size={22} />);
+                setIcon(<MdPlayArrow size={22} color="white"/>);
                 break;
             case routineEvents.routineFailed:
-                setIcon(<MdPlayArrow size={22} />);
+                setIcon(<MdPlayArrow size={22} color="white"/>);
                 break;
             default:
-                setIcon(<MdPlayArrow size={22} />);
+                setIcon(<MdPlayArrow size={22} color="white"/>);
         }
     }
 

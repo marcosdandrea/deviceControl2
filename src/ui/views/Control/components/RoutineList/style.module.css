@@ -36,6 +36,7 @@ p{
 .noRoutinesTitle{
     font-size: 1.2rem;
     font-family: "Open Sans Bold", sans-serif;
+    color: var(--secondary);
 }
 
 .noRoutinesSubtitle{

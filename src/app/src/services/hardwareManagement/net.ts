@@ -8,8 +8,13 @@ import {
   NetworkIPv4Config,
 } from "@common/types/network"
 import dotenv from "dotenv";
+import { EventEmitter } from "events";
+import networkEvents from "@common/events/network.events";
 
 dotenv.config();
+
+// EventEmitter para emitir eventos de cambios en las interfaces de red
+export const networkEventEmitter = new EventEmitter();
 
 type Platform = "linux" | "windows" | "darwin" | "unknown";
 
@@ -1041,4 +1046,105 @@ export class NetworkManagerService {
       await run("sudo systemctl restart NetworkManager");
     }
   }
+}
+
+// Variables para el monitoreo de interfaces de red
+let monitoringInterval: NodeJS.Timeout | null = null;
+let lastKnownInterfaces: NetworkDeviceSummary[] = [];
+
+/**
+ * Compara dos listas de interfaces de red para detectar cambios
+ */
+function interfacesHaveChanged(
+  oldInterfaces: NetworkDeviceSummary[],
+  newInterfaces: NetworkDeviceSummary[]
+): boolean {
+  if (oldInterfaces.length !== newInterfaces.length) return true;
+
+  // Crear un mapa por nombre de dispositivo para comparación eficiente
+  const oldMap = new Map(oldInterfaces.map(iface => [iface.device, iface]));
+
+  for (const newIface of newInterfaces) {
+    const oldIface = oldMap.get(newIface.device);
+
+    if (!oldIface) return true; // Nueva interfaz
+
+    // Verificar cambios en estado, conexión o IP
+    if (
+      oldIface.state !== newIface.state ||
+      oldIface.connection !== newIface.connection ||
+      oldIface.ipv4?.address !== newIface.ipv4?.address ||
+      oldIface.ipv4?.gateway !== newIface.ipv4?.gateway ||
+      oldIface.dhcp !== newIface.dhcp
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Inicia el monitoreo de cambios en las interfaces de red
+ * @param intervalMs - Intervalo de verificación en milisegundos (por defecto 3000ms)
+ */
+export function startNetworkMonitoring(intervalMs: number = 3000): void {
+  // Si ya hay un monitoreo activo, detenerlo primero
+  if (monitoringInterval) {
+    console.log('Stopping existing network monitoring before starting a new one...');
+    stopNetworkMonitoring();
+  }
+
+  console.log('Starting network interfaces monitoring...');
+
+  // Función para verificar cambios en las interfaces
+  const checkInterfaces = async () => {
+    try {
+      const currentInterfaces = await NetworkManagerService.listDevices();
+
+      // Verificar si hubo cambios
+      const hasChanged = interfacesHaveChanged(lastKnownInterfaces, currentInterfaces);
+
+      if (hasChanged) {
+        console.log('Network interfaces changed, emitting event...');
+        lastKnownInterfaces = currentInterfaces;
+        networkEventEmitter.emit(networkEvents.networkInterfacesChanged, currentInterfaces);
+      }
+    } catch (error) {
+      console.error('Error monitoring network interfaces:', error);
+    }
+  };
+
+  // Ejecutar inmediatamente para obtener el estado inicial
+  checkInterfaces();
+
+  // Configurar el intervalo de verificación
+  monitoringInterval = setInterval(checkInterfaces, intervalMs);
+}
+
+/**
+ * Detiene el monitoreo de interfaces de red
+ */
+export function stopNetworkMonitoring(): void {
+  if (monitoringInterval) {
+    console.log('Stopping network interfaces monitoring...');
+    clearInterval(monitoringInterval);
+    monitoringInterval = null;
+  }
+}
+
+/**
+ * Verifica si el monitoreo está activo
+ * @returns true si el monitoreo está activo, false en caso contrario
+ */
+export function isNetworkMonitoringActive(): boolean {
+  return monitoringInterval !== null;
+}
+
+/**
+ * Obtiene las últimas interfaces conocidas sin hacer una nueva consulta
+ * @returns Las últimas interfaces conocidas
+ */
+export function getLastKnownInterfaces(): NetworkDeviceSummary[] {
+  return lastKnownInterfaces;
 }

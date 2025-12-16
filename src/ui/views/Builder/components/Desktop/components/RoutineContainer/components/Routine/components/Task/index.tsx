@@ -51,6 +51,8 @@ const Task = ({ taskData }) => {
                 return getTextIcon("Artnet");
             case "sendPJLinkJob":
                 return getTextIcon("PJ");
+            case "autoCheckRoutineConditionsJob":
+                return getTextIcon("AC");
             default:
                 return null;
         }

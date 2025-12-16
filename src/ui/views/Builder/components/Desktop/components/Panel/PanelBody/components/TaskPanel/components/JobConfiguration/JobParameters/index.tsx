@@ -1,13 +1,24 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useMemo } from 'react';
 import style from './style.module.css'
 import { taskContext } from '../../..';
 import useGetAvailableJobs from '@views/Builder/hooks/useGetAvailableJobs';
 import { Descriptions, Input, Select } from 'antd';
+import useProject from '@hooks/useProject';
 
 const JobParameters = () => {
     const { task, setTask } = useContext(taskContext)
     const { availableJobs } = useGetAvailableJobs()
+    const { project } = useProject({ fetchProject: false })
     const [jobParams, setJobParams] = useState<any[]>([])
+
+    // Generar opciones de rutinas dinámicamente
+    const routineOptions = useMemo(() => {
+        if (!project || !project.routines) return [];
+        return project.routines.map(routine => ({
+            label: routine.name,
+            value: routine.id
+        }));
+    }, [project]);
 
     useEffect(() => {
         if (!availableJobs || !task || !task.job?.type) return;
@@ -15,14 +26,25 @@ const JobParameters = () => {
         if (!thisJob)
             setJobParams([])
         else {
-            const params = thisJob.params.map(param => ({
-                ...param,
-                isValid: task.job.params ? validateParam(param, task.job.params?.[param.name]) : false
-            }))
+            const params = thisJob.params.map(param => {
+                // Si el parámetro es routineId del job autoCheckRoutineConditionsJob,
+                // agregar las opciones de rutinas dinámicamente
+                if (param.name === 'routineId' && task.job.type === 'autoCheckRoutineConditionsJob') {
+                    return {
+                        ...param,
+                        options: routineOptions,
+                        isValid: task.job.params ? validateParam(param, task.job.params?.[param.name]) : false
+                    };
+                }
+                return {
+                    ...param,
+                    isValid: task.job.params ? validateParam(param, task.job.params?.[param.name]) : false
+                };
+            });
             setJobParams(params)
         }
 
-    }, [task, availableJobs])
+    }, [task, availableJobs, routineOptions])
 
     if (!task?.job?.params || Object.keys(task.job.params).length === 0) return (<></>)
 
@@ -115,6 +137,7 @@ const JobParameters = () => {
                                                             onChange={(value) => handleOnChangeValue(param.name, value)}
                                                             status={validateParam(param, task?.job?.params?.[param.name]) ? '' : 'error'}
                                                             options={param.options || []}
+                                                            placeholder={param.name === 'routineId' ? 'Seleccione una rutina' : 'Seleccione una opción'}
                                                         />
                                                     : <span>Tipo no soportado</span>
                             }

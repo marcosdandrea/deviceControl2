@@ -61,19 +61,19 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
     const getIcon = (status: RoutineStatus): React.ReactNode => {
         switch (status) {
             case routineEvents.routineAutoCheckingConditions:
-                return (<MdAutorenew size={22} className={style.rotatingIcon} />);
+                return (<MdAutorenew size={22} className={style.rotatingIcon}  color='white'/>);
             case routineEvents.routineRunning:
-                return (<MdAutorenew size={22} className={style.rotatingIcon} />);
+                return (<MdAutorenew size={22} className={style.rotatingIcon}  color='white'/>);
             case routineEvents.routineCompleted:
-                return (<MdDone size={22} />);
+                return (<MdDone size={22}  color='white'/>);
             case routineEvents.routineAborted:
-                return (<MdStopCircle size={22} />);
+                return (<MdStopCircle size={22}  color='white'/>);
             case routineEvents.routineFailed:
-                return (<MdError size={22} />);
+                return (<MdError size={22}  color='white'/>);
             case routineEvents.routineTimeout:
-                return (<MdError size={22} />);
+                return (<MdError size={22}  color='white'/>);
             default:
-                return (<MdHelp size={22} />);
+                return (<MdHelp size={22} color='white' />);
         }
     }
 

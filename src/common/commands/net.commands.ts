@@ -1,5 +1,7 @@
 
 export default {
     getNetworkInterfaces: "getNetworkInterfaces",
-    applyInterfaceSettings: "applyInterfaceSettings"
+    applyInterfaceSettings: "applyInterfaceSettings",
+    startNetworkMonitoring: "startNetworkMonitoring",
+    stopNetworkMonitoring: "stopNetworkMonitoring"
 }

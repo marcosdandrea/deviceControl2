@@ -42,7 +42,7 @@ const LicenseChecker = ({ children }) => {
                 <FaKey size={40} color="var(--warning)" />
                 <h3>LICENCIA REQUERIDA</h3>
             </div>
-            <p style={{
+            <div style={{
                 display: "flex",
                 flexDirection: "column",
                 rowGap: "1rem"
@@ -57,7 +57,7 @@ const LicenseChecker = ({ children }) => {
                     </Button>
                     : <p>{`conectándose al panel builder en ${networkInterfaces.filter((iface) => iface.state === "connected").map((iface) => iface.ipv4.address.split("/")[0]).join(", ")}${port}`}</p>
                 }
-            </p>
+            </div>
         </div>
     );
 }
