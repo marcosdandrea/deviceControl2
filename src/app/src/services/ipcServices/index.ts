@@ -17,10 +17,20 @@ import wifiCommands from '@common/commands/wifi.commands';
 import wifiServices from './wifi.services';
 import netCommands from '@common/commands/net.commands';
 import networkServices from './network.services';
+import { networkEventEmitter, startNetworkMonitoring as initNetworkMonitoring } from '../hardwareManagement/net';
+import networkEvents from '@common/events/network.events';
+import { NetworkDeviceSummary } from '@common/types/network';
 
 const log = Log.createInstance('IPC Services', false);
 
 const init = (io: import('socket.io').Server) => {
+    // Iniciar monitoreo de red global una sola vez
+    initNetworkMonitoring();
+    
+    // Configurar broadcaster de eventos de red (solo una vez)
+    networkEventEmitter.on(networkEvents.networkInterfacesChanged, (interfaces: NetworkDeviceSummary[]) => {
+        broadcastToClients(networkEvents.networkInterfacesChanged, interfaces);
+    });
     
     io.on('connection', (socket) => {
         log.info('New client connected:', socket.id);

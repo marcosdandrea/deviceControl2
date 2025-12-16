@@ -36,17 +36,17 @@ export type interfaceContextType = {
 
 const InterfaceContextProvider = ({children, netInterface, onApplyChanges}) => {
     const [useDhcp, setUseDhcp] = useState(netInterface.dhcp);
-    const [ipv4, setIpv4] = useState(netInterface.ipv4.address);
+    const [ipv4, setIpv4] = useState(netInterface.ipv4.address || "0.0.0.0/24");
     const [subnetMaskIpv4, setSubnetMaskIpv4] = useState("0.0.0.0");
-    const [gatewayIpv4, setGatewayIpv4] = useState(netInterface.ipv4.gateway);
+    const [gatewayIpv4, setGatewayIpv4] = useState(netInterface.ipv4.gateway || "0.0.0.0");
     const [defaultDnsIpv4, setDefaultDnsIpv4] = useState(netInterface.ipv4.dns[0] || "0.0.0.0");
     const [alternateDnsIpv4, setAlternateDnsIpv4] = useState(netInterface.ipv4.dns[1] || "0.0.0.0");
 
     // Actualizar estados cuando cambie la interfaz de red
     useEffect(() => {
         setUseDhcp(netInterface.dhcp);
-        setIpv4(netInterface.ipv4.address);
-        setGatewayIpv4(netInterface.ipv4.gateway);
+        setIpv4(netInterface.ipv4.address || "0.0.0.0/24");
+        setGatewayIpv4(netInterface.ipv4.gateway || "0.0.0.0");
         setDefaultDnsIpv4(netInterface.ipv4.dns[0] || "0.0.0.0");
         setAlternateDnsIpv4(netInterface.ipv4.dns[1] || "0.0.0.0");
     }, [netInterface.device, netInterface.dhcp, netInterface.ipv4.address, netInterface.ipv4.gateway, netInterface.ipv4.dns.join(',')]); // Actualizar cuando cambien propiedades relevantes

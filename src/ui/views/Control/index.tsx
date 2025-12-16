@@ -7,6 +7,7 @@ import BlockedControl from "./components/BlockedControl";
 import LicenseChecker from "./components/LicenceChecker";
 import { ConfigProvider, theme } from "antd";
 import RoutinesView from "./components/RoutinesView";
+import { NetworkInterfacesProvider } from "@contexts/NetworkInterfacesContext";
 
 const Control = ({ isPreview }: { isPreview: boolean }) => {
 
@@ -15,14 +16,16 @@ const Control = ({ isPreview }: { isPreview: boolean }) => {
       <ConfigProvider
         theme={{ algorithm: theme.darkAlgorithm }}>
         <ProjectContextProvider>
-          <LicenseChecker>
-            <BlockedControl disabled={isPreview}>
-              <PasswordProtection>
-                <RoutinesView />
-              </PasswordProtection>
-              <StatusBar />
-            </BlockedControl>
-          </LicenseChecker>
+          <NetworkInterfacesProvider>
+            <LicenseChecker>
+              <BlockedControl disabled={isPreview}>
+                <PasswordProtection>
+                  <RoutinesView />
+                </PasswordProtection>
+                <StatusBar />
+              </BlockedControl>
+            </LicenseChecker>
+          </NetworkInterfacesProvider>
         </ProjectContextProvider>
       </ConfigProvider>
     </div>

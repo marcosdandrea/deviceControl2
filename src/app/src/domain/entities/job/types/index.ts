@@ -10,6 +10,7 @@ export const jobTypes = {
     sendMailJob: "sendMailJob",
     sendPJLinkJob: "sendPJLinkJob",
     autoCheckRoutineConditionsJob: "autoCheckRoutineConditionsJob",
+    resetRoutineStatusJob: "resetRoutineStatusJob",
 }
 
 export const getJobTypes = async () : Promise<Record<string, any>> => {
@@ -23,6 +24,7 @@ export const getJobTypes = async () : Promise<Record<string, any>> => {
         sendMailJob: await import("./sendMail/index.js"),
         sendPJLinkJob: await import("./sendPJLink/index.js"),
         autoCheckRoutineConditionsJob: await import("./autoCheckRoutineConditions/index.js"),
+        resetRoutineStatusJob: await import("./resetRoutineStatus/index.js"),
     }
     return jobs
 }

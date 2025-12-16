@@ -90,11 +90,29 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
     }
 
-    #setStatus(status: RoutineStatus): Boolean {
+    setStatus(status: RoutineStatus): Boolean {
+        this.logger.info(`Setting routine status to ${status}`);
         if (this.status === status)
             return false
         this.logger.info(`Routine status changed to ${status}`);
         this.status = status
+        
+        // Despachar el evento correspondiente al estado
+        const statusEventMap: Record<RoutineStatus, string> = {
+            "running": routineEvents.routineRunning,
+            "checking": routineEvents.routineAutoCheckingConditions,
+            "completed": routineEvents.routineCompleted,
+            "aborted": routineEvents.routineAborted,
+            "failed": routineEvents.routineFailed,
+            "unknown": routineEvents.routineStatusReseted,
+            "timedout": routineEvents.routineTimeout
+        };
+        
+        const eventToDispatch = statusEventMap[status];
+        if (eventToDispatch) {
+            this.#eventDispatcher(eventToDispatch, { routineId: this.id });
+        }
+        
         return true
     }
 
@@ -145,18 +163,20 @@ export class Routine extends EventEmitter implements RoutineInterface {
 
             if (this.suspendAutoCheckConditions) return
 
-            if (this.#setStatus("completed"))
-                this.#eventDispatcher(routineEvents.routineCompleted);
-            else
+            if (this.setStatus("completed")) {
+                // Evento ya despachado por setStatus
+            } else {
                 this.#eventDispatcher(routineEvents.routineIdle);
+            }
 
         } catch (err) {
             if (this.suspendAutoCheckConditions) return
 
-            if (this.#setStatus("failed"))
-                this.#eventDispatcher(routineEvents.routineFailed);
-            else
+            if (this.setStatus("failed")) {
+                // Evento ya despachado por setStatus
+            } else {
                 this.#eventDispatcher(routineEvents.routineIdle);
+            }
 
         } finally {
             if (this.suspendAutoCheckConditions) return
@@ -412,8 +432,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.#suspendAutoCheckingConditions()
         this.isRunning = true;
         this.failed = false;
-        this.#setStatus("running");
-        this.#eventDispatcher(routineEvents.routineRunning, { routineId: this.id });
+        this.setStatus("running");
+        // Evento ya despachado por setStatus
 
         const cleanOnFinish = () => {
             this.abortController = null;
@@ -452,13 +472,13 @@ export class Routine extends EventEmitter implements RoutineInterface {
                         } catch (e) {
                             if (abortSignal.aborted) {
                                 childCtx.log.warn(dictionary("app.domain.entities.routine.taskAborted", this.getTaskDisplayName(task), String(abortSignal.reason)));
-                                this.#setStatus("aborted");
+                                this.setStatus("aborted");
                                 reject(dictionary("app.domain.entities.routine.aborted", String(abortSignal.reason ?? "")));
                             }
                             if (this.continueOnError) {
                                 childCtx.log.warn(dictionary("app.domain.entities.routine.taskFailed", this.getTaskDisplayName(task), e?.message || String(e)));
                             } else {
-                                this.#setStatus("failed");
+                                this.setStatus("failed");
                                 reject(dictionary("app.domain.entities.routine.breakOnErrorDisabled"));
                                 break;
                             }
@@ -466,10 +486,10 @@ export class Routine extends EventEmitter implements RoutineInterface {
                     }
 
                     if (this.continueOnError && this.tasks.some(t => t.failed)){
-                        this.#setStatus("failed")
+                        this.setStatus("failed")
                         reject(dictionary("app.domain.entities.routine.oneOrMoreTasksFailed"))
                     } else {
-                        this.#setStatus("completed")
+                        this.setStatus("completed")
                         resolve()
                     }
                     
@@ -487,10 +507,10 @@ export class Routine extends EventEmitter implements RoutineInterface {
                     } catch (e) {
                         if (abortSignal.aborted) {
                             childCtx.log.warn(dictionary("app.domain.entities.routine.tasksAborted", String(abortSignal.reason)));
-                            this.#setStatus("aborted");
+                            this.setStatus("aborted");
                             return reject(new Error(dictionary("app.domain.entities.routine.aborted", String(abortSignal.reason ?? ""))));
                         }
-                        this.#setStatus("failed");
+                        this.setStatus("failed");
                         return reject(e);
                     }
                 });
@@ -506,7 +526,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
                     if (result.every((res) => res.status === 'fulfilled')) {
                         const completedTaskNames = this.getTasks().map(task => this.getTaskDisplayName(task)).join(', ');
                         childCtx.log.info(dictionary("app.domain.entities.routine.tasksCompletedList", completedTaskNames));
-                        this.#setStatus("completed");
+                        this.setStatus("completed");
                         resolve();
                     } else {
                         for (const res of result) {
@@ -516,7 +536,7 @@ export class Routine extends EventEmitter implements RoutineInterface {
                                 childCtx.log.info(dictionary("app.domain.entities.routine.taskFulfilledValue", String(res.value)));
                             }
                         }
-                        this.#setStatus("failed");
+                        this.setStatus("failed");
                         reject(new Error(dictionary("app.domain.entities.routine.tasksFailedDetails")))
                     }
                 })
@@ -558,25 +578,25 @@ export class Routine extends EventEmitter implements RoutineInterface {
                             this.timeoutController.start(this.abortController.signal),
                         ]);
 
-                this.#setStatus("completed")
+                this.setStatus("completed")
                 this.logger.info(childCtx.finish.info(dictionary("app.domain.entities.routine.completed", Date.now() - routineStartTime)));
-                this.#eventDispatcher(routineEvents.routineCompleted);
+                // Evento ya despachado por setStatus
 
                 resolve();
             } catch (e) {
 
                 if (userAbortSignal.aborted) {
-                    this.#setStatus("aborted");
+                    this.setStatus("aborted");
                     this.logger.warn(childCtx.finish.warn(dictionary("app.domain.entities.routine.aborted", e?.message || String(e))));
-                    this.#eventDispatcher(routineEvents.routineAborted);
+                    // Evento ya despachado por setStatus
                 } else if (this.timeoutController?.timedout) {
                     this.logger.warn(childCtx.finish.warn(dictionary("app.domain.entities.routine.timedOut", e?.message || String(e))));
-                    this.#eventDispatcher(routineEvents.routineTimeout);
-                    this.#setStatus("timedout");
+                    this.setStatus("timedout");
+                    // Evento ya despachado por setStatus
                 } else {
-                    this.#setStatus("failed");
+                    this.setStatus("failed");
                     this.logger.error(childCtx.finish.error(dictionary("app.domain.entities.routine.failed", e?.message || String(e))));
-                    this.#eventDispatcher(routineEvents.routineFailed);
+                    // Evento ya despachado por setStatus
                 }
 
                 reject(e);

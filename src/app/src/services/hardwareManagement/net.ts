@@ -10,6 +10,9 @@ import {
 import dotenv from "dotenv";
 import { EventEmitter } from "events";
 import networkEvents from "@common/events/network.events";
+import { Log } from "@src/utils/log";
+
+const log = Log.createInstance("NetworkManagerService", true);
 
 dotenv.config();
 
@@ -144,7 +147,7 @@ export class NetworkManagerService {
       const out = await run(cmd);
 
       if (!out) {
-        console.log("Empty output from nmcli");
+        log.info("Empty output from nmcli");
         return [];
       }
 
@@ -158,7 +161,7 @@ export class NetworkManagerService {
           try {
             return await this.getDeviceInfoLinux(device);
           } catch (err) {
-            console.error(`Failed to getDeviceInfo for ${device}:`, err);
+            log.error(`Failed to getDeviceInfo for ${device}:`, err);
             // Devolver un objeto mínimo para no romper el flujo
             return {
               device,
@@ -187,7 +190,7 @@ export class NetworkManagerService {
 
       return devices;
     } catch (error) {
-      console.error("Error in listDevicesLinux:", error);
+      log.error("Error in listDevicesLinux:", error);
       throw error;
     }
   }
@@ -202,58 +205,64 @@ export class NetworkManagerService {
       const out = await run(cmd);
       
       if (!out) {
+        log.info("[listDevicesWindows] No output from PowerShell");
         return [];
       }
 
       const adapters = JSON.parse(out);
       const adapterArray = Array.isArray(adapters) ? adapters : [adapters];
+      
+      // Filtrar solo adaptadores físicos desde el principio para evitar procesar adaptadores innecesarios
+      const physicalAdapters = adapterArray.filter(adapter => {
+        const desc = adapter.InterfaceDescription?.toLowerCase() || "";
+        return desc.includes("wireless") || desc.includes("wi-fi") || desc.includes("wifi") || 
+               desc.includes("ethernet") || desc.includes("lan");
+      });
+      
+      log.info(`[listDevicesWindows] Processing ${physicalAdapters.length} physical adapters from ${adapterArray.length} total`);
 
       const devices: NetworkDeviceSummary[] = [];
 
-      for (const adapter of adapterArray) {
+      for (const adapter of physicalAdapters) {
         try {
-          // Obtener configuración IP para cada adaptador
-          const ipCmd = `powershell -Command "Get-NetIPAddress -InterfaceIndex ${adapter.ifIndex} -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object IPAddress,PrefixLength | ConvertTo-Json"`;
-          const ipOut = await run(ipCmd);
+          // Combinar todos los comandos PowerShell en uno solo para mejorar performance
+          const combinedCmd = `powershell -Command "$ifIndex = ${adapter.ifIndex}; $result = @{}; $result.ip = Get-NetIPAddress -InterfaceIndex $ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1 IPAddress,PrefixLength; $result.gateway = Get-NetRoute -InterfaceIndex $ifIndex -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Select-Object -First 1 NextHop; $result.dns = Get-DnsClientServerAddress -InterfaceIndex $ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1 ServerAddresses; $result.dhcp = Get-NetIPInterface -InterfaceIndex $ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1 Dhcp; $result | ConvertTo-Json -Compress"`;
           
           let ipAddress = undefined;
           let prefixLength = undefined;
-
-          if (ipOut) {
-            try {
-              const ipInfo = JSON.parse(ipOut);
-              const ipData = Array.isArray(ipInfo) ? ipInfo[0] : ipInfo;
-              ipAddress = ipData?.IPAddress;
-              prefixLength = ipData?.PrefixLength;
-            } catch (e) {
-              // Ignorar errores de parseo
-            }
-          }
-
-          // Obtener gateway
-          const gatewayCmd = `powershell -Command "Get-NetRoute -InterfaceIndex ${adapter.ifIndex} -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Select-Object NextHop | ConvertTo-Json"`;
           let gateway = undefined;
-          try {
-            const gatewayOut = await run(gatewayCmd);
-            if (gatewayOut) {
-              const gatewayInfo = JSON.parse(gatewayOut);
-              gateway = gatewayInfo?.NextHop;
-            }
-          } catch (e) {
-            // Ignorar errores
-          }
-
-          // Obtener DNS
-          const dnsCmd = `powershell -Command "Get-DnsClientServerAddress -InterfaceIndex ${adapter.ifIndex} -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object ServerAddresses | ConvertTo-Json"`;
           let dns: string[] = [];
+          let dhcp = false;
+
           try {
-            const dnsOut = await run(dnsCmd);
-            if (dnsOut) {
-              const dnsInfo = JSON.parse(dnsOut);
-              dns = dnsInfo?.ServerAddresses || [];
+            const combinedOut = await run(combinedCmd);
+            if (combinedOut) {
+              const result = JSON.parse(combinedOut);
+              
+              // Extraer IP
+              if (result.ip) {
+                ipAddress = result.ip.IPAddress;
+                prefixLength = result.ip.PrefixLength;
+              }
+              
+              // Extraer gateway
+              if (result.gateway?.NextHop) {
+                gateway = result.gateway.NextHop;
+              }
+              
+              // Extraer DNS
+              if (result.dns?.ServerAddresses) {
+                dns = Array.isArray(result.dns.ServerAddresses) ? result.dns.ServerAddresses : [];
+              }
+              
+              // Extraer DHCP
+              if (result.dhcp?.Dhcp) {
+                dhcp = result.dhcp.Dhcp === "Enabled";
+              }
             }
           } catch (e) {
-            // Ignorar errores
+            // Si el comando combinado falla, asumir valores por defecto
+            dhcp = true;
           }
 
           // Determinar tipo de interfaz
@@ -268,27 +277,21 @@ export class NetworkManagerService {
           }
 
           // Determinar estado
+          // En Windows, consideramos "connected" solo si el adaptador está "Up" Y tiene una IP válida (no link-local)
+          // Las IPs 169.254.x.x son direcciones APIPA (Automatic Private IP Addressing) que no representan conectividad real
+          const isLinkLocal = ipAddress && ipAddress.startsWith("169.254.");
+          const hasValidIP = ipAddress && !isLinkLocal;
+          
           let state: NetworkDeviceState = "unknown";
-          if (adapter.Status === "Up") {
+          if (adapter.Status === "Up" && hasValidIP) {
             state = "connected";
-          } else if (adapter.Status === "Down" || adapter.Status === "Disabled") {
+          } else if (adapter.Status === "Up" && !hasValidIP) {
+            // Adaptador habilitado pero sin IP válida (cable desconectado, DHCP sin asignar, o solo link-local)
+            state = "disconnected";
+          } else if (adapter.Status === "Down" || adapter.Status === "Disabled" || adapter.Status === "Disconnected") {
             state = "disconnected";
           } else {
             state = "unavailable";
-          }
-
-          // Determinar si usa DHCP
-          const dhcpCmd = `powershell -Command "Get-NetIPInterface -InterfaceIndex ${adapter.ifIndex} -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object Dhcp | ConvertTo-Json"`;
-          let dhcp = false;
-          try {
-            const dhcpOut = await run(dhcpCmd);
-            if (dhcpOut) {
-              const dhcpInfo = JSON.parse(dhcpOut);
-              dhcp = dhcpInfo?.Dhcp === "Enabled";
-            }
-          } catch (e) {
-            // Asumir DHCP si hay error
-            dhcp = true;
           }
 
           const ipv4: NetworkIPv4Config = {
@@ -306,14 +309,16 @@ export class NetworkManagerService {
             dhcp,
             ipv4,
           });
+          
         } catch (err) {
-          console.error(`Error processing adapter ${adapter.Name}:`, err);
+          log.error(`[listDevicesWindows] Error processing adapter ${adapter.Name}:`, err);
         }
       }
 
+      log.info(`[listDevicesWindows] Returning ${devices.length} devices`);
       return devices;
     } catch (error) {
-      console.error("Error in listDevicesWindows:", error);
+      log.error("Error in listDevicesWindows:", error);
       throw error;
     }
   }
@@ -359,7 +364,7 @@ export class NetworkManagerService {
 
       return devices;
     } catch (error) {
-      console.error("Error in listDevicesMac:", error);
+      log.error("Error in listDevicesMac:", error);
       throw error;
     }
   }
@@ -464,18 +469,26 @@ export class NetworkManagerService {
         ipv4,
       });
     } catch (err) {
-      console.error(`Error processing port ${port.device}:`, err);
+      log.error(`Error processing port ${port.device}:`, err);
     }
   }
 
   /**
    * Lista todos los dispositivos de red según la plataforma.
-   * Usa caché persistente durante toda la ejecución de la aplicación.
+   * Si no se fuerza refresh, usa los datos del monitoreo automático (lastKnownInterfaces).
+   * Solo el monitoreo automático debe forzar refresh.
    */
   static async listDevices(forceRefresh: boolean = false): Promise<NetworkDeviceSummary[]> {
-    // Si hay caché y no se fuerza el refresh, retornar caché
-    if (!forceRefresh && this.devicesCache !== null) {
-      return this.devicesCache;
+    // Si no se fuerza refresh, retornar los datos del monitoreo automático
+    if (!forceRefresh) {
+      // Si hay datos del monitoreo, usarlos
+      if (lastKnownInterfaces.length > 0) {
+        return lastKnownInterfaces;
+      }
+      // Si no hay datos del monitoreo pero hay caché, usar caché
+      if (this.devicesCache !== null) {
+        return this.devicesCache;
+      }
     }
 
     const platform = this.getPlatform();
@@ -577,7 +590,7 @@ export class NetworkManagerService {
         }
       }
     } catch (err) {
-      console.error(`Error searching for connections for device ${device}:`, err);
+      log.error(`Error searching for connections for device ${device}:`, err);
     }
 
     return null;
@@ -696,60 +709,43 @@ export class NetworkManagerService {
 
       const adapter = JSON.parse(out);
 
-      // Obtener configuración IP
-      const ipCmd = `powershell -Command "Get-NetIPAddress -InterfaceIndex ${adapter.ifIndex} -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object IPAddress,PrefixLength | ConvertTo-Json"`;
-      const ipOut = await run(ipCmd);
+      // Combinar todos los comandos PowerShell en uno solo para mejorar performance
+      const combinedCmd = `powershell -Command "$ifIndex = ${adapter.ifIndex}; $result = @{}; $result.ip = Get-NetIPAddress -InterfaceIndex $ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1 IPAddress,PrefixLength; $result.gateway = Get-NetRoute -InterfaceIndex $ifIndex -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Select-Object -First 1 NextHop; $result.dns = Get-DnsClientServerAddress -InterfaceIndex $ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1 ServerAddresses; $result.dhcp = Get-NetIPInterface -InterfaceIndex $ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1 Dhcp; $result | ConvertTo-Json -Compress"`;
       
       let ipAddress = undefined;
       let prefixLength = undefined;
-
-      if (ipOut) {
-        try {
-          const ipInfo = JSON.parse(ipOut);
-          const ipData = Array.isArray(ipInfo) ? ipInfo[0] : ipInfo;
-          ipAddress = ipData?.IPAddress;
-          prefixLength = ipData?.PrefixLength;
-        } catch (e) {
-          // Ignorar errores
-        }
-      }
-
-      // Obtener gateway
-      const gatewayCmd = `powershell -Command "Get-NetRoute -InterfaceIndex ${adapter.ifIndex} -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Select-Object NextHop | ConvertTo-Json"`;
       let gateway = undefined;
-      try {
-        const gatewayOut = await run(gatewayCmd);
-        if (gatewayOut) {
-          const gatewayInfo = JSON.parse(gatewayOut);
-          gateway = gatewayInfo?.NextHop;
-        }
-      } catch (e) {
-        // Ignorar errores
-      }
-
-      // Obtener DNS
-      const dnsCmd = `powershell -Command "Get-DnsClientServerAddress -InterfaceIndex ${adapter.ifIndex} -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object ServerAddresses | ConvertTo-Json"`;
       let dns: string[] = [];
-      try {
-        const dnsOut = await run(dnsCmd);
-        if (dnsOut) {
-          const dnsInfo = JSON.parse(dnsOut);
-          dns = dnsInfo?.ServerAddresses || [];
-        }
-      } catch (e) {
-        // Ignorar errores
-      }
-
-      // Determinar si usa DHCP
-      const dhcpCmd = `powershell -Command "Get-NetIPInterface -InterfaceIndex ${adapter.ifIndex} -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object Dhcp | ConvertTo-Json"`;
       let dhcp = false;
+
       try {
-        const dhcpOut = await run(dhcpCmd);
-        if (dhcpOut) {
-          const dhcpInfo = JSON.parse(dhcpOut);
-          dhcp = dhcpInfo?.Dhcp === "Enabled";
+        const combinedOut = await run(combinedCmd);
+        if (combinedOut) {
+          const result = JSON.parse(combinedOut);
+          
+          // Extraer IP
+          if (result.ip) {
+            ipAddress = result.ip.IPAddress;
+            prefixLength = result.ip.PrefixLength;
+          }
+          
+          // Extraer gateway
+          if (result.gateway?.NextHop) {
+            gateway = result.gateway.NextHop;
+          }
+          
+          // Extraer DNS
+          if (result.dns?.ServerAddresses) {
+            dns = Array.isArray(result.dns.ServerAddresses) ? result.dns.ServerAddresses : [];
+          }
+          
+          // Extraer DHCP
+          if (result.dhcp?.Dhcp) {
+            dhcp = result.dhcp.Dhcp === "Enabled";
+          }
         }
       } catch (e) {
+        // Si el comando combinado falla, asumir valores por defecto
         dhcp = true;
       }
 
@@ -765,10 +761,18 @@ export class NetworkManagerService {
       }
 
       // Determinar estado
+      // En Windows, consideramos "connected" solo si el adaptador está "Up" Y tiene una IP válida (no link-local)
+      // Las IPs 169.254.x.x son direcciones APIPA (Automatic Private IP Addressing) que no representan conectividad real
+      const isLinkLocal = ipAddress && ipAddress.startsWith("169.254.");
+      const hasValidIP = ipAddress && !isLinkLocal;
+      
       let state: NetworkDeviceState = "unknown";
-      if (adapter.Status === "Up") {
+      if (adapter.Status === "Up" && hasValidIP) {
         state = "connected";
-      } else if (adapter.Status === "Down" || adapter.Status === "Disabled") {
+      } else if (adapter.Status === "Up" && !hasValidIP) {
+        // Adaptador habilitado pero sin IP válida (cable desconectado, DHCP sin asignar, o solo link-local)
+        state = "disconnected";
+      } else if (adapter.Status === "Down" || adapter.Status === "Disabled" || adapter.Status === "Disconnected") {
         state = "disconnected";
       } else {
         state = "unavailable";
@@ -791,7 +795,7 @@ export class NetworkManagerService {
         ipv4,
       };
     } catch (error) {
-      console.error(`Error getting device info for ${device} on Windows:`, error);
+      log.error(`Error getting device info for ${device} on Windows:`, error);
       throw error;
     }
   }
@@ -930,7 +934,7 @@ export class NetworkManagerService {
         ipv4,
       };
     } catch (error) {
-      console.error(`Error getting device info for ${device} on macOS:`, error);
+      log.error(`Error getting device info for ${device} on macOS:`, error);
       throw error;
     }
   }
@@ -1051,6 +1055,7 @@ export class NetworkManagerService {
 // Variables para el monitoreo de interfaces de red
 let monitoringInterval: NodeJS.Timeout | null = null;
 let lastKnownInterfaces: NetworkDeviceSummary[] = [];
+let subscriberCount: number = 0; // Contador de suscriptores
 
 /**
  * Compara dos listas de interfaces de red para detectar cambios
@@ -1086,32 +1091,36 @@ function interfacesHaveChanged(
 
 /**
  * Inicia el monitoreo de cambios en las interfaces de red
+ * Usa un sistema de conteo de referencias para permitir múltiples suscriptores
  * @param intervalMs - Intervalo de verificación en milisegundos (por defecto 3000ms)
  */
-export function startNetworkMonitoring(intervalMs: number = 3000): void {
-  // Si ya hay un monitoreo activo, detenerlo primero
+export function startNetworkMonitoring(intervalMs: number = 8000): void {
+  subscriberCount++;
+  log.info(`Network monitoring subscriber added. Total subscribers: ${subscriberCount}`);
+
+  // Si ya hay un monitoreo activo, solo incrementar el contador
   if (monitoringInterval) {
-    console.log('Stopping existing network monitoring before starting a new one...');
-    stopNetworkMonitoring();
+    return;
   }
 
-  console.log('Starting network interfaces monitoring...');
+  log.info('Starting network interfaces monitoring...');
 
   // Función para verificar cambios en las interfaces
   const checkInterfaces = async () => {
     try {
-      const currentInterfaces = await NetworkManagerService.listDevices();
+      // Forzar refresh para obtener el estado actual real
+      const currentInterfaces = await NetworkManagerService.listDevices(true);
 
       // Verificar si hubo cambios
       const hasChanged = interfacesHaveChanged(lastKnownInterfaces, currentInterfaces);
 
       if (hasChanged) {
-        console.log('Network interfaces changed, emitting event...');
+        log.info('Network interfaces changed, emitting event...');
         lastKnownInterfaces = currentInterfaces;
         networkEventEmitter.emit(networkEvents.networkInterfacesChanged, currentInterfaces);
       }
     } catch (error) {
-      console.error('Error monitoring network interfaces:', error);
+      log.error('Error monitoring network interfaces:', error);
     }
   };
 
@@ -1124,10 +1133,17 @@ export function startNetworkMonitoring(intervalMs: number = 3000): void {
 
 /**
  * Detiene el monitoreo de interfaces de red
+ * Solo detiene realmente el monitoreo cuando no hay más suscriptores
  */
 export function stopNetworkMonitoring(): void {
-  if (monitoringInterval) {
-    console.log('Stopping network interfaces monitoring...');
+  if (subscriberCount > 0) {
+    subscriberCount--;
+    log.info(`Network monitoring subscriber removed. Remaining subscribers: ${subscriberCount}`);
+  }
+
+  // Solo detener el monitoreo si no hay más suscriptores
+  if (subscriberCount === 0 && monitoringInterval) {
+    log.info('No more subscribers, stopping network interfaces monitoring...');
     clearInterval(monitoringInterval);
     monitoringInterval = null;
   }

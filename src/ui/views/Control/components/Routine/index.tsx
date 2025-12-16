@@ -26,10 +26,13 @@ const Routine = React.memo(({ routineData }: Props) => {
         routineEvents.routineFailed,
         routineEvents.routineAutoCheckingConditions,
         routineEvents.routineIdle,
-        routineEvents.routineTimeout
+        routineEvents.routineTimeout,
+        routineEvents.routineStatusReseted
     ], []);
 
     const lastEvent = useRoutineEvents(routineData.id, eventsToListen);
+
+    console.log (`Routine ${routineData.name} rendered with last event:`, lastEvent);
 
     return (
         <RoutineContextProvider routine={routineData}>

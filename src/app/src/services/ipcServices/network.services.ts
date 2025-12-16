@@ -9,14 +9,15 @@ const log = Log.createInstance("Network IPC Service", true);
 const getNetworkInterfaces = async (_payload: any, callback?: (devices: NetworkDeviceSummary[] | {error: string}) => void) => {
    
     try {
-        const allDevices = await NetworkManagerService.listDevices();
+        // NO forzar refresh - usar datos del monitoreo automático
+        const allDevices = await NetworkManagerService.listDevices(false);
         
         // Filtrar solo interfaces físicas (ethernet y wifi)
         const physicalDevices = allDevices.filter(device => 
             device.type === 'ethernet' || device.type === 'wifi'
         );
         
-        log.info(`Retrieved ${physicalDevices.length} physical network devices (filtered from ${allDevices.length} total).`);
+        log.info(`Retrieved ${physicalDevices.length} physical network devices from cache (filtered from ${allDevices.length} total).`);
         
         if (typeof callback === 'function') {
             callback(physicalDevices);
@@ -86,18 +87,11 @@ const applyInterfaceSettings = async (
 
 const startNetworkMonitoring = (payload: any, callback?: Function): void => {
     initializeNetworkMonitoring();
-
-    networkEventEmitter.on(networkEvents.networkInterfacesChanged, (interfaces: NetworkDeviceSummary[]) => {
-        broadcastToClients(networkEvents.networkInterfacesChanged, interfaces);
-    });
-
     if (callback) callback({ success: true });
 };
 
 const stopNetworkMonitoring = (payload: any, callback?: Function): void => {
     finalizeNetworkMonitoring();
-    networkEventEmitter.removeAllListeners(networkEvents.networkInterfacesChanged);
-    
     if (callback) callback({ success: true });
 };
 

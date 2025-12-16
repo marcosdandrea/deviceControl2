@@ -27,9 +27,8 @@ const JobParameters = () => {
             setJobParams([])
         else {
             const params = thisJob.params.map(param => {
-                // Si el parámetro es routineId del job autoCheckRoutineConditionsJob,
-                // agregar las opciones de rutinas dinámicamente
-                if (param.name === 'routineId' && task.job.type === 'autoCheckRoutineConditionsJob') {
+                // Si el parámetro es routineId, agregar las opciones de rutinas dinámicamente
+                if (param.name === 'routineId') {
                     return {
                         ...param,
                         options: routineOptions,

@@ -55,7 +55,7 @@ const LicenseChecker = ({ children }) => {
                         onClick={handleOpenBuilder}>
                         Abrir Builder
                     </Button>
-                    : <p>{`conectándose al panel builder en ${networkInterfaces.filter((iface) => iface.state === "connected").map((iface) => iface.ipv4.address.split("/")[0]).join(", ")}${port}`}</p>
+                    : <p>{`conectándose al panel builder en ${networkInterfaces.filter((iface) => iface.state === "connected" && iface.ipv4?.address).map((iface) => iface.ipv4.address.split("/")[0]).join(", ")}${port}`}</p>
                 }
             </div>
         </div>
