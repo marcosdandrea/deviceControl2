@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { Log } from '@src/utils/log';
 
-const log = Log.createInstance('Hardware Management Utils', true);
+const log = Log.createInstance('Hardware Management Utils', false);
 
 const execPromise = promisify(exec);
 

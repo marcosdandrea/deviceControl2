@@ -1,7 +1,5 @@
 
-export default {
-    getNetworkInterfaces: "getNetworkInterfaces",
-    applyInterfaceSettings: "applyInterfaceSettings",
-    startNetworkMonitoring: "startNetworkMonitoring",
-    stopNetworkMonitoring: "stopNetworkMonitoring"
+export const enum NetworkCommands {
+    getNetworkStatus = "getNetworkConfiguration",
+    setNetworkConfiguration = "setNetworkConfiguration",
 }

@@ -1,98 +1,50 @@
-import { NetworkDeviceSummary } from "@common/types/network";
-import { NetworkManagerService, networkEventEmitter, startNetworkMonitoring as initializeNetworkMonitoring, stopNetworkMonitoring as finalizeNetworkMonitoring } from "../hardwareManagement/net";
+import { NetworkConfiguration } from "@common/types/network";
 import { Log } from "@src/utils/log";
-import networkEvents from "@common/events/network.events";
-import { broadcastToClients } from ".";
 
 const log = Log.createInstance("Network IPC Service", true);
 
-const getNetworkInterfaces = async (_payload: any, callback?: (devices: NetworkDeviceSummary[] | {error: string}) => void) => {
-   
+export const getNetworkStatus = async (_args: any, callback: Function) => {
+    // Obtener la instancia del NetworkManager
+    log.info("Getting network status...");
     try {
-        // NO forzar refresh - usar datos del monitoreo automático
-        const allDevices = await NetworkManagerService.listDevices(false);
-        
-        // Filtrar solo interfaces físicas (ethernet y wifi)
-        const physicalDevices = allDevices.filter(device => 
-            device.type === 'ethernet' || device.type === 'wifi'
-        );
-        
-        log.info(`Retrieved ${physicalDevices.length} physical network devices from cache (filtered from ${allDevices.length} total).`);
-        
-        if (typeof callback === 'function') {
-            callback(physicalDevices);
-        } else {
-            console.error("Callback is not a function:", callback);
+        const { NetworkManager } = await import("@src/services/hardwareManagement/net/index.js");
+        const nm = NetworkManager.getInstance();
+        if (!nm) {
+            throw new Error("NetworkManager instance not initialized");
         }
+        const networkStatus = (await nm).getNetworkStatus()
+        callback?.(networkStatus);
+        return networkStatus;
     } catch (error) {
-        log.error("Error retrieving network devices:", error);
-        if (typeof callback === 'function') {
-            callback({ error: (error as Error).message });
-        }
+        log.error(`Error getting network status: ${(error as Error).message}`);
+        callback?.(error);
+        return null;
     }
 }
 
-type ApplySettingsPayload = {
-    interfaceName: string;
-    settings: {
-        dhcp: boolean;
-        ipv4: string;
-        gateway: string;
-        dns: string[];
-    };
-    connectionName?: string; // Optional: will be looked up if not provided
-};
-
-const applyInterfaceSettings = async (
-    payload: ApplySettingsPayload,
-    callback?: (response: { success: boolean; error?: string }) => void
-) => {
-    const { interfaceName, settings } = payload || ({} as ApplySettingsPayload);
-
+export const setNetworkConfiguration = async (args: any, callback: Function) => {
+    // Establecer la configuración de red
+    log.info("Setting network configuration...");
     try {
-        if (!interfaceName) throw new Error("No interfaceName provided");
-
-        // Get the device info to find its connection name
-        const allDevices = await NetworkManagerService.listDevices();
-        const device = allDevices.find(d => d.device === interfaceName);
-        
-        if (!device) {
-            throw new Error(`Device ${interfaceName} not found in network interfaces`);
+        const config: NetworkConfiguration = args?.config;
+        if (!config) {
+            throw new Error("No network configuration provided");
         }
 
-        const connectionName = device.connection;
-
-        if (settings.dhcp) {
-            await NetworkManagerService.setDHCP(interfaceName, connectionName);
-        } else {
-            // settings.ipv4 expected as "address/prefix" (e.g. 192.168.1.50/24)
-            await NetworkManagerService.setStaticIP(
-                interfaceName,
-                settings.ipv4,
-                settings.gateway,
-                settings.dns || [],
-                connectionName
-            );
+        const { NetworkManager } = await import("@src/services/hardwareManagement/net/index.js");
+        const networkManager = NetworkManager.getInstance();
+        if (!networkManager) {
+            throw new Error("NetworkManager instance not initialized");
         }
 
-        // Limpiar caché de dispositivos para que se refresque en la próxima consulta
-        NetworkManagerService.clearDevicesCache();
-
-        if (typeof callback === 'function') callback({ success: true });
+        await networkManager.setNetworkConfiguration(config);
+        callback?.(true);
+        return true;
     } catch (error) {
-        log.error(`Error applying settings to interface ${interfaceName}: ${error}`);
-        if (typeof callback === 'function') callback({ success: false, error: (error as Error).message });
+        log.error(`Error setting network configuration: ${(error as Error).message}`);
+        callback?.(false);
+        return false;
     }
-};
+}
 
-const startNetworkMonitoring = (payload: any, callback?: Function): void => {
-    initializeNetworkMonitoring();
-    if (callback) callback({ success: true });
-};
-
-const stopNetworkMonitoring = (payload: any, callback?: Function): void => {
-    finalizeNetworkMonitoring();
-    if (callback) callback({ success: true });
-};
-
-export default { getNetworkInterfaces, applyInterfaceSettings, startNetworkMonitoring, stopNetworkMonitoring };
+export default { getNetworkStatus, setNetworkConfiguration }

@@ -3,7 +3,7 @@ import { getVersion } from "@src/utils/getVersion";
 import { isDev } from "@src/utils/index.js"
 import { Log } from "@src/utils/log.js";
 
-const log = Log.createInstance("windowManagerUseCase", true)
+const log = Log.createInstance("windowManagerUseCase", false)
 
 let mainWindow: import('electron').BrowserWindow | null = null
 

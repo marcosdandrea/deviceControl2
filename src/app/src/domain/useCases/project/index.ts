@@ -21,7 +21,8 @@ import { getUserDataPath } from "@src/utils/paths";
 import path from "path";
 import { decryptData, encryptData } from "@src/services/cryptography";
 
-const log = Log.createInstance("projectUseCases", true);
+
+const log = Log.createInstance("projectUseCases", false);
 const eventManager = new EventManager();
 
 let lastOpenedProjectId = undefined
@@ -38,7 +39,7 @@ const defaultProject = {
    password: null,
    routines: [],
    triggers: [],
-   tasks: []
+   tasks: [],
 } as unknown as ProjectConstructor;
 
 export const createNewProject = async (): Promise<Project> => {
@@ -145,66 +146,88 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
       log.error("Project instance not found. Creating a new project instance.");
    }
 
-   const createTriggers = async () => {
-      log.info("Loading triggers...");
+   try {
 
-      for (const triggerData of projectData.triggers || []) {
-         log.info(`Creating trigger '${triggerData.name}' of type '${triggerData.type}'...`);
-         const newTrigger = await createNewTriggerByType(triggerData.type, triggerData);
+      const createTriggers = async () => {
+         log.info(`Loading ${projectData.triggers.length} triggers...`);
 
-         if (!newTrigger) {
-            broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el trigger ${triggerData.name} (${triggerData.id}) de tipo ${triggerData.type}` });
-            log.error(`Failed to create trigger of type ${triggerData.type}`);
-            continue;
-         }
+         for (const triggerData of projectData.triggers || []) {
+            log.info(`Creating trigger '${triggerData.name}' of type '${triggerData.type}'...`);
+            try {
+               const newTrigger = await createNewTriggerByType(triggerData.type, triggerData);
 
-         if (triggers[triggerData.id])
-            continue
+               if (!newTrigger) {
+                  broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el trigger ${triggerData.name} (${triggerData.id}) de tipo ${triggerData.type}` });
+                  await log.error(`Failed to create trigger of type ${triggerData.type}`);
+                  continue;
+               }
 
-         triggers[triggerData.id] = newTrigger;
-      }
+               if (triggers[triggerData.id])
+                  continue
 
-   }
-
-   const createRoutines = async () => {
-      log.info("Loading routines...");
-
-      for (const routineData of projectData.routines || []) {
-         if (routines[routineData.id])
-            continue
-
-         try {
-            const newRoutine = await createRoutine(routineData, projectData);
-            routines[routineData.id] = newRoutine;
-         } catch (error) {
-            broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar la rutina ${routineData.name} (${routineData.id}): ${error.message}` });
-            log.error(`Failed to create routine with ID ${routineData.id}: ${error.message}`);
-            continue;
+               triggers[triggerData.id] = newTrigger;
+            } catch (error) {
+               broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el trigger ${triggerData.name} (${triggerData.id}): ${error.message}` });
+               log.error(`Failed to create trigger with ID ${triggerData.id}: ${error.message}`);
+               break;
+            }
          }
 
       }
+      await createTriggers();
+
+      const createRoutines = async () => {
+         log.info("Loading routines...");
+
+         for (const routineData of projectData.routines || []) {
+            if (routines[routineData.id])
+               continue
+
+            try {
+               const newRoutine = await createRoutine(routineData, projectData);
+               routines[routineData.id] = newRoutine;
+            } catch (error) {
+               broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar la rutina ${routineData.name} (${routineData.id}): ${error.message}` });
+               log.error(`Failed to create routine with ID ${routineData.id}: ${error.message}`);
+               continue;
+            }
+
+         }
+      }
+      
+      project = Project.createInstance({
+         ...projectData,
+         routines: [],
+         triggers: Object.values(triggers),
+         tasks: Object.values(tasks)
+      })
+      
+      await createRoutines();
+
+      project.routines = Object.values(routines);
+      project.onAny(broadcastToClients)
+
+      lastOpenedProjectId = project.id;
+
+      setMainWindowTitle(project.name);
+
+      broadcastToClients(projectEvents.loaded, { projectData: project.toJson() });
+      eventManager.emit(projectEvents.loaded, project);
+      saveLastProject();
+      log.info("Project loaded successfully.");
+   } catch (error) {
+      log.error("Error loading project:", error);
+      throw new Error(`Error loading project: ${error.message}`);
    }
 
-   await createTriggers();
+   //inicializar networkManager con la configuración del proyecto
+   try {
+      const nm = await import("@src/services/hardwareManagement/net/index.js");
+      nm.NetworkManager.getInstance(project.networkConfiguration);
+   } catch (error) {
+      log.error("Failed to initialize NetworkManager with project configuration:", error);
+   }
 
-   project = Project.createInstance({
-      ...projectData,
-      routines: [],
-      triggers: Object.values(triggers),
-      tasks: Object.values(tasks)
-   })
-
-   await createRoutines();
-   project.routines = Object.values(routines);
-   project.onAny(broadcastToClients)
-
-   lastOpenedProjectId = project.id;
-
-   setMainWindowTitle(project.name);
-
-   broadcastToClients(projectEvents.loaded, { projectData: project.toJson() });
-   eventManager.emit(projectEvents.loaded, project);
-   saveLastProject();
    return Promise.resolve(project)
 
 }

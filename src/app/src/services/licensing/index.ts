@@ -122,29 +122,126 @@ const getMachineIdentifier = async (): Promise<string> => {
     }
   }
 
-  const genericId = [os.hostname(), os.arch(), os.type(), os.release()].join("-");
+  const genericId = [os.hostname(), os.arch(), os.type()].join("-");
   return genericId;
+};
+
+// Returns stable MAC addresses for physical adapters, independent of link state.
+const getStablePhysicalMacAddresses = async (): Promise<string[]> => {
+  const platform = os.platform();
+
+  const uniqSort = (items: string[]) => Array.from(new Set(items.map((s) => s.toUpperCase()))).sort();
+
+  if (platform === "win32") {
+    try {
+      const output = execSync(
+        // Filter to physical adapters with a non-empty MAC address
+        'wmic nic where "PhysicalAdapter=true and MACAddress is not null" get MACAddress',
+        { stdio: ["ignore", "pipe", "ignore"] }
+      )
+        .toString()
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+      // First line is the header when using table format; skip if present
+      const lines = output[0]?.toLowerCase() === "macaddress" ? output.slice(1) : output;
+      return uniqSort(lines.filter((m) => /^[0-9A-Fa-f:]{12,17}$/.test(m)));
+    } catch {
+      // Try PowerShell if WMIC is unavailable
+      try {
+        const ps = execSync(
+          'powershell -NoProfile -Command "Get-NetAdapter -Physical | Where-Object {$_.MacAddress} | Select-Object -ExpandProperty MacAddress"',
+          { stdio: ["ignore", "pipe", "ignore"] }
+        )
+          .toString()
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean);
+        if (ps.length) return uniqSort(ps.filter((m) => /^[0-9A-Fa-f:]{12,17}$/.test(m)));
+      } catch {
+        // Fallback to Node's view if both WMIC and PowerShell fail
+      }
+    }
+  }
+
+  if (platform === "linux") {
+    try {
+      const base = "/sys/class/net";
+      const ifaces = await fs.readdir(base);
+      const macs: string[] = [];
+
+      for (const iface of ifaces) {
+        if (iface === "lo") continue; // skip loopback
+        // Physical devices typically have a 'device' symlink present
+        try {
+          await fs.access(path.join(base, iface, "device"));
+        } catch {
+          continue; // likely virtual; skip
+        }
+
+        try {
+          const addr = (await fs.readFile(path.join(base, iface, "address"), "utf8")).trim();
+          if (addr && addr !== "00:00:00:00:00:00") macs.push(addr);
+        } catch {
+          // ignore and continue
+        }
+      }
+
+      if (macs.length) return uniqSort(macs);
+    } catch {
+      // Fallback below
+    }
+  }
+
+  if (platform === "darwin") {
+    try {
+      const output = execSync("networksetup -listallhardwareports", {
+        stdio: ["ignore", "pipe", "ignore"],
+        shell: "/bin/bash",
+      })
+        .toString()
+        .split("\n");
+
+      const macs: string[] = [];
+      for (const line of output) {
+        const m = line.match(/Ethernet Address:\s*([0-9A-Fa-f:]{12,17})/);
+        if (m) macs.push(m[1]);
+      }
+      if (macs.length) return uniqSort(macs);
+    } catch {
+      // Fallback below
+    }
+  }
+
+  // Generic fallback: use Node's networkInterfaces, which may be volatile if link state changes.
+  try {
+    const macs = Object.values(os.networkInterfaces())
+      .flatMap((ifaces) => ifaces ?? [])
+      .filter((iface) => !iface.internal)
+      .map((iface) => iface.mac)
+      .filter((m) => m && m !== "00:00:00:00:00:00");
+    return uniqSort(macs);
+  } catch {
+    return [];
+  }
 };
 
 const buildFingerprintSeed = async (): Promise<string> => {
   const machineId = await getMachineIdentifier();
   const cpus = os.cpus() ?? [];
   const primaryCpu = cpus[0]?.model ?? "unknown";
-  const macAddresses = Object.values(os.networkInterfaces())
-    .flatMap((ifaces) => ifaces ?? [])
-    .filter((iface) => !iface.internal)
-    .map((iface) => iface.mac)
-    .sort()
-    .join(";");
+  // Collect MAC addresses from physical adapters using stable OS sources,
+  // avoiding volatility from link state or IP assignment.
+  const macAddresses = await getStablePhysicalMacAddresses();
 
   return [
     machineId,
     os.platform(),
-    os.release(),
     os.arch(),
     primaryCpu,
     os.totalmem().toString(),
-    macAddresses,
+    macAddresses.join(";"),
   ].join("|");
 };
 

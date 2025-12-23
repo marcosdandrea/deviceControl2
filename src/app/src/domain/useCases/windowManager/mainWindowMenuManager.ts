@@ -6,7 +6,7 @@ import { Menu } from "electron";
 import projectEvents from "@common/events/project.events.js";
 import { Project } from "@src/domain/entities/project/index.js";
 
-const log = Log.createInstance("mainWindowTitleManager", true)
+const log = Log.createInstance("mainWindowTitleManager", false)
 
 const refreshMainWindowMenu = () => {
 

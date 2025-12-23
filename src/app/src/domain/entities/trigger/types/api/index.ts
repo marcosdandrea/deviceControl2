@@ -2,8 +2,8 @@ import { Trigger } from "../..";
 import { requiredTriggerParamType, TriggerType } from "@common/types/trigger.type";
 import triggerEvents from "@common/events/trigger.events";
 import { ServerManager } from "@src/services/server/serverManager";
-import networkServices from "@src/services/ipcServices/network.services";
-import { NetworkManagerService } from "@src/services/hardwareManagement/net";
+import { NetworkManager } from "@src/services/hardwareManagement/net";
+import { NetworkStatus } from "@common/types/network";
 
 interface ApiInterface extends TriggerType {
     endpoint?: string; // Endpoint to listen for API requests
@@ -30,15 +30,13 @@ export class APITrigger extends Trigger {
 
     async requiredParams(): Promise<Record<string, requiredTriggerParamType>> {
 
-        const networkInterfaces = await NetworkManagerService.listDevices()
-        const connectedInterfaces = networkInterfaces.length > 0 
-        ? networkInterfaces
-            .filter((iface) => iface.state == "connected")
-            .map((iface) => iface.ipv4.address.split("/")[0])
-            .join(", ")
-        : "<IP>";
+        const nm = NetworkManager.getInstance();
+        const networkStatus = await (await nm).getNetworkStatus()
+        if (networkStatus.status !== NetworkStatus.CONNECTED) {
+            throw new Error("Network is not connected. API Trigger will not be available.");
+        }
         const mainServer = ServerManager.getInstance("general");
-        const route = `http://${connectedInterfaces}:${mainServer.port}`;
+        const route = `http://${networkStatus.ipv4Address}:${mainServer.port}`;
 
         return {
             endpoint: {

@@ -5,20 +5,25 @@ import { Log } from "@src/utils/log"
 import { broadcastToClients } from "."
 import appCommands from "@common/commands/app.commands"
 import { Socket } from "socket.io"
-import { loadLastProject } from "@src/domain/useCases/project"
-const log = new Log("AppServices", true)
+import systemEvents from "@common/events/system.events"
+const log = new Log("AppServices", false)
 
 const getAvailableTriggers = async (_args: any, callback: Function) => {
     const triggerClasses = await getTriggerTypes()
     let triggers: Record<string, any> = {}
 
     for (const [key, modulePromise] of Object.entries(await triggerClasses)) {
-        const module = await modulePromise
-        triggers[key] = {
-            easyName: module.default.easyName,
-            moduleDescription: module.default.moduleDescription,
-            disableRearming: module.default.disableRearming,
-            params: await module.default.prototype.requiredParams(),
+        try {
+            const module = await modulePromise
+            triggers[key] = {
+                easyName: module.default.easyName,
+                moduleDescription: module.default.moduleDescription,
+                disableRearming: module.default.disableRearming,
+                params: await module.default.prototype.requiredParams(),
+            }
+        } catch (error) {
+            broadcastToClients(systemEvents.appLogError, {message: `Error cargando el trigger de tipo ${key}: ${(error as Error).message}`})
+            log.error(`Error loading trigger type ${key}: ${(error as Error).message}`)
         }
     }
     callback?.(triggers)

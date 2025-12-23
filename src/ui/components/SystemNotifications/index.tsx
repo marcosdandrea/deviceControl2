@@ -1,17 +1,12 @@
 import systemEvents from '@common/events/system.events';
 import { SocketIOContext } from '@components/SocketIOProvider';
-import { message } from 'antd';
+import { App } from 'antd';
 import React, { useContext, useEffect } from 'react';
 
 const SystemNotifications = () => {
     const {socket} = useContext(SocketIOContext)
+    const { message, modal } = App.useApp();
     const lastMessageRef = React.useRef({ message: null, timestamp: 0 });
-
-    message.config({
-        top: 50,
-        duration: 4,
-        maxCount: 3,
-    });
 
     const canShowMessage = (messageText) => {
         const now = Date.now();
@@ -48,7 +43,12 @@ const SystemNotifications = () => {
         if (!canShowMessage(data.message)) return;
         
         updateLastMessage(data.message);
-        message.error(data.message);
+        modal.error({
+            title: 'Error',
+            content: data.message,
+            okText: 'OK',
+        });
+        console.error("Error log received:", data);
     }
 
     const handleOnWarningLog = (data) => {

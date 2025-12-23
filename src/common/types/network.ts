@@ -1,38 +1,26 @@
-// Tipos compartidos para UI / backend
+import { EventEmitter } from "stream";
 
-export type NetworkDeviceType = "ethernet" | "wifi" | "loopback" | "unknown";
+export type ipv4Address = string
 
-export type NetworkDeviceState =
-  | "connected"
-  | "disconnected"
-  | "unavailable"
-  | "unknown";
-
-export interface NetworkDeviceSummary {
-  device: string;          // eth0, wlan0, etc
-  type: NetworkDeviceType; // ethernet, wifi, loopback
-  state: NetworkDeviceState;
-  connection: string | null; // nombre de la conexión NM, o null
-  dhcp: boolean;        // si DHCP está habilitado
-  ipv4: NetworkIPv4Config;
-  gateway?: string;        // puerta de enlace predeterminada, si está disponible
-  dns?: string[];          // servidores DNS, si están disponibles
+export enum NetworkStatus {
+  CONNECTED = 'connected',
+  DISCONNECTED = 'disconnected',
+  CONNECTING = 'connecting',
+  UNKNOWN = 'unknown',
 }
 
-export interface NetworkIPv4Config {
-  method: "auto" | "manual" | "disabled" | "unknown";
-  address?: string;        // 192.168.10.50/24
-  gateway?: string;        // 192.168.10.1
-  dns: string[];           // [ "8.8.8.8", "192.168.10.1" ]
+export type NetworkConfiguration = {
+  interfaceName: string;
+  status: NetworkStatus;
+  dhcpEnabled: boolean;
+  ipv4Address: ipv4Address;
+  subnetMask: ipv4Address;
+  gateway: ipv4Address;
+  dnsServers: ipv4Address[];
 }
 
-export interface NetworkDeviceInfo {
-  device: string;
-  type: NetworkDeviceType;
-  state: NetworkDeviceState;
-  mac?: string;
-  mtu?: number;
-  connection: string | null;
-  ipv4: NetworkIPv4Config;
-  // si en algún momento querés, se puede extender con ipv6, wifi, etc.
+export interface NetworkManagerInterface extends EventEmitter {
+  networkConfig: NetworkConfiguration;
+  setNetworkConfiguration(config: NetworkConfiguration): Promise<void>;
+  getNetworkStatus(): NetworkConfiguration;
 }
