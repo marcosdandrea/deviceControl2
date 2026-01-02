@@ -31,6 +31,7 @@ export const getRoutineTemplate = (args: any, callback: Function) => {
         id: nanoid(8),
         name: "",
         description: "",
+        groupId: null,
         timeout: defaultTimeout,
         tasksId: [],
         triggersId: [],

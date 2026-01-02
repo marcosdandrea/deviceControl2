@@ -30,13 +30,16 @@ export class APITrigger extends Trigger {
 
     async requiredParams(): Promise<Record<string, requiredTriggerParamType>> {
 
+        let route = ""
+        const mainServer = ServerManager.getInstance("general");
+
         const nm = NetworkManager.getInstance();
         const networkStatus = await (await nm).getNetworkStatus()
         if (networkStatus.status !== NetworkStatus.CONNECTED) {
-            throw new Error("Network is not connected. API Trigger will not be available.");
+           route = `http://LOCAL_IP:${mainServer.port}`;
+        } else {
+            route = `http://${networkStatus.ipv4Address}:${mainServer.port}`;
         }
-        const mainServer = ServerManager.getInstance("general");
-        const route = `http://${networkStatus.ipv4Address}:${mainServer.port}`;
 
         return {
             endpoint: {
@@ -50,7 +53,7 @@ export class APITrigger extends Trigger {
     }
 
     #initListeners() {
-        this.on(triggerEvents.triggerArmed, ()=> {
+        this.on(triggerEvents.triggerArmed, () => {
             this.logger.info(`API Trigger armed at endpoint: ${this.endpoint}`);
             this.init().catch(error => {
                 this.logger.error("Error initializing API Trigger:", error);
@@ -73,7 +76,7 @@ export class APITrigger extends Trigger {
 
     private async init() {
 
-        if (!this.armed) 
+        if (!this.armed)
             return this.logger.warn("API Trigger is not armed, skipping initialization");
 
         if (!this.endpoint) {

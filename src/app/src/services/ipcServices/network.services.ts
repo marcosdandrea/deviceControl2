@@ -37,7 +37,7 @@ export const setNetworkConfiguration = async (args: any, callback: Function) => 
             throw new Error("NetworkManager instance not initialized");
         }
 
-        await networkManager.setNetworkConfiguration(config);
+        await (await networkManager).setNetworkConfiguration(config);
         callback?.(true);
         return true;
     } catch (error) {

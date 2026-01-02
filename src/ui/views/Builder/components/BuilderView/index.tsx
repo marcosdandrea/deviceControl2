@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import styles from "./style.module.css";
 import Toolbar from "../Toolbar";
 import BeforeExit from "@components/BeforeExit";
@@ -15,8 +15,16 @@ import OpenTerminalView from "../Toolbar/components/OpenTerminalView";
 import Desktop from "../Desktop";
 import Divider from "../Toolbar/components/Divider";
 import ProjectName from "../Toolbar/components/ProjectName";
+import LicenseBox from "@components/LicenseBox";
+import { LicenceContext } from "@contexts/LicenceContextProvider";
 
 const BuilderView = () => {
+
+  const {isLicensed, fetching, systemFingerprint} = useContext(LicenceContext);
+
+  if (!isLicensed && !fetching && systemFingerprint != null)
+  return (<LicenseBox />)
+
   return (
     <div className={styles.builderView}>
       <Toolbar>

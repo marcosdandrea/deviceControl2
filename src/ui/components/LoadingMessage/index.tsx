@@ -4,12 +4,12 @@ import { Spin } from "antd";
 import Text from "@components/Text";
 
 
-export const LoadingMessage = () => {
+export const LoadingMessage = ({message}: {message?: string}) => {
     return (
         <div className={style.loadingMessage}>
             <div className={style.loader}>
                 <Spin size="small" />
-                <Text className={style.message}>Cargando...</Text>
+                <Text className={style.message}>{message || "Cargando..."}</Text>
             </div>
         </div>
     );

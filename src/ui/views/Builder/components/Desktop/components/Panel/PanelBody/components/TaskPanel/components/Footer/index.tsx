@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import style from './style.module.css'
-import { Button, message, Popconfirm } from 'antd';
+import { Button, message, Modal, Popconfirm } from 'antd';
 import { taskContext } from '../..';
 import { ProjectContext } from '@contexts/projectContextProvider';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -13,6 +13,8 @@ const Footer = () => {
     const { task, taskInstanceId } = useContext(taskContext)
     const [allowSaving, setAllowSaving] = useState(false)
     const [isNewTask, setIsNewTask] = useState(taskId === "newTask")
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false)
+    const [deleteOption, setDeleteOption] = useState<'reference-only' | 'full' | null>(null)
 
     useEffect(() => {
         if (!task) {
@@ -107,7 +109,28 @@ const Footer = () => {
         return count;
     }
 
-    const handleOnDeleteTask = (e) => {
+    const taskExistInThisRoutine = () => {
+        if (isNewTask) return false;
+        if (!task || !routineId) return false;
+        
+        const thisRoutine = project?.routines.find(r => r.id === routineId);
+        if (!thisRoutine || !thisRoutine.tasksId) return false;
+        
+        const taskExists = thisRoutine.tasksId.some((taskInstance: any) => {
+            if (taskInstanceId) {
+                if (typeof taskInstance === 'string')
+                    return taskInstance === taskInstanceId;
+                return taskInstance.id === taskInstanceId;
+            }
+            if (typeof taskInstance === 'string')
+                return taskInstance === task.id;
+            return taskInstance.taskId === task.id;
+        });
+        
+        return taskExists;
+    }
+
+    const handleOnDeleteTask = (option?: 'reference-only' | 'full') => {
         if (!project || !task) return;
         const thisRoutine = project.routines.find(r => r.id === routineId)
         if (!thisRoutine) return;
@@ -144,11 +167,21 @@ const Footer = () => {
                 thisRoutine.tasksId.splice(index, 1)
             }
             if (totalUsageCount == 1) {
-                const taskIndex = project.tasks.findIndex(t => t.id === task.id)
-                if (taskIndex !== -1) {
-                    project.tasks.splice(taskIndex, 1)
+                // Si el usuario elige eliminar del proyecto o es la única referencia
+                if (option === 'full') {
+                    const taskIndex = project.tasks.findIndex(t => t.id === task.id)
+                    if (taskIndex !== -1) {
+                        project.tasks.splice(taskIndex, 1)
+                        setProject({ ...project })
+                        message.success('Tarea eliminada del proyecto correctamente')
+                        Navigation(-1)
+                        return
+                    }
+                } else if (option === 'reference-only') {
+                    // Solo eliminar la referencia de la rutina
                     setProject({ ...project })
-                    message.success('Tarea eliminada del proyecto correctamente')
+                    message.success('Tarea eliminada de la rutina correctamente')
+                    Navigation(-1)
                     return
                 }
             }
@@ -193,25 +226,70 @@ const Footer = () => {
                     }
                 </Button>
             </div>
-            <Popconfirm
+            <Modal
                 styles={{ root: { width: "15rem" } }}
                 title={
                     countHowManyTimesTaskIsUsedInThisProject(task?.id || '') == 1
                         ?
-                        "No quedan mas referencias a esta tarea en el proyecto. Si elimina la tarea de esta rutina, se eliminará tambien del proyecto. ¿Desea continuar?"
+                        "¿Cómo desea eliminar esta tarea?"
                         :
                         "¿Está seguro de eliminar esta tarea de la rutina?"
                 }
-                onConfirm={handleOnDeleteTask}>
+                open={deleteModalVisible}
+                onCancel={() => setDeleteModalVisible(false)}
+                footer={countHowManyTimesTaskIsUsedInThisProject(task?.id || '') == 1 ? [
+                    <Button key="cancel" onClick={() => setDeleteModalVisible(false)}>
+                        Cancelar
+                    </Button>,
+                    <Button 
+                        key="reference" 
+                        onClick={() => {
+                            setDeleteModalVisible(false)
+                            handleOnDeleteTask('reference-only')
+                        }}
+                        style={{ color: 'var(--warning)' }}>
+                        Solo de esta rutina
+                    </Button>,
+                    <Button 
+                        key="full" 
+                        type="primary"
+                        danger
+                        onClick={() => {
+                            setDeleteModalVisible(false)
+                            handleOnDeleteTask('full')
+                        }}>
+                        Eliminar del proyecto
+                    </Button>,
+                ] : [
+                    <Button key="cancel" onClick={() => setDeleteModalVisible(false)}>
+                        Cancelar
+                    </Button>,
+                    <Button 
+                        key="delete"
+                        type="primary"
+                        danger
+                        onClick={() => {
+                            setDeleteModalVisible(false)
+                            handleOnDeleteTask()
+                        }}>
+                        Eliminar
+                    </Button>,
+                ]}>
                 {
-                    isNewTask ? null :
-                        <Button
-                            type='link'
-                            style={{ width: '100%', color: 'var(--error)' }}>
-                            Eliminar Tarea
-                        </Button>
+                    countHowManyTimesTaskIsUsedInThisProject(task?.id || '') == 1
+                        ? "No quedan mas referencias a esta tarea en el proyecto, puede optar por eliminarla completamente o solo quitarla de esta rutina. Si quiere usar esta tarea en el futuro quizás quiera conservarla, de lo contrario deberá volver a crearla si la elimina del proyecto."
+                        : null
                 }
-            </Popconfirm>
+            </Modal>
+            {
+                isNewTask || !taskExistInThisRoutine() ? null :
+                    <Button
+                        onClick={() => setDeleteModalVisible(true)}
+                        type='link'
+                        style={{ width: '100%', color: 'var(--error)' }}>
+                        Eliminar Tarea
+                    </Button>
+            }
         </div>
     );
 }

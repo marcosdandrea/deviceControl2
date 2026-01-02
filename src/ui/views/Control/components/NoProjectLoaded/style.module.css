@@ -1,22 +1,11 @@
-.routineListView{
-    display: flex;
-    flex-direction: row;
-}
-
-.routineList{
+.noProjectLoaded{
     flex: 1;
     display: flex;
+    justify-content: center;
+    align-items: center;
     flex-direction: column;
-    overflow-y: auto;
-    padding: 1rem;
-    box-sizing: border-box;
-}
-
-.routinesContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    min-height: min-content;
+    width: 100%;
+    height: 100%;
 }
 
 .noRoutines{
@@ -39,4 +28,8 @@
     font-size: 1rem;
     font-family: "Open Sans Regular", sans-serif;
     color: var(--text-secondary);
+}
+
+p{
+    margin: 0
 }

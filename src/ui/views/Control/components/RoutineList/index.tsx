@@ -28,14 +28,11 @@ const RoutineList = React.memo(({ groupId }: { groupId?: string }) => {
     setGlobalRoutineStatus
   }), [globalRoutineStatus]);
 
+  console.log ({project})
+
   return (
     <globalRoutineStatusContext.Provider value={contextValue}>
-      {!project ? (
-        <div className={style.noRoutines}>
-          <p className={style.noRoutinesTitle}>No hay proyecto</p>
-          <p className={style.noRoutinesSubtitle}>Ve al Builder y crea o carga uno. </p>
-        </div>
-      ) : project.routines.filter(r => !r.hidden).length === 0 ? (
+      {project.routines.filter(r => !r.hidden).length === 0 ? (
         <div className={style.noRoutines}>
           <p className={style.noRoutinesTitle}>
             No hay rutinas para mostrar en este proyecto.

@@ -13,11 +13,9 @@ import executionsServices from './executions.services';
 import tasksCommands from '@common/commands/tasks.commands';
 import tasksServices from './tasks.services';
 import hardwareServices from './hardware.services';
-import wifiCommands from '@common/commands/wifi.commands';
-import netCommands, { NetworkCommands } from '@common/commands/net.commands';
+import { NetworkCommands } from '@common/commands/net.commands';
 import networkServices from './network.services';
-import { NetworkEvents } from '@common/events/network.events';
-import { NetworkStatus } from '@common/types/network';
+
 
 
 const log = Log.createInstance('IPC Services', false);

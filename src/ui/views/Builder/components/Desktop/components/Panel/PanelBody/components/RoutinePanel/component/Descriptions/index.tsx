@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { Descriptions as AntdDescriptions, Button, Input, InputNumber, Switch } from 'antd';
 import { routineConfigurationContext } from '../..';
 import InfoIcon from '@components/InfoIcon';
+import { RoutineType } from '@common/types/routine.type';
 
 const Descriptions = () => {
     const {routine, setRoutine} = useContext(routineConfigurationContext)
@@ -95,7 +96,7 @@ const Descriptions = () => {
                 contentStyle={{ textAlign: 'center' }}>
                 <InputNumber
                     tabIndex={9}
-                    value={routine?.routineTimeout}
+                    value={routine?.timeout}
                     style={{ width: "80px" }}
                     min={5000} step={1000} 
                     onChange={handleOnChangeTimeout}

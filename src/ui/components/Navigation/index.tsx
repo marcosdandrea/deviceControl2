@@ -21,7 +21,7 @@ const Navigation = React.memo(() => {
 
     return (
         <HashRouter>
-            <Suspense fallback={<LoadingMessage />}>
+            <Suspense fallback={<LoadingMessage message='Iniciando...' />}>
                 <Routes>
                     <Route path="/control" element={<Control isPreview={false} />} />
                     <Route path="/controlPreview" element={<Control isPreview={true} />} />

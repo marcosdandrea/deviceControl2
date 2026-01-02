@@ -70,10 +70,16 @@ export abstract class NetworkManager extends EventEmitter implements NetworkMana
 
     switch (platform) {
       case "linux": {
-        throw new Error("Linux platform is not yet implemented");
+        const { NetworkManagerLinux } = await import("./net.linux.js");
+        const instance = new NetworkManagerLinux(networkConfig);
+        NetworkManager.instance = instance;
+        return instance;
       }
       case "darwin": {
-        throw new Error("macOS platform is not yet implemented");
+        const { NetworkManagerMac } = await import("./net.mac.js");
+        const instance = new NetworkManagerMac(networkConfig);
+        NetworkManager.instance = instance;
+        return instance;
       }
       case "win32": {
         const { NetworkManagerWin } = await import("./net.win.js");
@@ -118,7 +124,7 @@ export abstract class NetworkManager extends EventEmitter implements NetworkMana
         this.log.info('Network disconnected');
       }
     } 
-    
+
     this.dispatchEvent(NetworkEvents.NETWORK_UPDATED, config);
     this.log.info('Network updated');
     

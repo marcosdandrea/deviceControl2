@@ -4,10 +4,12 @@ import useProject from '@hooks/useProject';
 import { Input } from 'antd';
 import { MdEdit, MdSave } from 'react-icons/md';
 import Text from '@components/Text';
+import useAppVersion from '@hooks/useAppVersion';
 
 const ProjectName = () => {
     const { project, setProject } = useProject({ fetchProject: false });
     const [editMode, setEditMode] = useState(false);
+    const {version} = useAppVersion();
 
     if (!project)
         return (
@@ -15,7 +17,7 @@ const ProjectName = () => {
                 <Text
                     fontFamily='Open Sans Bold'
                     color='--var(text-secondary)'>
-                    Device Control 2
+                    {`Device Control ${version}`}
                 </Text>
             </div>);
 

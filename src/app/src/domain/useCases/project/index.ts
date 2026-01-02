@@ -22,7 +22,7 @@ import path from "path";
 import { decryptData, encryptData } from "@src/services/cryptography";
 
 
-const log = Log.createInstance("projectUseCases", false);
+const log = Log.createInstance("projectUseCases", true);
 const eventManager = new EventManager();
 
 let lastOpenedProjectId = undefined
@@ -58,7 +58,7 @@ export const createNewProject = async (): Promise<Project> => {
    await saveLastProject();
 
    log.info("New project created successfully");
-   broadcastToClients(systemEvents.appLogInfo, { message: `Nuevo proyecto creado con éxito.` });
+   broadcastToClients(systemEvents.appLogSuccess, { message: `Nuevo proyecto creado con éxito.` });
    eventManager.emit(projectEvents.created, project);
    return project
 
@@ -107,6 +107,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
    const tasks: Record<string, Task> = {}
 
    log.info("Loading project...");
+   log.info(JSON.stringify(projectData, null, 2));
 
    // check that major and minor version match
    const [major, minor] = projectData.appVersion.split(".").map(Number);
@@ -287,10 +288,10 @@ export const loadLastProject = async (): Promise<projectType> => {
 }
 
 export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promise<Project> => {
-
+   
+   let projectRawData: string;
+   
    try {
-
-      let projectRawData: string;
       const { decryptData } = await import('@src/services/cryptography/index.js');
       projectRawData = await decryptData(String(fileContent) as string);
    } catch (error) {
@@ -298,6 +299,7 @@ export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promis
       log.error(`Failed to decrypt project file: ${error.message}`);
       throw new Error("La contraseña del proyecto es incorrecta o el archivo está corrupto.");
    }
+
    try {
       const projectContent = JSON.parse(projectRawData);
       await loadProject(projectContent);
@@ -311,19 +313,27 @@ export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promis
 
 }
 
-export const closeProject = async (): Promise<void> => {
+export const enum ProjectStatus {
+   projectClosed = "PROJECT_CLOSED",
+   projectLoaded = "PROJECT_LOADED",
+   projectWasClosed = "PROJECT_WAS_CLOSED"
+}
+
+export const closeProject = async (): Promise<{status: ProjectStatus, projectName?: string}> => {
    try {
       const project = Project.getInstance();
 
       if (!project)
-         return;
+         return {status: ProjectStatus.projectWasClosed}
 
+      const projectName = project.name;
       Project.close();
       await removeCurrentProjectFile();
       setMainWindowTitle(null);
       broadcastToClients(projectEvents.closed, { projectData: {} });
       eventManager.emit(projectEvents.closed);
       log.info("Project closed successfully");
+      return {status: ProjectStatus.projectClosed, projectName};
    } catch (error) {
       log.error("Error closing project:", error);
       broadcastToClients(systemEvents.appLogError, { message: `Error al cerrar el proyecto: ${error.message}` });
