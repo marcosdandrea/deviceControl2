@@ -10,7 +10,7 @@ import { Trigger } from "../trigger";
 import { Task } from "../task";
 import App from "../app";
 import { ServerManager } from "@src/services/server/serverManager";
-import {removeRoutine} from "@useCases/routine"
+import {removeRoutine} from "@src/domain/useCases/routine"
 import { nanoid } from "nanoid";
 import { NetworkConfiguration } from "@common/types/network";
 
@@ -50,10 +50,11 @@ export class Project extends EventEmitter implements ProjectInterface {
     password?: string | null;
     showGroupsInControlView: boolean;
     networkConfiguration: NetworkConfiguration;
-
+    
     private static readonly appVersion: string = App.getAppVersion()
     private unsavedChanges: boolean = false; // Flag to track unsaved changes
     private static Instance: Project | null = null; // Singleton instance
+    static initialized: boolean;
 
     logger: Log
 
@@ -83,7 +84,6 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.password = props.password || null;
         this.logger = Log.createInstance(`Project "${this.name}" (${this.id})`, true);
         this.showGroupsInControlView = props.showGroupsInControlView || false;
-
         this.logger.info("Project instance created");
 
         Project.Instance = this; // Set the singleton instance
@@ -107,6 +107,7 @@ export class Project extends EventEmitter implements ProjectInterface {
         const project = new Project(props);
         project.logger.info("New project instance created");
         project.dispatchEvent(projectEvents.created, project);
+        Project.initialized = true;
         return project;
     }
 
@@ -144,7 +145,7 @@ export class Project extends EventEmitter implements ProjectInterface {
         Project.Instance.logger.info("Project instance closed");
         Project.Instance.removeAllListeners(); // Limpia los listeners del proyecto
         Project.Instance = null; // Elimina la referencia al singleton
-
+        Project.initialized = false;
         return null;
     }
 

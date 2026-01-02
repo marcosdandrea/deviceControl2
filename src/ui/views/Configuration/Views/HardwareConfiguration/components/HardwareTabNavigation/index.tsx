@@ -5,6 +5,7 @@ import NetInterfaceConfiguration from "../../Views/InterfaceConfiguration";
 import WifiConfiguration from "../../Views/WifiConfiguration";
 import { MdLan, MdOutlineWifi } from "react-icons/md";
 import usePropietaryHardware from "@hooks/usePropietaryHardware";
+import LicenseManager from "../../Views/LicenseManager";
 
 const HardwareTabNavigation = () => {
 
@@ -37,7 +38,7 @@ const HardwareTabNavigation = () => {
             key: '3',
             requirePropietaryHardware: false,
             label: <div className={style.label}>Licencia</div>,
-            children: <div style={{ padding: 20 }}>Próximamente...</div>,
+            children: <LicenseManager/>,
         }
     ];
 

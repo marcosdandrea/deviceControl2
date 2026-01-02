@@ -1,7 +1,7 @@
 .text {
     font-family: "Open Sans Regular";
     font-size: 1rem;
-    color: #212529;
+    color: var(--text);
     width: 100%;
     user-select: none;
 }

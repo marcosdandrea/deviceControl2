@@ -33,12 +33,15 @@ const init = (io: import('socket.io').Server) => {
         socket.on(systemCommands.getAppVersion, getAppVersion)
         socket.on(systemCommands.getServerPorts, getServerPorts);
         socket.on(systemCommands.getServerIp, getServerIp);
-        socket.on(appCommands.checkLicense, appServices.checkLicense);
-        socket.on(appCommands.setLicense, appServices.setLicense);
         socket.on(systemCommands.checkUDPPortAvailability, checkUDPPortAvailability);
         socket.on(systemCommands.checkTCPPortAvailability, checkTCPPortAvailability);
         socket.on(systemCommands.getIsSignedHardware, hardwareServices.isSignedHarware);
-
+        
+        //license
+        socket.on(appCommands.setLicense, appServices.setLicense);
+        socket.on(appCommands.checkLicense, appServices.checkLicense);
+        socket.on(appCommands.deleteLicense, appServices.deleteLicense);
+        
         //network
         socket.on(NetworkCommands.getNetworkStatus, networkServices.getNetworkStatus);
         //socket.on(NetworkEvents.NETWORK_GET_CONFIGURATION, networkServices.getNetworkStatus);

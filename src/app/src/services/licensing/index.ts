@@ -316,6 +316,47 @@ export const checkLicense = async (): Promise<boolean> => {
   }
 };
 
+export type LicenseInformation = {
+  createdAt: string;
+  expiresAt: string;
+  data: any;
+  isValid: boolean;
+  fingerprint: string | null;
+};
+
+export const getLicenseInfo = async (): Promise<LicenseInformation | null> => {
+  const filePath = await getLicenseFilePath();
+  const fingerprint = await getSystemFingerprint();
+  const content = await readFileIfExists(filePath);
+  if (!content) {
+    return null;
+  }
+  try {
+    const stored: StoredLicense = JSON.parse(content);
+    const payload = parseLicenseKey(stored.licenseKey);
+    if (!payload) {
+      return null;
+    }
+    const isValid = (await validateLicense(stored.licenseKey)) !== null;
+    return {
+      createdAt: payload.issuedAt,
+      expiresAt: payload.expiresAt,
+      data: payload,
+      fingerprint,
+      isValid,
+    };
+  } catch {
+    return null;
+  }
+};
+
+export const deleteLicenseFile = async (): Promise<void> => {
+  const filePath = await getLicenseFilePath();
+  await fs.unlink(filePath).catch(() => {
+    // Ignore if file does not exist
+  });
+};
+
 const LICENSE_CHECK_INTERVAL = process.env.AUTOCHECK_LICENSE_INTERVAL_HOURS ? Number(process.env.AUTOCHECK_LICENSE_INTERVAL_HOURS) * 60 * 60 * 1000 : 3600000
 
 const autoCheckLicense = async () => {

@@ -1,17 +1,17 @@
-import useLicense from "@hooks/useLicense";
-import React, { useMemo } from "react";
+import useLicense, { UseLicenseType } from "@hooks/useLicense";
+import React from "react";
 
 export const LicenceContext = React.createContext(null);
 
 export const LicenceContextProvider = ({children}) => {
-    const {isLicensed, fetching, systemFingerprint, licensePromise} = useLicense();
+    const licenseData = useLicense();
 
     // Lanzar la Promise mientras fetching sea true
-    if (fetching && licensePromise) {
-        throw licensePromise;
+    if (licenseData.fetching && licenseData.licensePromise) {
+        throw licenseData.licensePromise;
     }
 
-    return ( <LicenceContext.Provider value={{isLicensed, fetching, systemFingerprint}}>
+    return ( <LicenceContext.Provider value={licenseData as UseLicenseType}>
         {children}
     </LicenceContext.Provider> );
 }

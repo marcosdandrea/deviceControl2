@@ -38,7 +38,7 @@ const ServerPortDisplay = () => {
     return (
         <Text
             text={url}
-            style={{ width: "auto" }}
+            style={{ width: "auto", color: "var(--text-dark)" }}
         />
     );
 }
