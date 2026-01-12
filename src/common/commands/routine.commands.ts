@@ -1,4 +1,6 @@
 export default {
     getRoutineTemplate: "getRoutineTemplate",
-    abort: "routine:abort"
+    abort: "routine:abort",
+    enableRoutine: "routine:enableRoutine",
+    disableRoutine: "routine:disableRoutine",
 } as const;

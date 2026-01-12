@@ -72,6 +72,8 @@ const init = (io: import('socket.io').Server) => {
         //routines
         socket.on(routineCommands.abort, routineServeices.abortRoutine);
         socket.on(routineCommands.getRoutineTemplate, routineServeices.getRoutineTemplate);
+        socket.on(routineCommands.enableRoutine, routineServeices.enableRoutine);
+        socket.on(routineCommands.disableRoutine, routineServeices.disableRoutine);
 
         //tasks
         socket.on(tasksCommands.getTaskTemplate, tasksServices.getTaskTemplate);

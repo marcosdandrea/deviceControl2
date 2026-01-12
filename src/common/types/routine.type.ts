@@ -16,6 +16,9 @@ type commonRoutineProps = {
     hidden?: boolean;
     autoCheckConditionEveryMs?: number | false;
 
+    allowUserDisable?: boolean;
+    memoizeUserDisable?: boolean;
+
     isRunning?: boolean;
     status?: string;
     failed?: boolean;

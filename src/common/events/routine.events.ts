@@ -27,4 +27,6 @@ export default {
     routineTimeout: "routine:timeout",
 
     routineStatusReseted: "routine:statusReseted",
+
+    routineEnabledStatusChanged: "routine:enabledStatusChanged",
 }

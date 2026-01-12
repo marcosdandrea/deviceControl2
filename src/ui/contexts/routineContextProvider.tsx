@@ -1,6 +1,6 @@
 import routineEvents from '@common/events/routine.events';
 import { Color } from '@common/theme/colors';
-import { RoutineStatus } from '@common/types/routine.type';
+import { RoutineInterface, RoutineStatus } from '@common/types/routine.type';
 import React, { createContext, useState } from 'react';
 
 export const RoutineContext = createContext(null);
@@ -26,7 +26,7 @@ export const getRoutineStatusColor = (status: RoutineStatus) => {
         }
     }
 
-export const RoutineContextProvider = ({ children, routine }) => {
+export const RoutineContextProvider = ({ children, routine }:{children: React.ReactNode, routine: RoutineInterface}) => {
     return (
         <RoutineContext.Provider value={{ routine, getColor:getRoutineStatusColor }}>
             {children}

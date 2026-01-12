@@ -17,7 +17,6 @@ const Control = ({ isPreview }: { isPreview: boolean }) => {
         theme={{ algorithm: theme.darkAlgorithm }}>
         <ProjectContextProvider>
           <NetworkInterfacesProvider>
-
             <LicenseChecker>
               <BlockedControl disabled={isPreview}>
                 <PasswordProtection>

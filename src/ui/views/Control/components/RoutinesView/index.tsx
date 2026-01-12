@@ -5,7 +5,7 @@ import RoutineList from '../RoutineList';
 import NoProjectLoaded from '../NoProjectLoaded';
 
 const RoutinesView = () => {
-    const { project } = useProject({ fetchProject: false });
+    const { project } = useProject({ fetchProject: true });
     const [showGroups, setShowGroups] = useState<boolean>(true);
 
     useEffect(() => {
