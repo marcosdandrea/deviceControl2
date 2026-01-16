@@ -2,8 +2,8 @@ import { Trigger } from "../..";
 import { requiredTriggerParamType, TriggerType } from "@common/types/trigger.type";
 import triggerEvents from "@common/events/trigger.events";
 import { ServerManager } from "@src/services/server/serverManager";
-import networkServices from "@src/services/ipcServices/network.services";
-import { NetworkManagerService } from "@src/services/hardwareManagement/net";
+import { NetworkManager } from "@src/services/hardwareManagement/net";
+import { NetworkStatus } from "@common/types/network";
 
 interface ApiInterface extends TriggerType {
     endpoint?: string; // Endpoint to listen for API requests
@@ -30,15 +30,16 @@ export class APITrigger extends Trigger {
 
     async requiredParams(): Promise<Record<string, requiredTriggerParamType>> {
 
-        const networkInterfaces = await NetworkManagerService.listDevices()
-        const connectedInterfaces = networkInterfaces.length > 0 
-        ? networkInterfaces
-            .filter((iface) => iface.state == "connected")
-            .map((iface) => iface.ipv4.address.split("/")[0])
-            .join(", ")
-        : "<IP>";
+        let route = ""
         const mainServer = ServerManager.getInstance("general");
-        const route = `http://${connectedInterfaces}:${mainServer.port}`;
+
+        const nm = NetworkManager.getInstance();
+        const networkStatus = await (await nm).getNetworkStatus()
+        if (networkStatus.status !== NetworkStatus.CONNECTED) {
+           route = `http://LOCAL_IP:${mainServer.port}`;
+        } else {
+            route = `http://${networkStatus.ipv4Address}:${mainServer.port}`;
+        }
 
         return {
             endpoint: {
@@ -52,7 +53,7 @@ export class APITrigger extends Trigger {
     }
 
     #initListeners() {
-        this.on(triggerEvents.triggerArmed, ()=> {
+        this.on(triggerEvents.triggerArmed, () => {
             this.logger.info(`API Trigger armed at endpoint: ${this.endpoint}`);
             this.init().catch(error => {
                 this.logger.error("Error initializing API Trigger:", error);
@@ -75,7 +76,7 @@ export class APITrigger extends Trigger {
 
     private async init() {
 
-        if (!this.armed) 
+        if (!this.armed)
             return this.logger.warn("API Trigger is not armed, skipping initialization");
 
         if (!this.endpoint) {

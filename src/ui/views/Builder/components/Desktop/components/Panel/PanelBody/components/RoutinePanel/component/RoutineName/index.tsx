@@ -20,6 +20,7 @@ const RoutineName = () => {
     
     // Sincronizar cuando cambie la rutina externamente
     useEffect(() => {
+        console.log ('Routine Name Changed Externally:', routine?.name);
         setLocalName(routine?.name || '');
     }, [routine?.name]);
 

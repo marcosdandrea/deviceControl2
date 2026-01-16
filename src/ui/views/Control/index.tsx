@@ -25,7 +25,8 @@ const Control = ({ isPreview }: { isPreview: boolean }) => {
                 <StatusBar />
               </BlockedControl>
             </LicenseChecker>
-          </NetworkInterfacesProvider>
+            
+            </NetworkInterfacesProvider> 
         </ProjectContextProvider>
       </ConfigProvider>
     </div>

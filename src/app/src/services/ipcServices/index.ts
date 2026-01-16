@@ -13,24 +13,15 @@ import executionsServices from './executions.services';
 import tasksCommands from '@common/commands/tasks.commands';
 import tasksServices from './tasks.services';
 import hardwareServices from './hardware.services';
-import wifiCommands from '@common/commands/wifi.commands';
-import wifiServices from './wifi.services';
-import netCommands from '@common/commands/net.commands';
+import { NetworkCommands } from '@common/commands/net.commands';
 import networkServices from './network.services';
-import { networkEventEmitter, startNetworkMonitoring as initNetworkMonitoring } from '../hardwareManagement/net';
-import networkEvents from '@common/events/network.events';
-import { NetworkDeviceSummary } from '@common/types/network';
+
+
 
 const log = Log.createInstance('IPC Services', false);
 
 const init = (io: import('socket.io').Server) => {
-    // Iniciar monitoreo de red global una sola vez
-    initNetworkMonitoring();
-    
-    // Configurar broadcaster de eventos de red (solo una vez)
-    networkEventEmitter.on(networkEvents.networkInterfacesChanged, (interfaces: NetworkDeviceSummary[]) => {
-        broadcastToClients(networkEvents.networkInterfacesChanged, interfaces);
-    });
+
     
     io.on('connection', (socket) => {
         log.info('New client connected:', socket.id);
@@ -42,26 +33,18 @@ const init = (io: import('socket.io').Server) => {
         socket.on(systemCommands.getAppVersion, getAppVersion)
         socket.on(systemCommands.getServerPorts, getServerPorts);
         socket.on(systemCommands.getServerIp, getServerIp);
-        socket.on(appCommands.checkLicense, appServices.checkLicense);
-        socket.on(appCommands.setLicense, appServices.setLicense);
         socket.on(systemCommands.checkUDPPortAvailability, checkUDPPortAvailability);
         socket.on(systemCommands.checkTCPPortAvailability, checkTCPPortAvailability);
         socket.on(systemCommands.getIsSignedHardware, hardwareServices.isSignedHarware);
-
+        
+        //license
+        socket.on(appCommands.setLicense, appServices.setLicense);
+        socket.on(appCommands.checkLicense, appServices.checkLicense);
+        socket.on(appCommands.deleteLicense, appServices.deleteLicense);
+        
         //network
-        socket.on(netCommands.getNetworkInterfaces, networkServices.getNetworkInterfaces);
-        socket.on(netCommands.applyInterfaceSettings, networkServices.applyInterfaceSettings);
-        socket.on(netCommands.startNetworkMonitoring, networkServices.startNetworkMonitoring);
-        socket.on(netCommands.stopNetworkMonitoring, networkServices.stopNetworkMonitoring);
-
-        //wifi
-        socket.on(wifiCommands.getAvailableNetworks, wifiServices.getAvailableNetworks);
-        socket.on(wifiCommands.connectToNetwork, wifiServices.connectToNetwork);
-        socket.on(wifiCommands.disconnectFromNetwork, wifiServices.disconnectFromNetwork);
-        socket.on(wifiCommands.getConnectionStatus, wifiServices.getConnectionStatus);
-        socket.on(wifiCommands.forgetNetwork, wifiServices.forgetNetwork);
-        socket.on(wifiCommands.startWiFiMonitoring, wifiServices.startWiFiMonitoring);
-        socket.on(wifiCommands.stopWiFiMonitoring, wifiServices.stopWiFiMonitoring);
+        socket.on(NetworkCommands.getNetworkStatus, networkServices.getNetworkStatus);
+        //socket.on(NetworkEvents.NETWORK_GET_CONFIGURATION, networkServices.getNetworkStatus);
 
         //app
         socket.on(appCommands.getTriggerTypes, appServices.getAvailableTriggers);
@@ -89,6 +72,8 @@ const init = (io: import('socket.io').Server) => {
         //routines
         socket.on(routineCommands.abort, routineServeices.abortRoutine);
         socket.on(routineCommands.getRoutineTemplate, routineServeices.getRoutineTemplate);
+        socket.on(routineCommands.enableRoutine, routineServeices.enableRoutine);
+        socket.on(routineCommands.disableRoutine, routineServeices.disableRoutine);
 
         //tasks
         socket.on(tasksCommands.getTaskTemplate, tasksServices.getTaskTemplate);

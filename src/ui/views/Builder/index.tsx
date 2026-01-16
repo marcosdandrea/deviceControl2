@@ -1,14 +1,13 @@
-import React from "react";
+import React, { Suspense } from "react";
 import PasswordProtection from "./components/PasswordProtection";
 import { App, ConfigProvider, theme } from "antd";
 import SystemNotifications from "@components/SystemNotifications";
 import BuilderView from "./components/BuilderView";
-import useLicense from "@hooks/useLicense";
-import LicenseBox from "@components/LicenseBox";
+import LicenceContextProvider from "@contexts/LicenceContextProvider";
+import { LoadingMessage } from "@components/LoadingMessage";
 
 const Builder = () => {
 
-  const {isLicensed} = useLicense();
 
   return (
     <ConfigProvider
@@ -16,13 +15,13 @@ const Builder = () => {
         algorithm: theme.darkAlgorithm,
       }}>
       <App>
-        <PasswordProtection> 
+        <PasswordProtection>
           <SystemNotifications />
-          {
-            isLicensed 
-            ? <BuilderView />
-            : <LicenseBox />
-          }
+          <Suspense fallback={<LoadingMessage message='Comprobando Licencia...' />}>
+            <LicenceContextProvider>
+              <BuilderView />
+            </LicenceContextProvider>
+          </Suspense>
         </PasswordProtection>
       </App>
     </ConfigProvider>

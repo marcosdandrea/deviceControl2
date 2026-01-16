@@ -5,20 +5,25 @@ import { Log } from "@src/utils/log"
 import { broadcastToClients } from "."
 import appCommands from "@common/commands/app.commands"
 import { Socket } from "socket.io"
-import { loadLastProject } from "@src/domain/useCases/project"
-const log = new Log("AppServices", true)
+import systemEvents from "@common/events/system.events"
+const log = new Log("AppServices", false)
 
 const getAvailableTriggers = async (_args: any, callback: Function) => {
     const triggerClasses = await getTriggerTypes()
     let triggers: Record<string, any> = {}
 
     for (const [key, modulePromise] of Object.entries(await triggerClasses)) {
-        const module = await modulePromise
-        triggers[key] = {
-            easyName: module.default.easyName,
-            moduleDescription: module.default.moduleDescription,
-            disableRearming: module.default.disableRearming,
-            params: await module.default.prototype.requiredParams(),
+        try {
+            const module = await modulePromise
+            triggers[key] = {
+                easyName: module.default.easyName,
+                moduleDescription: module.default.moduleDescription,
+                disableRearming: module.default.disableRearming,
+                params: await module.default.prototype.requiredParams(),
+            }
+        } catch (error) {
+            broadcastToClients(systemEvents.appLogError, { message: `Error cargando el trigger de tipo ${key}: ${(error as Error).message}` })
+            log.error(`Error loading trigger type ${key}: ${(error as Error).message}`)
         }
     }
     callback?.(triggers)
@@ -82,12 +87,16 @@ const unblockMainControlView = async (socket: Socket, callback?: Function) => {
 }
 
 const checkLicense = async (_args: any, callback: Function): Promise<{ isValid: boolean; fingerprint: string | null }> => {
-    const { checkLicense, getSystemFingerprint } = await import('@src/services/licensing/index.js');
+    const { getLicenseInfo, getSystemFingerprint } = await import('@src/services/licensing/index.js');
     try {
         const fingerprint = await getSystemFingerprint();
-        const isValid = await checkLicense();
+        const licenseInfo = await getLicenseInfo();
+        const isValid = licenseInfo?.isValid ?? false;
+        const expiresAt = licenseInfo?.expiresAt ?? null;
+        const createdAt = licenseInfo?.createdAt ?? null;
+        const data = licenseInfo?.data ?? null;
         log.info(`License valid: ${isValid}`);
-        callback?.({ isValid, fingerprint });
+        callback?.({ isValid, fingerprint, expiresAt, createdAt, data });
         return { isValid, fingerprint };
     } catch (error) {
         log.error(`Error checking license: ${(error as Error).message}`);
@@ -95,6 +104,26 @@ const checkLicense = async (_args: any, callback: Function): Promise<{ isValid: 
         return { isValid: false, fingerprint: null };
     }
 };
+
+const deleteLicense = async (_args: any, callback: Function) => {
+    const { deleteLicenseFile } = await import('@src/services/licensing/index.js');
+    try {
+        const { Project } = await import('@src/domain/entities/project/index.js');
+        if (Project.initialized) {
+            throw new Error("Cannot delete license while a project is loaded. Please close the project first.");
+        }
+        await deleteLicenseFile();
+        log.info('License deleted successfully');
+        broadcastToClients(systemEvents.appLicenseUpdated, null);
+        callback?.(true);
+        return true;
+    } catch (error) {
+        log.error(`Error deleting license: ${(error as Error).message}`);
+        broadcastToClients(systemEvents.appLogError, { message: `Error deleting license: ${(error as Error).message}` });
+        callback?.({error: (error as Error).message});
+        return false;
+    }
+}
 
 const setLicense = async (args: any, callback: Function): Promise<boolean> => {
     const { setSystemLicense } = await import('@src/services/licensing/index.js');
@@ -116,4 +145,13 @@ const setLicense = async (args: any, callback: Function): Promise<boolean> => {
         return false;
     }
 }
-export default { getAvailableTriggers, getAvailableJobs, getAvailableConditions, blockMainControlView, unblockMainControlView, checkLicense, setLicense }
+export default {
+    getAvailableTriggers,
+    getAvailableJobs,
+    getAvailableConditions,
+    blockMainControlView,
+    unblockMainControlView,
+    checkLicense,
+    setLicense,
+    deleteLicense
+}

@@ -6,4 +6,5 @@ export default {
     unblockMainControl: "unblockMainControl",
     checkLicense: "checkLicense",
     setLicense: "setLicense",
+    deleteLicense: "deleteLicense",
 } as const;

@@ -3,15 +3,18 @@ import Text from "@components/Text";
 import { RoutineContext } from "@contexts/routineContextProvider";
 import { Color } from "@common/theme/colors";
 import routineEvents from "@common/events/routine.events";
+import { RoutineInterface } from "@common/types/routine.type";
 
 const StatusLabel = ({ event }) => {
-    const { routineData } = useContext(RoutineContext);
+    const { routineData } = useContext(RoutineContext) as { routineData: RoutineInterface };
     const [status, setStatus] = React.useState<string>("Desconocido");
     const [prevStatus, setPrevStatus] = React.useState<string>("Desconocido");
 
     const getStatusText = (status: string) => {
 
         switch (status) {
+            case routineEvents.routineEnabledStatusChanged:
+                return event.data.enabled ? "Habilitada" : "Deshabilitada";
             case routineEvents.routineAutoCheckingConditions:
                 return "Comprobando condiciones automáticamente...";
             case routineEvents.routineAborted:
@@ -50,7 +53,6 @@ const StatusLabel = ({ event }) => {
             setPrevStatus(statusText);
 
         setStatus(statusText);
-
 
     }, [event]);
 

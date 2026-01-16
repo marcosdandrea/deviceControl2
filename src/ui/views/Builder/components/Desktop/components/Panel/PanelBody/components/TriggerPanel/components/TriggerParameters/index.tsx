@@ -8,7 +8,7 @@ import useCheckPortAvailability from "@hooks/useCheckPortAvailability";
 import systemCommands from "@common/commands/system.commands";
 import dayjs from "dayjs";
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { Logger } from '@helpers/logger';
+import { Logger } from "@helpers/logger";
 dayjs.extend(customParseFormat);
 
 const TriggerParameters = () => {

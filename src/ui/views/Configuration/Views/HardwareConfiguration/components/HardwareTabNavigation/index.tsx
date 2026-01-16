@@ -1,13 +1,15 @@
 import React from "react";
 import style from "./style.module.css";
 import { Tabs } from "antd";
-import ScreenConfiguration from "../../Views/ScreenConfiguration";
-import PowerConfiguration from "../../Views/PowerConfiguration";
 import NetInterfaceConfiguration from "../../Views/InterfaceConfiguration";
 import WifiConfiguration from "../../Views/WifiConfiguration";
-import { MdLan, MdOutlineScreenshotMonitor, MdOutlineWifi } from "react-icons/md";
+import { MdLan, MdOutlineWifi } from "react-icons/md";
+import usePropietaryHardware from "@hooks/usePropietaryHardware";
+import LicenseManager from "../../Views/LicenseManager";
 
 const HardwareTabNavigation = () => {
+
+    const { isSignedHardware } = usePropietaryHardware();
 
     const tabs = [
 /*         {
@@ -22,14 +24,22 @@ const HardwareTabNavigation = () => {
         }, */
         {
             key: '1',
+            requirePropietaryHardware: true,
             label: <div className={style.label}><MdOutlineWifi />WiFi</div>,
             children: <WifiConfiguration />,
         },
         {
             key: '2',
+            requirePropietaryHardware: true,
             label: <div className={style.label}><MdLan />Interfaces</div>,
             children: <NetInterfaceConfiguration />,
         },
+        {
+            key: '3',
+            requirePropietaryHardware: false,
+            label: <div className={style.label}>Licencia</div>,
+            children: <LicenseManager/>,
+        }
     ];
 
     return (
@@ -41,8 +51,7 @@ const HardwareTabNavigation = () => {
                 }}
                 className={style.tabs}
                 tabPosition="left"
-                defaultActiveKey="1"
-                items={tabs}
+                items={tabs.filter(tab => !tab.requirePropietaryHardware || isSignedHardware)}
                 popupClassName="popup-tabs"
             />
         </div>

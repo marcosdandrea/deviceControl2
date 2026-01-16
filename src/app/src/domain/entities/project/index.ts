@@ -10,8 +10,9 @@ import { Trigger } from "../trigger";
 import { Task } from "../task";
 import App from "../app";
 import { ServerManager } from "@src/services/server/serverManager";
-import {removeRoutine} from "@useCases/routine"
+import {removeRoutine} from "@src/domain/useCases/routine"
 import { nanoid } from "nanoid";
+import { NetworkConfiguration } from "@common/types/network";
 
 
 export interface ProjectConstructor {
@@ -29,6 +30,7 @@ export interface ProjectConstructor {
     filePath?: string; // Optional file path for the project
     password?: string | null; // Optional password for the project
     showGroupsInControlView: boolean; // Flag to show groups in control view
+    networkConfiguration?: NetworkConfiguration;
 }
 
 export class Project extends EventEmitter implements ProjectInterface {
@@ -47,10 +49,12 @@ export class Project extends EventEmitter implements ProjectInterface {
     filePath?: string; // Optional file path for the project
     password?: string | null;
     showGroupsInControlView: boolean;
-
+    networkConfiguration: NetworkConfiguration;
+    
     private static readonly appVersion: string = App.getAppVersion()
     private unsavedChanges: boolean = false; // Flag to track unsaved changes
     private static Instance: Project | null = null; // Singleton instance
+    static initialized: boolean;
 
     logger: Log
 
@@ -80,7 +84,6 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.password = props.password || null;
         this.logger = Log.createInstance(`Project "${this.name}" (${this.id})`, true);
         this.showGroupsInControlView = props.showGroupsInControlView || false;
-
         this.logger.info("Project instance created");
 
         Project.Instance = this; // Set the singleton instance
@@ -104,6 +107,7 @@ export class Project extends EventEmitter implements ProjectInterface {
         const project = new Project(props);
         project.logger.info("New project instance created");
         project.dispatchEvent(projectEvents.created, project);
+        Project.initialized = true;
         return project;
     }
 
@@ -141,7 +145,7 @@ export class Project extends EventEmitter implements ProjectInterface {
         Project.Instance.logger.info("Project instance closed");
         Project.Instance.removeAllListeners(); // Limpia los listeners del proyecto
         Project.Instance = null; // Elimina la referencia al singleton
-
+        Project.initialized = false;
         return null;
     }
 
@@ -259,6 +263,21 @@ export class Project extends EventEmitter implements ProjectInterface {
         return this.unsavedChanges;
     }
 
+    setNetworkConfiguration(config: NetworkConfiguration): void {
+        //check config validity
+        if (!config.dnsServers || !Array.isArray(config.dnsServers) || config.dnsServers.length === 0 || !config.gateway || !config.ipv4Address || !config.subnetMask) 
+            throw new Error("Invalid network configuration");
+
+        this.networkConfiguration = config;
+        this.updatedAt = new Date();
+        this.logger.info(`Network configuration updated for project "${this.name}"`);
+        this.dispatchEvent(projectEvents.networkConfigurationChanged, config);
+    }
+
+    getNetworkConfiguration(): NetworkConfiguration {
+        return this.networkConfiguration;
+    }
+
     toJson(): projectType {
         return {
             id: this.id,
@@ -270,6 +289,7 @@ export class Project extends EventEmitter implements ProjectInterface {
             updatedAt: this.updatedAt,
             password: this.password,
             groups: this.groups,
+            networkConfiguration: this.networkConfiguration,
             showGroupsInControlView: this.showGroupsInControlView,
             routines: this.routines.map(routine => routine.toJson()),
             triggers: this.getTrigger().map(trigger => trigger.toJson()),

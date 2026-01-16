@@ -41,6 +41,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
     status?: RoutineStatus = "unknown";
     autoCheckConditionEveryMs?: number | false;
     suspendAutoCheckConditions: boolean = false;
+    allowUserDisable?: boolean;
+    memoizeUserDisable?: boolean;
     failed?: boolean;
 
     tasks: TaskInterface[] = [];
@@ -72,6 +74,9 @@ export class Routine extends EventEmitter implements RoutineInterface {
         this.failed = false;
         this.hidden = props.hidden;
         this.routineTimeout = props.routineTimeout || defaultRoutineTimeout;
+
+        this.allowUserDisable = props.allowUserDisable || false;
+        this.memoizeUserDisable = props.memoizeUserDisable || false;
 
         this.taskInstances = props.tasksId ? [...props.tasksId] : [];
         this.triggerInstances = props.triggersId ? [...props.triggersId] : [];
@@ -640,6 +645,8 @@ export class Routine extends EventEmitter implements RoutineInterface {
             routineTimeout: this.routineTimeout,
             autoCheckConditionEveryMs: this.autoCheckConditionEveryMs,
             hidden: this.hidden,
+            allowUserDisable: this.allowUserDisable,
+            memoizeUserDisable: this.memoizeUserDisable,
             triggersId: this.triggerInstances.map(instance => ({ ...instance })),
             tasksId: this.taskInstances.map(instance => ({ ...instance }))
         }

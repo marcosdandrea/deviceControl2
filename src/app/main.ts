@@ -6,6 +6,7 @@ import { ServerManager } from '@src/services/server/serverManager';
 import logEvents from '@common/events/log.events';
 import { loadLastProject } from '@src/domain/useCases/project';
 import path from "path";
+import { NetworkEvents } from '@common/events/network.events';
 
 const enableHeapSnapshoot = false
 const isHeadless = process.argv.includes('--headless') || process.argv.includes('--h') || process.env.HEADLESS === 'true'
@@ -127,6 +128,14 @@ const coreProcesses = async () => {
 
     log.info(`General purpose server started on port ${generalServer.port}.`);
 
+    log.info('Initializing Network Manager Service')
+    const { NetworkManager } = await import('@src/services/hardwareManagement/net/index.js');
+    const nm = await NetworkManager.getInstance();
+
+    log.info('Waiting for initial network status...');
+    await new Promise(resolve => nm.once(NetworkEvents.NETWORK_UPDATED, resolve));
+    log.info('Network Manager Service initialized successfully');
+
     const { createApp } = await import('@src/domain/useCases/app/index.js');
     await createApp()
     try {
@@ -134,6 +143,7 @@ const coreProcesses = async () => {
     } catch (error) {
       log.error('Cannot load last project:', error);
     }
+    
   } catch (error) {
     // Re-lanzar el error para que sea manejado por el nivel superior
     throw error;

@@ -1,4 +1,6 @@
 import { build } from 'esbuild';
+import { copyFileSync, mkdirSync, existsSync } from 'fs';
+import { join } from 'path';
 
 build({
     entryPoints: {
@@ -28,4 +30,15 @@ build({
         'url',
         'dotenv/config'
     ]
+}).then(() => {
+    // Copiar scripts de PowerShell a dist-electron
+    const scriptsDir = join('dist-electron', 'scripts');
+    if (!existsSync(scriptsDir)) {
+        mkdirSync(scriptsDir, { recursive: true });
+    }
+    
+    copyFileSync('resources/scripts/ps.GetAllEthernetConfigs.ps1', join(scriptsDir, 'ps.GetAllEthernetConfigs.ps1'));
+    copyFileSync('resources/scripts/ps.OnEventSuscribe.ps1', join(scriptsDir, 'ps.OnEventSuscribe.ps1'));
+    
+    console.log('✓ PowerShell scripts copied to dist-electron/scripts');
 }).catch(() => process.exit(1));

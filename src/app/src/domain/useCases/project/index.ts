@@ -21,6 +21,7 @@ import { getUserDataPath } from "@src/utils/paths";
 import path from "path";
 import { decryptData, encryptData } from "@src/services/cryptography";
 
+
 const log = Log.createInstance("projectUseCases", true);
 const eventManager = new EventManager();
 
@@ -38,7 +39,7 @@ const defaultProject = {
    password: null,
    routines: [],
    triggers: [],
-   tasks: []
+   tasks: [],
 } as unknown as ProjectConstructor;
 
 export const createNewProject = async (): Promise<Project> => {
@@ -57,7 +58,7 @@ export const createNewProject = async (): Promise<Project> => {
    await saveLastProject();
 
    log.info("New project created successfully");
-   broadcastToClients(systemEvents.appLogInfo, { message: `Nuevo proyecto creado con éxito.` });
+   broadcastToClients(systemEvents.appLogSuccess, { message: `Nuevo proyecto creado con éxito.` });
    eventManager.emit(projectEvents.created, project);
    return project
 
@@ -106,6 +107,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
    const tasks: Record<string, Task> = {}
 
    log.info("Loading project...");
+   log.info(JSON.stringify(projectData, null, 2));
 
    // check that major and minor version match
    const [major, minor] = projectData.appVersion.split(".").map(Number);
@@ -145,66 +147,88 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
       log.error("Project instance not found. Creating a new project instance.");
    }
 
-   const createTriggers = async () => {
-      log.info("Loading triggers...");
+   try {
 
-      for (const triggerData of projectData.triggers || []) {
-         log.info(`Creating trigger '${triggerData.name}' of type '${triggerData.type}'...`);
-         const newTrigger = await createNewTriggerByType(triggerData.type, triggerData);
+      const createTriggers = async () => {
+         log.info(`Loading ${projectData.triggers.length} triggers...`);
 
-         if (!newTrigger) {
-            broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el trigger ${triggerData.name} (${triggerData.id}) de tipo ${triggerData.type}` });
-            log.error(`Failed to create trigger of type ${triggerData.type}`);
-            continue;
-         }
+         for (const triggerData of projectData.triggers || []) {
+            log.info(`Creating trigger '${triggerData.name}' of type '${triggerData.type}'...`);
+            try {
+               const newTrigger = await createNewTriggerByType(triggerData.type, triggerData);
 
-         if (triggers[triggerData.id])
-            continue
+               if (!newTrigger) {
+                  broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el trigger ${triggerData.name} (${triggerData.id}) de tipo ${triggerData.type}` });
+                  await log.error(`Failed to create trigger of type ${triggerData.type}`);
+                  continue;
+               }
 
-         triggers[triggerData.id] = newTrigger;
-      }
+               if (triggers[triggerData.id])
+                  continue
 
-   }
-
-   const createRoutines = async () => {
-      log.info("Loading routines...");
-
-      for (const routineData of projectData.routines || []) {
-         if (routines[routineData.id])
-            continue
-
-         try {
-            const newRoutine = await createRoutine(routineData, projectData);
-            routines[routineData.id] = newRoutine;
-         } catch (error) {
-            broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar la rutina ${routineData.name} (${routineData.id}): ${error.message}` });
-            log.error(`Failed to create routine with ID ${routineData.id}: ${error.message}`);
-            continue;
+               triggers[triggerData.id] = newTrigger;
+            } catch (error) {
+               broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar el trigger ${triggerData.name} (${triggerData.id}): ${error.message}` });
+               log.error(`Failed to create trigger with ID ${triggerData.id}: ${error.message}`);
+               break;
+            }
          }
 
       }
+      await createTriggers();
+
+      const createRoutines = async () => {
+         log.info("Loading routines...");
+
+         for (const routineData of projectData.routines || []) {
+            if (routines[routineData.id])
+               continue
+
+            try {
+               const newRoutine = await createRoutine(routineData, projectData);
+               routines[routineData.id] = newRoutine;
+            } catch (error) {
+               broadcastToClients(systemEvents.appLogError, { message: `No se pudo cargar la rutina ${routineData.name} (${routineData.id}): ${error.message}` });
+               log.error(`Failed to create routine with ID ${routineData.id}: ${error.message}`);
+               continue;
+            }
+
+         }
+      }
+      
+      project = Project.createInstance({
+         ...projectData,
+         routines: [],
+         triggers: Object.values(triggers),
+         tasks: Object.values(tasks)
+      })
+      
+      await createRoutines();
+
+      project.routines = Object.values(routines);
+      project.onAny(broadcastToClients)
+
+      lastOpenedProjectId = project.id;
+
+      setMainWindowTitle(project.name);
+
+      broadcastToClients(projectEvents.loaded, { projectData: project.toJson() });
+      eventManager.emit(projectEvents.loaded, project);
+      saveLastProject();
+      log.info("Project loaded successfully.");
+   } catch (error) {
+      log.error("Error loading project:", error);
+      throw new Error(`Error loading project: ${error.message}`);
    }
 
-   await createTriggers();
+   //inicializar networkManager con la configuración del proyecto
+   try {
+      const nm = await import("@src/services/hardwareManagement/net/index.js");
+      nm.NetworkManager.getInstance(project.networkConfiguration);
+   } catch (error) {
+      log.error("Failed to initialize NetworkManager with project configuration:", error);
+   }
 
-   project = Project.createInstance({
-      ...projectData,
-      routines: [],
-      triggers: Object.values(triggers),
-      tasks: Object.values(tasks)
-   })
-
-   await createRoutines();
-   project.routines = Object.values(routines);
-   project.onAny(broadcastToClients)
-
-   lastOpenedProjectId = project.id;
-
-   setMainWindowTitle(project.name);
-
-   broadcastToClients(projectEvents.loaded, { projectData: project.toJson() });
-   eventManager.emit(projectEvents.loaded, project);
-   saveLastProject();
    return Promise.resolve(project)
 
 }
@@ -264,10 +288,10 @@ export const loadLastProject = async (): Promise<projectType> => {
 }
 
 export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promise<Project> => {
-
+   
+   let projectRawData: string;
+   
    try {
-
-      let projectRawData: string;
       const { decryptData } = await import('@src/services/cryptography/index.js');
       projectRawData = await decryptData(String(fileContent) as string);
    } catch (error) {
@@ -275,6 +299,7 @@ export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promis
       log.error(`Failed to decrypt project file: ${error.message}`);
       throw new Error("La contraseña del proyecto es incorrecta o el archivo está corrupto.");
    }
+
    try {
       const projectContent = JSON.parse(projectRawData);
       await loadProject(projectContent);
@@ -288,19 +313,27 @@ export const loadProjectFile = async (fileContent: string | ArrayBuffer): Promis
 
 }
 
-export const closeProject = async (): Promise<void> => {
+export const enum ProjectStatus {
+   projectClosed = "PROJECT_CLOSED",
+   projectLoaded = "PROJECT_LOADED",
+   projectWasClosed = "PROJECT_WAS_CLOSED"
+}
+
+export const closeProject = async (): Promise<{status: ProjectStatus, projectName?: string}> => {
    try {
       const project = Project.getInstance();
 
       if (!project)
-         return;
+         return {status: ProjectStatus.projectWasClosed}
 
+      const projectName = project.name;
       Project.close();
       await removeCurrentProjectFile();
       setMainWindowTitle(null);
       broadcastToClients(projectEvents.closed, { projectData: {} });
       eventManager.emit(projectEvents.closed);
       log.info("Project closed successfully");
+      return {status: ProjectStatus.projectClosed, projectName};
    } catch (error) {
       log.error("Error closing project:", error);
       broadcastToClients(systemEvents.appLogError, { message: `Error al cerrar el proyecto: ${error.message}` });

@@ -14,7 +14,7 @@ function App() {
           <SocketIOProvider
             disconnectionViewComponent={<DisconnectedView />}
             mountComponentsOnlyWhenConnect={true}>
-            <Navigation />
+              <Navigation />
           </SocketIOProvider>
         </ProjectContextProvider>
       </PreloadedImagesProvider>

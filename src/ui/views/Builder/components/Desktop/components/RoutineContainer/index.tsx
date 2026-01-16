@@ -67,32 +67,22 @@ const RoutineContainer = () => {
         <div 
             className={style.routineContainer}
             ref={containerRef}>
-            {!isShiftPressed ? (
-                <SortableList
-                    dir='horizontal'
-                    onSortEnd={onSortEnd}
-                    className={style.routineArranger}
-                    draggedItemClassName={style.dragging}>
-                    {routinesToShow.map((routine) => (
-                        <SortableItem 
-                            key={routine.id}>
-                            <div id={`routine-${routine.id}`}>
-                                <Routine routineData={routine} isShiftPressed={isShiftPressed} />
-                            </div>
-                        </SortableItem>
-                    ))}
-                    <Routine routineData={null} isShiftPressed={isShiftPressed} />
-                </SortableList>
-            ) : (
-                <div className={style.routineArranger}>
-                    {routinesToShow.map((routine) => (
-                        <div key={routine.id} id={`routine-${routine.id}`}>
+            <SortableList
+                dir='horizontal'
+                onSortEnd={onSortEnd}
+                className={style.routineArranger}
+                draggedItemClassName={style.dragging}
+                allowDrag={!isShiftPressed}
+            >
+                {routinesToShow.map((routine) => (
+                    <SortableItem key={routine.id}>
+                        <div id={`routine-${routine.id}`}>
                             <Routine routineData={routine} isShiftPressed={isShiftPressed} />
                         </div>
-                    ))}
-                    <Routine routineData={null} isShiftPressed={isShiftPressed} />
-                </div>
-            )}
+                    </SortableItem>
+                ))}
+                <Routine routineData={null} isShiftPressed={isShiftPressed} />
+            </SortableList>
             <Panel/>       
         </div>
     );

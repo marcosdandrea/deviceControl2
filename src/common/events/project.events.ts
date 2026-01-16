@@ -1,3 +1,4 @@
+
 export default {
     created: "project:created",
     loaded: "project:loaded",
@@ -12,4 +13,5 @@ export default {
     executionsUpdated: "project:executionsUpdated",
     groupAdded: "project:groupAdded",
     groupRemoved: "project:groupRemoved",
+    networkConfigurationChanged: "project:networkConfigurationChanged",
 } as const;

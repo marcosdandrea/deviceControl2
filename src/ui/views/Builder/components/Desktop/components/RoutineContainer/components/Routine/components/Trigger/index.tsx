@@ -42,7 +42,8 @@ const Trigger = ({ triggerData }) => {
                     />
                     <Text
                         style={{
-                            width: "auto"
+                            width: "auto",
+                            color: "black"
                         }}
                         fontFamily="Open Sans Bold"
                         size={8}>

@@ -3,25 +3,13 @@ import "./style.module.css";
 import style from "./style.module.css";
 import { Tabs } from "antd";
 import BasicConfiguration from "@views/Configuration/Views/BasicConfiguration";
-import usePropietaryHardware from "@hooks/usePropietaryHardware";
 import HardwareConfiguration from "@views/Configuration/Views/HardwareConfiguration";
 import useProject from "@hooks/useProject";
+import DisableWrapper from "@components/DisableWrapper";
 
 const ConfigurationTabs = () => {
 
-    const { isSignedHardware } = usePropietaryHardware();
     const { project } = useProject({ fetchProject: false });
-
-    const DisableWrapper = ({ children, disable }) => (
-        <div style={{ 
-                width: "100%",
-                height: "100%",
-                pointerEvents: disable ? 'none' : 'auto', 
-                filter: disable ? 'grayscale(100%) opacity(0.6)' : 'none'
-                }}>
-            {children}
-        </div>
-    );  
 
     const items = [
         {
@@ -33,8 +21,7 @@ const ConfigurationTabs = () => {
         {
             key: '2',
             label: <div className={style.tabButtons}>Controlador</div>,
-            disabled: !isSignedHardware,
-            children: <DisableWrapper disable={!isSignedHardware}><HardwareConfiguration /></DisableWrapper>,
+            children: <DisableWrapper disable={false}><HardwareConfiguration /></DisableWrapper>,
         }
     ];
 

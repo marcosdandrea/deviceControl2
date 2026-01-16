@@ -2,6 +2,9 @@ import { RoutineType } from "@common/types/routine.type";
 import { Project } from "@src/domain/entities/project";
 import { Log } from "@src/utils/log";
 import { nanoid } from "nanoid";
+import { broadcastToClients } from ".";
+import routineEvents from "@common/events/routine.events";
+import { saveLastProject } from "@src/domain/useCases/project";
 
 const log = Log.createInstance("RoutineService", true);
 
@@ -31,6 +34,7 @@ export const getRoutineTemplate = (args: any, callback: Function) => {
         id: nanoid(8),
         name: "",
         description: "",
+        groupId: null,
         timeout: defaultTimeout,
         tasksId: [],
         triggersId: [],
@@ -44,7 +48,43 @@ export const getRoutineTemplate = (args: any, callback: Function) => {
     callback?.(routineTemplate);
 };
 
+const changeRoutineEnabledState = async (routineId: string, enabled: boolean, callback?: Function) => {
+    log.info(`${enabled ? "Enabling" : "Disabling"} routine with ID: ${routineId}`);
+    const project = Project.getInstance();
+    const routine = project.getRoutines(routineId)?.[0];
+    if (!routine) {
+        log.warn(`Routine with ID: ${routineId} not found`);
+        callback?.({ error: "Routine not found" });
+        return;
+    }
+    routine.enabled = enabled;
+    log.info(`Routine with ID: ${routineId} ${enabled ? "enabled" : "disabled"}`);
+
+    if (routine.memoizeUserDisable){
+        await saveLastProject()
+        log.info(`Routine with ID: ${routineId} enable state memoized to project`);
+    }
+
+    callback?.({ success: true });
+};
+
+const enableRoutine = async (args: any, callback?: Function) => {
+    const { routineId } = args;
+    log.info(`Enabling routine with ID: ${routineId}`);
+    await changeRoutineEnabledState(routineId, true, callback);
+    broadcastToClients(`routine.${routineId}.${routineEvents.routineEnabledStatusChanged}`, { routineId, enabled: true });
+};
+
+const disableRoutine = async (args: any, callback?: Function) => {
+    const { routineId } = args;
+    log.info(`Disabling routine with ID: ${routineId}`);
+    await changeRoutineEnabledState(routineId, false, callback);
+    broadcastToClients(`routine.${routineId}.${routineEvents.routineEnabledStatusChanged}`, { routineId, enabled: false });
+};
+
 export default {
     getRoutineTemplate,
     abortRoutine,
+    enableRoutine,
+    disableRoutine,
 }

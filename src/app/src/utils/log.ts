@@ -36,7 +36,7 @@ export class Log {
     line += `[${new Date().toISOString()}] [${level.toUpperCase()}] [${this.source}] - ${message} `;
 
     if (this.verbose) {
-      this.#writeToConsole(level, line);
+      this.#writeToConsole(level, line, data);
     }
 
     let event = ""
@@ -58,12 +58,12 @@ export class Log {
     this.#emitEvent(event, message, data);
   }
 
-  #writeToConsole(level: LogLevel, line: string) {
+  #writeToConsole(level: LogLevel, line: string, data?: any) {
     if (!this.verbose && level === 'debug') return;
-    if (level === 'error') console.error(line);
-    else if (level === 'warn') console.warn(line);
-    else if (level === 'debug') console.debug(line);
-    else console.log(line);
+    if (level === 'error') console.error(line, data || '');
+    else if (level === 'warn') console.warn(line, data || '');
+    else if (level === 'debug') console.debug(line, data || '');
+    else console.log(line, data || '');
   }
 
 }

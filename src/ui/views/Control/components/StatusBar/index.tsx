@@ -8,16 +8,16 @@ import ServerConnectionMonitor from './components/ServerConnectionMonitor';
 const StatusBar = () => {
     return (
         <div className={styles.statusBar}>
-            <div className={styles.segment}>
+            <div className={styles.segment_left}>
                 <ServerConnectionMonitor />
                 <ServerPortDisplay />
             </div>
             <div 
                 style={{flex: 1, display: 'flex', justifyContent: 'center'}}
-                className={styles.segment}>
+                className={styles.segment_center}>
                 <ProjectNameDisplay />
             </div>
-            <div className={styles.segment}>
+            <div className={styles.segment_right}>
                 <Clock />
             </div>
         </div>);

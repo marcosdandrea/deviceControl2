@@ -1,11 +1,9 @@
-import Text from '@components/Text';
 import style from './style.module.css'
 import { Button, message, Popconfirm } from 'antd';
 import React, { useContext, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { routineConfigurationContext } from '../..';
 import useProject from '@hooks/useProject';
-import RoutineId from './components/RoutineId';
 import { nanoid } from 'nanoid';
 import { RoutineType } from '@common/types/routine.type';
 import { Logger } from '@helpers/logger';
@@ -60,7 +58,14 @@ const Footer = () => {
 
     const handleOnDuplicateRoutine = () => {
         if (routine?.id) {
-            const newRoutine = { ...routine, id: nanoid(10), name: `${routine.name} (Copia)` }
+            const newRoutine = { ...routine, id: nanoid(10), name: `${routine.name} (Copia)` } as RoutineType
+
+            //update InstanceID for tasks inside the routine
+            newRoutine.tasksId = newRoutine.tasksId.map(task => ({ ...task, instanceId: nanoid(10) }))
+
+            //update InstanceID for triggers inside the routine
+            newRoutine.triggersId = newRoutine.triggersId.map(trigger => ({ ...trigger, instanceId: nanoid(10) }))            
+
             setProject({ ...project, routines: [...project.routines, newRoutine] })
             navigate(`/builder/${groupId}/newRoutine`, { replace: true })
             message.success('Rutina duplicada correctamente')
@@ -106,7 +111,6 @@ const Footer = () => {
                     </Button>
                 </Popconfirm>
             </div>
-            <RoutineId />
         </div>
     );
 }

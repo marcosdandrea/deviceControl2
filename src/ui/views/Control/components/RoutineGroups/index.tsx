@@ -9,6 +9,8 @@ const RoutineGroups = React.memo(() => {
     const { project } = useProject({ fetchProject: true });
     const [activeKey, setActiveKey] = React.useState<string | string[]>([]);
 
+    console.log ({project})
+
     const groups = useMemo(() => {
         if (!project) return [];
 
