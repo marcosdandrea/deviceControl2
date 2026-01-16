@@ -4,7 +4,7 @@ import useRoutines from '@hooks/useRoutines';
 import { globalRoutineStatusContext } from '../RoutineList';
 
 
-const MinifiedTag = React.memo(({routineId, id}:{routineId: string, id: string}) => {
+const MinifiedTag = React.memo(({routineId, id}: { routineId: string; id: string }) => {
     const {globalRoutineStatus} = React.useContext<any>(globalRoutineStatusContext);
     const [color, setColor] = React.useState<string>("#888888");
 
@@ -21,7 +21,7 @@ const MinifiedTag = React.memo(({routineId, id}:{routineId: string, id: string})
     );
 });
 
-const MinifiedStatusView = React.memo(({groupId}:{groupId: string}) => {
+const MinifiedStatusView = React.memo(({groupId}: { groupId?: string }) => {
     const { routines } = useRoutines()
     
     const routineList = useMemo(() => {

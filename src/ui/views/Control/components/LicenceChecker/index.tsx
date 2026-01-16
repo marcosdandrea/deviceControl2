@@ -45,7 +45,7 @@ const LicenseChecker = ({ children }) => {
             <div style={{
                 display: "flex",
                 flexDirection: "column",
-                rowGap: "1rem"
+                rowGap: isSignedHardware ? "1rem" : undefined
             }}>
                 <p>Active la licencia de <strong>Device Control 2</strong></p>
                 {

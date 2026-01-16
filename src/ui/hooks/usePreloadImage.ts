@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Logger } from '@helpers/logger';
 
 interface PreloadedImage {
   dataUrl: string | null;
