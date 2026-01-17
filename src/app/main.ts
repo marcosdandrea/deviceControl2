@@ -136,8 +136,9 @@ const coreProcesses = async () => {
     await new Promise(resolve => nm.once(NetworkEvents.NETWORK_UPDATED, resolve));
     log.info('Network Manager Service initialized successfully');
 
-    const { createApp } = await import('@src/domain/useCases/app/index.js');
+    const { createApp, getAppVersion } = await import('@src/domain/useCases/app/index.js');
     await createApp()
+    log.info(`Device Control v ${getAppVersion().version} initialized successfully`);
     try {
       await loadLastProject();
     } catch (error) {
@@ -164,6 +165,8 @@ const coreProcesses = async () => {
         try {
           const { createSplashWindow } = await import('@src/domain/useCases/windowManager/index.js')
           await createSplashWindow();
+
+          app.commandLine.appendSwitch("remote-debugging-port", "9222");
 
           await coreProcesses();
           

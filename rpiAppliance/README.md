@@ -1,12 +1,18 @@
 # DeviceControl2 - Raspberry Pi Installer
 
-Automated installation script for DeviceControl2 on Raspberry Pi OS 13 (Trixie).
+Automated installation script for DeviceControl2 on Raspberry Pi OS 12 (Bookworm).
 
 ## Requirements
 
-- **Clean Raspberry Pi OS 13 (Trixie) installation**
-- **User `devicecontrol` must exist** (default in Raspberry Pi OS)
+- **Clean Raspberry Pi OS 12 (Bookworm) installation**
+- **User `devicecontrol` will be created automatically if it doesn't exist**
 - Internet connection for downloading packages and DC2
+
+The installer will automatically:
+- Create the `devicecontrol` user if it doesn't exist
+- Set password to `pesp1102` 
+- Configure SSH access for remote connections
+- Add user to sudo group for administrative tasks
 
 ## Quick Start
 
@@ -116,16 +122,26 @@ sudo ./run-all.sh --force-download
 
 ## System Details
 
-- **User**: devicecontrol
+- **User**: devicecontrol (created automatically with password `pesp1102`)
+- **SSH Access**: Enabled for remote connections
 - **Install Directory**: /opt/devicecontrol2
 - **Service**: devicecontrol.service
 - **UI Port**: 8080
 - **Browser**: Chromium (kiosk mode)
 - **Display**: X Server on TTY1
 
+## SSH Access
+
+After installation, you can connect remotely:
+```bash
+ssh devicecontrol@<raspberry-pi-ip>
+# Password: pesp1102
+```
+
 ## Notes
 
-- The installer requires the `devicecontrol` user to exist (standard in Raspberry Pi OS)
+- The installer creates the `devicecontrol` user automatically if it doesn't exist
+- SSH server is installed and configured for remote access
 - If splash.png is not found in the DC2 package, Plymouth configuration is skipped
 - All installation is done in `/opt/devicecontrol2`
 - The system is configured for headless kiosk operation

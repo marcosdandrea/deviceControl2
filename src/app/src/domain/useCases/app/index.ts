@@ -73,7 +73,12 @@ export const closeApp = () => {
     }
 }
 
+export const getAppVersion = () => {
+    return { version: App.getAppVersion() };
+}
+
 export default {
     createApp,
     closeApp,
+    getAppVersion
 }

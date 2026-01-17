@@ -3,8 +3,8 @@
 # 00-common.sh - Common functions and variables for DeviceControl2 RPI setup
 
 # Supported OS
-SUPPORTED_DEBIAN_VERSION="13"
-SUPPORTED_CODENAME="trixie"
+SUPPORTED_DEBIAN_VERSION="12"
+SUPPORTED_CODENAME="bookworm"
 
 # Required user (must exist in base OS)
 REQUIRED_USER="devicecontrol"
@@ -20,6 +20,10 @@ DC2_INSTALL_DIR="/opt/devicecontrol2"
 GITHUB_OWNER="marcosdandrea"
 GITHUB_REPO="deviceControl2"
 DC2_VERSION="${DC2_VERSION:-latest}"
+
+# Kiosk user configuration (same as DC2_USER for simplicity)
+KIOSK_USER="$DC2_USER"
+KIOSK_HOME="/home/$KIOSK_USER"
 
 # UI configuration
 ENV_FILE="/mnt/pendrive/rpiAppliance/.env"
@@ -87,14 +91,45 @@ check_os_version() {
   log_info "OS: Debian $VERSION_ID ($VERSION_CODENAME) - OK"
 }
 
-# Check required user exists
+# Check required user exists or create it
 check_required_user() {
   if ! id "$REQUIRED_USER" &>/dev/null; then
-    log_error "Required user '$REQUIRED_USER' does not exist"
-    log_error "This script requires a clean Raspberry Pi OS installation with user '$REQUIRED_USER'"
-    exit 1
+    log_warn "User '$REQUIRED_USER' does not exist, creating it..."
+    
+    # Create the user with home directory
+    useradd -m -s /bin/bash "$REQUIRED_USER"
+    
+    # Set password
+    echo "$REQUIRED_USER:pesp1102" | chpasswd
+    
+    # Add to sudo group for administrative tasks
+    usermod -aG sudo "$REQUIRED_USER"
+    
+    # Configure SSH access
+    log_step "Configuring SSH access for user '$REQUIRED_USER'"
+    
+    # Ensure SSH service is installed and enabled
+    if ! command -v sshd &>/dev/null; then
+      log_step "Installing SSH server..."
+      apt-get update -qq
+      apt-get install -y openssh-server
+    fi
+    
+    # Enable and start SSH service
+    systemctl enable ssh
+    systemctl start ssh
+    
+    # Create .ssh directory and set proper permissions
+    USER_HOME=$(eval echo ~$REQUIRED_USER)
+    mkdir -p "$USER_HOME/.ssh"
+    chown "$REQUIRED_USER:$REQUIRED_USER" "$USER_HOME/.ssh"
+    chmod 700 "$USER_HOME/.ssh"
+    
+    log_info "User '$REQUIRED_USER' created successfully with SSH access"
+    log_info "Password set to: pesp1102"
+  else
+    log_info "User '$REQUIRED_USER' exists - OK"
   fi
-  log_info "User '$REQUIRED_USER' exists - OK"
 }
 
 # Load UI URL from .env if exists

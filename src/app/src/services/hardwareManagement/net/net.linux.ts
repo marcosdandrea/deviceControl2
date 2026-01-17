@@ -9,7 +9,7 @@ import * as path from "path";
 const execAsync = promisify(exec);
 
 /**
- * Implementación de NetworkManager para Linux (optimizado para Raspberry Pi con Debian Trixie)
+ * Implementación de NetworkManager para Linux (optimizado para Raspberry Pi con Debian Bookworm)
  * Monitorea ÚNICAMENTE conexiones Ethernet (no WiFi)
  *
  * Estrategia:
@@ -103,12 +103,18 @@ export class NetworkManagerLinux extends NetworkManager {
       // Verificar que el archivo existe
       await fs.access(operstatePath);
       
+      // Verificar si inotify-tools está instalado antes de intentar usarlo
+      const hasInotifyTools = await this.checkInotifyToolsAvailable();
+      
+      if (!hasInotifyTools) {
+        this.log.warn("inotify-tools not available, using fs.watch as fallback method");
+        this.watchWithFsWatch(operstatePath);
+        return;
+      }
+      
       this.log.info(`Starting network monitor on ${this.ethernetInterface} using inotify`);
       
-      // Usar inotifywait para monitorear cambios (debe estar instalado: apt-get install inotify-tools)
-      // Alternativa: monitor con script de Node.js usando fs.watch (menos eficiente pero sin dependencias)
-      
-      // Opción 1: inotifywait (requiere inotify-tools)
+      // Usar inotifywait para monitorear cambios (requiere inotify-tools)
       this.monitorProcess = spawn("inotifywait", [
         "-m",  // monitor mode (continuo)
         "-e", "modify",  // eventos de modificación
@@ -128,13 +134,13 @@ export class NetworkManagerLinux extends NetworkManager {
       this.monitorProcess.stderr?.on("data", (data) => {
         const error = data.toString().trim();
         if (error && !error.includes("Watches established")) {
-          this.log.error("Network monitor error:", error);
+          this.log.warn("inotifywait stderr:", error);
         }
       });
       
       this.monitorProcess.on("error", (error) => {
-        this.log.error("Failed to start inotifywait (is inotify-tools installed?):", error);
-        this.log.info("Falling back to fs.watch monitoring");
+        this.log.warn("inotifywait failed to start, using fs.watch fallback. To use inotifywait, install with: sudo apt-get install inotify-tools");
+        this.log.debug("inotifywait error details:", error);
         this.watchWithFsWatch(operstatePath);
       });
       
@@ -145,7 +151,7 @@ export class NetworkManagerLinux extends NetworkManager {
         }
       });
       
-      this.log.info(`Network monitor started on PID: ${this.monitorProcess.pid}`);
+      this.log.info(`Network monitor started with inotifywait on PID: ${this.monitorProcess.pid}`);
       
     } catch (error) {
       this.log.error("Failed to start network monitor:", error);
@@ -158,29 +164,52 @@ export class NetworkManagerLinux extends NetworkManager {
   }
 
   /**
+   * Verifica si inotify-tools está disponible en el sistema
+   */
+  private async checkInotifyToolsAvailable(): Promise<boolean> {
+    try {
+      await execAsync("which inotifywait");
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
    * Fallback: Monitoreo usando fs.watch de Node.js (sin dependencias externas)
    */
   private watchWithFsWatch(operstatePath: string): void {
     try {
+      // Verificar que el archivo existe antes de intentar monitorearlo
+      if (!fsSync.existsSync(operstatePath)) {
+        this.log.error(`Cannot monitor ${operstatePath}: file does not exist`);
+        return;
+      }
+      
       const watcher = fsSync.watch(operstatePath);
       
       let debounceTimer: NodeJS.Timeout | null = null;
       
-      watcher.on("change", () => {
+      watcher.on("change", (eventType) => {
         // Debounce: evitar múltiples llamadas rápidas
         if (debounceTimer) clearTimeout(debounceTimer);
         
         debounceTimer = setTimeout(() => {
-          this.log.info("Network change detected (fs.watch)");
+          this.log.info(`Network change detected (fs.watch, event: ${eventType})`);
           this.fetchNetworkStatus();
         }, 500);
       });
       
       watcher.on("error", (error) => {
         this.log.error("fs.watch error:", error);
+        // Intentar reiniciar el monitor después de un error
+        setTimeout(() => {
+          this.log.info("Attempting to restart fs.watch monitor");
+          this.watchWithFsWatch(operstatePath);
+        }, 5000);
       });
       
-      this.log.info("Network monitor started using fs.watch (fallback mode)");
+      this.log.info(`Network monitor started using fs.watch (fallback mode) on ${operstatePath}`);
     } catch (error) {
       this.log.error("Failed to start fs.watch:", error);
     }
@@ -201,77 +230,145 @@ export class NetworkManagerLinux extends NetworkManager {
       }
 
       const iface = this.ethernetInterface;
+      this.log.debug(`Fetching network status for interface: ${iface}`);
       
       // Leer estado operacional desde sysfs
       const operstatePath = `/sys/class/net/${iface}/operstate`;
       const operstate = (await fs.readFile(operstatePath, "utf-8")).trim();
+      this.log.debug(`Interface ${iface} operstate: ${operstate}`);
       
       const isUp = operstate === "up";
       
       // Obtener configuración IP usando 'ip' command
-      const { stdout: ipOutput } = await execAsync(`ip -j addr show ${iface}`);
+      const ipCommand = `ip -j addr show ${iface}`;
+      this.log.debug(`Executing: ${ipCommand}`);
+      const { stdout: ipOutput } = await execAsync(ipCommand);
+      this.log.debug(`IP command output: ${ipOutput}`);
+      
       const ipData = JSON.parse(ipOutput);
       
       let ipv4Address = "";
       let subnetMask = "";
       let dhcpEnabled = true; // Por defecto asumimos DHCP
       
-      if (ipData && ipData[0]) {
+      if (ipData && ipData.length > 0 && ipData[0]) {
         const addr_info = ipData[0].addr_info || [];
-        const ipv4 = addr_info.find((a: any) => a.family === "inet");
+        this.log.debug(`Address info count: ${addr_info.length}`);
+        
+        // Buscar la primera dirección IPv4 que no sea loopback
+        const ipv4 = addr_info.find((a: any) => 
+          a.family === "inet" && 
+          a.local && 
+          !a.local.startsWith("127.")
+        );
+        
+        this.log.debug(`IPv4 entry found:`, ipv4);
         
         if (ipv4) {
           ipv4Address = ipv4.local;
           // Convertir prefixlen a subnet mask
           subnetMask = this.prefixLenToSubnetMask(ipv4.prefixlen);
+          this.log.debug(`Parsed IPv4: ${ipv4Address}, Subnet: ${subnetMask}, PrefixLen: ${ipv4.prefixlen}`);
+        } else {
+          this.log.debug("No valid IPv4 address found in addr_info");
         }
+      } else {
+        this.log.debug("No IP data received or empty array");
       }
       
       // Obtener gateway
       let gateway = "";
       try {
-        const { stdout: routeOutput } = await execAsync(`ip -j route show default dev ${iface}`);
+        const routeCommand = `ip -j route show default dev ${iface}`;
+        this.log.debug(`Executing: ${routeCommand}`);
+        const { stdout: routeOutput } = await execAsync(routeCommand);
+        this.log.debug(`Route command output: ${routeOutput}`);
+        
         const routes = JSON.parse(routeOutput);
         if (routes && routes[0]) {
           gateway = routes[0].gateway || "";
+          this.log.debug(`Gateway found: ${gateway}`);
         }
       } catch (error) {
-        // Sin gateway configurado
+        this.log.debug("No default gateway found for interface");
       }
       
       // Obtener DNS servers
       let dnsServers: string[] = [];
       try {
         // Intentar leer de resolv.conf o systemd-resolve
-        const { stdout: resolvOutput } = await execAsync("cat /etc/resolv.conf | grep nameserver | awk '{print $2}'");
+        const resolvCommand = "cat /etc/resolv.conf | grep nameserver | awk '{print $2}'";
+        const { stdout: resolvOutput } = await execAsync(resolvCommand);
         dnsServers = resolvOutput.trim().split("\n").filter(ip => ip && ip !== "127.0.0.53");
         
         // Si encuentra 127.0.0.53 (systemd-resolved), usar systemd-resolve
         if (dnsServers.length === 0 || resolvOutput.includes("127.0.0.53")) {
           try {
+            // Intentar primero con resolvectl (Debian 13+)
             const { stdout: systemdResolve } = await execAsync(`resolvectl status ${iface} 2>/dev/null | grep "DNS Servers" | awk '{print $3}'`);
             const systemdDns = systemdResolve.trim().split("\n").filter(ip => ip);
             if (systemdDns.length > 0) {
               dnsServers = systemdDns;
             }
           } catch {
-            // resolvectl no disponible
+            // Fallback para Debian 12: usar systemd-resolve
+            try {
+              const { stdout: systemdResolve } = await execAsync(`systemd-resolve --status ${iface} 2>/dev/null | grep "DNS Servers" | awk '{print $3}'`);
+              const systemdDns = systemdResolve.trim().split("\n").filter(ip => ip);
+              if (systemdDns.length > 0) {
+                dnsServers = systemdDns;
+              }
+            } catch {
+              // Ningún comando systemd disponible
+            }
           }
         }
+        this.log.debug(`DNS servers found: ${dnsServers.join(", ")}`);
       } catch (error) {
         this.log.warn("Could not read DNS servers:", error);
       }
       
-      // Detectar si es DHCP (heurística: buscar proceso dhclient/dhcpcd)
-      try {
-        await execAsync(`pgrep -f "dhclient.*${iface}|dhcpcd.*${iface}"`);
-        dhcpEnabled = true;
-      } catch {
-        // Si no hay proceso DHCP activo, asumir IP estática
-        dhcpEnabled = false;
+      // Detectar si es DHCP usando múltiples métodos
+      let dhcpDetected = false;
+      
+      // Método 1: Verificar si la IP tiene flag "dynamic" en el JSON
+      if (ipData && ipData.length > 0 && ipData[0] && ipData[0].addr_info) {
+        const ipv4Info = ipData[0].addr_info.find((a: any) => a.family === "inet" && a.local && !a.local.startsWith("127."));
+        if (ipv4Info && ipv4Info.dynamic === true) {
+          dhcpDetected = true;
+          this.log.debug("DHCP detected via 'dynamic' flag in IP data");
+        }
       }
       
-      const status = isUp && ipv4Address ? NetworkStatus.CONNECTED : NetworkStatus.DISCONNECTED;
+      // Método 2: Buscar procesos DHCP si el método anterior no funcionó
+      if (!dhcpDetected) {
+        try {
+          await execAsync(`pgrep -f "dhclient|dhcpcd" | head -1`);
+          dhcpDetected = true;
+          this.log.debug("DHCP client process detected");
+        } catch {
+          // Método 3: Verificar archivos de configuración típicos de DHCP
+          try {
+            await execAsync(`ls /var/lib/dhcp/dhclient.*.leases 2>/dev/null | head -1`);
+            dhcpDetected = true;
+            this.log.debug("DHCP lease files found");
+          } catch {
+            this.log.debug("No DHCP indicators found, assuming static IP");
+          }
+        }
+      }
+      
+      dhcpEnabled = dhcpDetected;
+      
+      // Mejorar la lógica de detección de estado
+      // Una interfaz está conectada si:
+      // 1. El operstate es "up" Y
+      // 2. Tiene una dirección IP válida (no 0.0.0.0) Y
+      // 3. La dirección IP no es de loopback
+      const hasValidIP = ipv4Address && ipv4Address !== "0.0.0.0" && !ipv4Address.startsWith("127.");
+      const status = isUp && hasValidIP ? NetworkStatus.CONNECTED : NetworkStatus.DISCONNECTED;
+      
+      this.log.debug(`Status determination: isUp=${isUp}, hasValidIP=${hasValidIP}, finalStatus=${status}`);
       
       this.updateNetworkConfig({
         interfaceName: iface,

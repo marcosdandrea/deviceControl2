@@ -107,7 +107,7 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
    const tasks: Record<string, Task> = {}
 
    log.info("Loading project...");
-   log.info(JSON.stringify(projectData, null, 2));
+   //log.info(JSON.stringify(projectData, null, 2));
 
    // check that major and minor version match
    const [major, minor] = projectData.appVersion.split(".").map(Number);

@@ -39,6 +39,8 @@ export class WindowManager {
                     title: options.title || name || "App Window",
                     ...options,
                 });
+
+                
                 this.windows.set(name, window);
 
                 window.on('closed', () => {

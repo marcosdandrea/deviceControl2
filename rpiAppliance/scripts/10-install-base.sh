@@ -24,7 +24,8 @@ apt-get install -y \
   unzip \
   git \
   build-essential \
-  ca-certificates
+  ca-certificates \
+  inotify-tools
 
 log_info "Base packages installed successfully"
 echo ""

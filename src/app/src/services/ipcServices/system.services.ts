@@ -1,12 +1,12 @@
-import App from "@src/domain/entities/app";
 import { ServerManager } from "../server/serverManager";
+import appUseCases from "@src/domain/useCases/app";
 
 export const getSystemTime = (_data: null, cb: Function) => {
     cb({ time: new Date().toISOString() });
 }
 
 export const getAppVersion = (_data: null, cb: Function) => {
-    cb({ version: App.getAppVersion() });
+    cb({ version: appUseCases.getAppVersion().version });
 }
 
 export const getServerPorts = (_data: null, cb: Function) => {

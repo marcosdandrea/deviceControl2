@@ -20,7 +20,7 @@ export class EventManager extends EventEmitter {
     }
 
     emitEvent(eventName: string, data: object): void {
-        this.logger.info(`Event emitted: ${eventName}`, data);
+        this.logger.info(`Event emitted: ${eventName}`);
         this.emit(eventName, data);
     }
 
