@@ -1,5 +1,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import usePreloadImage from '@hooks/usePreloadImage';
+// Importar la imagen SVG directamente
+import disconnectedImageSrc from '../assets/disconnected.svg';
 
 interface PreloadedImagesContextType {
   disconnectedImage: {
@@ -23,7 +25,8 @@ interface PreloadedImagesProviderProps {
 }
 
 export const PreloadedImagesProvider: React.FC<PreloadedImagesProviderProps> = ({ children }) => {
-  const disconnectedImage = usePreloadImage('/resources/images/404.gif');
+  // Usar la imagen SVG importada que siempre estará disponible
+  const disconnectedImage = usePreloadImage(disconnectedImageSrc);
 
   const value: PreloadedImagesContextType = {
     disconnectedImage,

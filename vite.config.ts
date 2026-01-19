@@ -33,6 +33,7 @@ export default defineConfig({
       "@stores": path.resolve(__dirname, 'src/ui/stores'),
       "@ipc": path.resolve(__dirname, 'src/ui/ipc'),
       "@contexts": path.resolve(__dirname, 'src/ui/contexts'),
+      "@assets": path.resolve(__dirname, 'src/ui/assets'),
       "@utils": path.resolve(__dirname, 'src/app/src/utils'),
       "@entities": path.resolve(__dirname, 'src/app/src/domain/entities'),
       "@src": path.resolve(__dirname, 'src/app/src'),
