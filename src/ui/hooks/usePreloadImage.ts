@@ -17,7 +17,7 @@ const usePreloadImage = (imagePath: string): PreloadedImage => {
       try {
         Logger.info(`Iniciando precarga de imagen: ${imagePath}`);
         
-        // Si la imagen es importada directamente (como un SVG), usar directamente la URL
+        // Si la imagen es importada directamente (como un SVG o GIF), usar directamente la URL
         if (imagePath.startsWith('data:') || imagePath.includes('blob:') || imagePath.startsWith('/assets/')) {
           Logger.info(`Usando imagen importada directamente: ${imagePath}`);
           setPreloadedImage({

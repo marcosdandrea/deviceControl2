@@ -3,7 +3,7 @@ import style from './style.module.css'
 import Text from '@components/Text';
 import { Image } from 'antd';
 import { usePreloadedImages } from '@contexts/PreloadedImagesProvider';
-import disconnectedFallback from '@assets/disconnected.svg';
+import disconnectedFallback from '@assets/disconnected.gif';
 
 const DisconnectedView = () => {
     const { disconnectedImage } = usePreloadedImages();
