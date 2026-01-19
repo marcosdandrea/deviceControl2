@@ -4,26 +4,24 @@ import useNetworkInterfaces from "@hooks/useNetworkInterfaces";
 import { Tabs } from "antd";
 import InterfaceContextProvider from "./context";
 import InterfaceSettings from "./components/InterfaceSettings";
-import { Logger } from "@helpers/logger";
 
 const NetInterfaceConfiguration = () => {
 
-    const {networkInterfaces, applyChanges} = useNetworkInterfaces()
+    const {networkConfiguration, isLoading} = useNetworkInterfaces()
 
-    Logger.log ("Network Interfaces:", networkInterfaces);
+    // No renderizar si aún está cargando
+    if (isLoading) {
+        return <div>Cargando configuración de red...</div>;
+    }
 
     return (
     <div className={style.interfaceSettings}>
         <Tabs>
-            {networkInterfaces.map((netInterface) => (
-                <Tabs.TabPane tab={netInterface.device} key={netInterface.device}>
-                    <InterfaceContextProvider 
-                        onApplyChanges={applyChanges}
-                        netInterface={netInterface}>
+                <Tabs.TabPane tab={"LAN"} key={"lan"}>
+                    <InterfaceContextProvider netInterface={networkConfiguration}>
                         <InterfaceSettings />
                     </InterfaceContextProvider>
-                </Tabs.TabPane>
-            ))}
+             </Tabs.TabPane>
         </Tabs>
     </div>);
 }

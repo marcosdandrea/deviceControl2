@@ -22,5 +22,5 @@ export type NetworkConfiguration = {
 export interface NetworkManagerInterface extends EventEmitter {
   networkConfig: NetworkConfiguration;
   setNetworkConfiguration(config: NetworkConfiguration): Promise<void>;
-  getNetworkStatus(): NetworkConfiguration;
+  getNetworkStatus(): Promise<NetworkConfiguration>;
 }

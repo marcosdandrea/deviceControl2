@@ -10,8 +10,14 @@ xset s off
 xset -dpms
 xset s noblank
 
-# Hide cursor when idle
-unclutter &
+# Hide cursor completely using multiple methods
+# Method 1: Create invisible cursor using xsetroot
+printf '\x00\x00\x00\x00\x00\x00\x00\x00' > /tmp/blank_cursor.bits
+printf '\x00\x00\x00\x00\x00\x00\x00\x00' > /tmp/blank_mask.bits
+xsetroot -cursor /tmp/blank_cursor.bits /tmp/blank_mask.bits
+
+# Method 2: Also try with unclutter as fallback (hide after 1 second, but invisible cursor should work)
+unclutter -idle 1 -root &
 
 # Start Openbox window manager
 openbox-session &
@@ -67,4 +73,17 @@ echo "Target URL: {{DC2_UI_URL}}"
   --disable-session-crashed-bubble \
   --disable-features=TranslateUI \
   --incognito \
-  {{DC2_UI_URL}}
+  --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
+  --disable-web-security \
+  --disable-features=VizDisplayCompositor \
+  --disable-background-timer-throttling \
+  --disable-backgrounding-occluded-windows \
+  --disable-renderer-backgrounding \
+  --disable-background-networking \
+  --force-color-profile=srgb \
+  --disable-ipc-flooding-protection \
+  --touch-events=enabled \
+  --disable-gesture-requirement-for-media-playbook \
+  --autoplay-policy=no-user-gesture-required \
+  --user-data-dir=/tmp/chrome-kiosk \
+  --app={{DC2_UI_URL}}

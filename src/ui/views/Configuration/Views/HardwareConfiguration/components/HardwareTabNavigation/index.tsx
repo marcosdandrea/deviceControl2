@@ -21,13 +21,14 @@ const HardwareTabNavigation = () => {
             key: '2',
             label: <div className={style.label}><ImPower />Energía</div>,
             children: <PowerConfiguration />,
-        }, */
+        }, 
         {
             key: '1',
             requirePropietaryHardware: true,
             label: <div className={style.label}><MdOutlineWifi />WiFi</div>,
             children: <WifiConfiguration />,
         },
+        */
         {
             key: '2',
             requirePropietaryHardware: true,

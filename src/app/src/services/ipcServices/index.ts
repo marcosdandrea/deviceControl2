@@ -44,6 +44,7 @@ const init = (io: import('socket.io').Server) => {
         
         //network
         socket.on(NetworkCommands.getNetworkStatus, networkServices.getNetworkStatus);
+        socket.on(NetworkCommands.setNetworkConfiguration, networkServices.setNetworkConfiguration);
         //socket.on(NetworkEvents.NETWORK_GET_CONFIGURATION, networkServices.getNetworkStatus);
 
         //app

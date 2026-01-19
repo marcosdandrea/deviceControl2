@@ -99,8 +99,9 @@ export class NetworkManagerLinux extends NetworkManager {
       }
 
       const operstatePath = `/sys/class/net/${this.ethernetInterface}/operstate`;
+      const carrierPath = `/sys/class/net/${this.ethernetInterface}/carrier`;
       
-      // Verificar que el archivo existe
+      // Verificar que los archivos existen
       await fs.access(operstatePath);
       
       // Verificar si inotify-tools está instalado antes de intentar usarlo
@@ -108,26 +109,38 @@ export class NetworkManagerLinux extends NetworkManager {
       
       if (!hasInotifyTools) {
         this.log.warn("inotify-tools not available, using fs.watch as fallback method");
-        this.watchWithFsWatch(operstatePath);
+        this.watchWithFsWatch(operstatePath, carrierPath);
         return;
       }
       
       this.log.info(`Starting network monitor on ${this.ethernetInterface} using inotify`);
       
-      // Usar inotifywait para monitorear cambios (requiere inotify-tools)
+      // Usar inotifywait para monitorear cambios en ambos archivos (requiere inotify-tools)
       this.monitorProcess = spawn("inotifywait", [
         "-m",  // monitor mode (continuo)
         "-e", "modify",  // eventos de modificación
         "-e", "attrib",  // eventos de cambio de atributos
-        operstatePath
+        operstatePath,
+        carrierPath
       ]);
       
       this.monitorProcess.stdout?.on("data", (data) => {
         const output = data.toString().trim();
         if (output) {
-          this.log.info("Network change detected on interface:", this.ethernetInterface);
-          // Delay breve para evitar múltiples ejecuciones simultáneas
-          setTimeout(() => this.fetchNetworkStatus(), 500);
+          this.log.info("Network change detected on interface:", this.ethernetInterface, "Event:", output);
+          
+          // Determinar si es probablemente una reconexión basándose en el archivo que cambió
+          const isCarrierEvent = output.includes("carrier");
+          const isReconnectionCandidate = isCarrierEvent && this.networkConfig?.status === 'disconnected';
+          
+          if (isReconnectionCandidate) {
+            // Para reconexiones potenciales, verificar más rápido
+            this.log.info("Possible reconnection detected, checking network status immediately");
+            setTimeout(() => this.fetchNetworkStatus(), 100);
+          } else {
+            // Para otros eventos, usar el delay normal
+            setTimeout(() => this.fetchNetworkStatus(), 500);
+          }
         }
       });
       
@@ -141,24 +154,29 @@ export class NetworkManagerLinux extends NetworkManager {
       this.monitorProcess.on("error", (error) => {
         this.log.warn("inotifywait failed to start, using fs.watch fallback. To use inotifywait, install with: sudo apt-get install inotify-tools");
         this.log.debug("inotifywait error details:", error);
-        this.watchWithFsWatch(operstatePath);
+        this.watchWithFsWatch(operstatePath, carrierPath);
       });
       
       this.monitorProcess.on("exit", (code) => {
         if (code !== 0 && code !== null) {
           this.log.warn(`inotifywait exited with code ${code}, falling back to fs.watch`);
-          this.watchWithFsWatch(operstatePath);
+          this.watchWithFsWatch(operstatePath, carrierPath);
         }
       });
       
       this.log.info(`Network monitor started with inotifywait on PID: ${this.monitorProcess.pid}`);
+      
+      // Agregar monitoreo periódico adicional para detectar cambios que inotify no puede capturar
+      // Especialmente útil cuando la desconexión física del cable no dispara eventos en operstate/carrier
+      this.startPeriodicConnectivityCheck();
       
     } catch (error) {
       this.log.error("Failed to start network monitor:", error);
       // Intentar con fs.watch como fallback
       if (this.ethernetInterface) {
         const operstatePath = `/sys/class/net/${this.ethernetInterface}/operstate`;
-        this.watchWithFsWatch(operstatePath);
+        const carrierPath = `/sys/class/net/${this.ethernetInterface}/carrier`;
+        this.watchWithFsWatch(operstatePath, carrierPath);
       }
     }
   }
@@ -176,40 +194,149 @@ export class NetworkManagerLinux extends NetworkManager {
   }
 
   /**
+   * Inicia verificación periódica de conectividad para detectar cambios que inotify puede perderse
+   * Especialmente útil cuando la desconexión física no se refleja en operstate/carrier
+   */
+  private startPeriodicConnectivityCheck(): void {
+    // Verificar cada 10 segundos si hay conectividad real
+    const checkInterval = 10000; // 10 segundos
+    
+    setInterval(async () => {
+      try {
+        if (!this.ethernetInterface) return;
+        
+        const currentStatus = this.networkConfig?.status;
+        
+        // CASO 1: Si creemos que estamos conectados, verificar si perdimos conectividad
+        if (currentStatus === 'connected') {
+          let hasConnectivity = false;
+          try {
+            const { stdout: gatewayOutput } = await execAsync(`ip -j route show default dev ${this.ethernetInterface}`);
+            const routes = JSON.parse(gatewayOutput);
+            if (routes && routes[0] && routes[0].gateway) {
+              const gateway = routes[0].gateway;
+              await execAsync(`ping -c 1 -W 1 ${gateway}`, { timeout: 2000 });
+              hasConnectivity = true;
+            }
+          } catch (error) {
+            hasConnectivity = false;
+            this.log.info(`Periodic connectivity check failed - cable may be disconnected: ${(error as Error).message}`);
+          }
+          
+          // Si perdimos conectividad, actualizar estado inmediatamente como desconectado
+          if (!hasConnectivity) {
+            this.log.warn("Periodic check detected connectivity loss - updating status to DISCONNECTED immediately");
+            
+            // Actualizar estado inmediatamente sin esperar a fetchNetworkStatus completo
+            this.updateNetworkConfig({
+              interfaceName: this.ethernetInterface,
+              status: NetworkStatus.DISCONNECTED,
+              dhcpEnabled: this.networkConfig.dhcpEnabled,
+              ipv4Address: "0.0.0.0",
+              subnetMask: "0.0.0.0",
+              gateway: "0.0.0.0",
+              dnsServers: ["0.0.0.0"]
+            });
+            
+            // Luego hacer la verificación completa para asegurar consistencia
+            setTimeout(() => this.fetchNetworkStatus(), 1000);
+          }
+        }
+        
+        // CASO 2: Si estamos desconectados, verificar si se reconectó
+        else if (currentStatus === 'disconnected' || !currentStatus) {
+          this.log.info("Periodic check - Currently disconnected, checking for reconnection...");
+          
+          // Verificar si el carrier está activo (cable conectado físicamente)
+          let isPhysicallyReconnected = false;
+          try {
+            const { stdout: carrierOutput } = await execAsync(`cat /sys/class/net/${this.ethernetInterface}/carrier 2>/dev/null || echo "0"`);
+            const hasCarrier = carrierOutput.trim() === "1";
+            
+            const { stdout: operOutput } = await execAsync(`cat /sys/class/net/${this.ethernetInterface}/operstate 2>/dev/null || echo "down"`);
+            const isUp = operOutput.trim() === "up";
+            
+            isPhysicallyReconnected = hasCarrier && isUp;
+            
+            this.log.debug(`Reconnection check: carrier=${hasCarrier}, operstate=${operOutput.trim()}, physicallyReconnected=${isPhysicallyReconnected}`);
+          } catch (error) {
+            this.log.debug(`Error checking physical reconnection: ${(error as Error).message}`);
+          }
+          
+          // Si detectamos reconexión física, hacer verificación completa inmediatamente
+          if (isPhysicallyReconnected) {
+            this.log.warn("Periodic check detected physical reconnection - triggering full network status check");
+            setTimeout(() => this.fetchNetworkStatus(), 500);
+          }
+        }
+      } catch (error) {
+        this.log.debug("Error in periodic connectivity check:", error);
+      }
+    }, checkInterval);
+    
+    this.log.info(`Periodic connectivity check started (every ${checkInterval/1000}s)`);
+  }
+
+  /**
    * Fallback: Monitoreo usando fs.watch de Node.js (sin dependencias externas)
    */
-  private watchWithFsWatch(operstatePath: string): void {
+  private watchWithFsWatch(operstatePath: string, carrierPath?: string): void {
     try {
-      // Verificar que el archivo existe antes de intentar monitorearlo
+      // Verificar que el archivo operstate existe antes de intentar monitorearlo
       if (!fsSync.existsSync(operstatePath)) {
         this.log.error(`Cannot monitor ${operstatePath}: file does not exist`);
         return;
       }
       
-      const watcher = fsSync.watch(operstatePath);
-      
+      const watchers: fsSync.FSWatcher[] = [];
       let debounceTimer: NodeJS.Timeout | null = null;
       
-      watcher.on("change", (eventType) => {
+      const handleChange = (eventType: string, filename: string | null) => {
         // Debounce: evitar múltiples llamadas rápidas
         if (debounceTimer) clearTimeout(debounceTimer);
         
         debounceTimer = setTimeout(() => {
-          this.log.info(`Network change detected (fs.watch, event: ${eventType})`);
+          this.log.info(`Network change detected (fs.watch, event: ${eventType}, file: ${filename})`);
           this.fetchNetworkStatus();
         }, 500);
-      });
+      };
       
-      watcher.on("error", (error) => {
+      const handleError = (error: Error) => {
         this.log.error("fs.watch error:", error);
+        // Cerrar watchers existentes
+        watchers.forEach(w => w.close());
         // Intentar reiniciar el monitor después de un error
         setTimeout(() => {
           this.log.info("Attempting to restart fs.watch monitor");
-          this.watchWithFsWatch(operstatePath);
+          this.watchWithFsWatch(operstatePath, carrierPath);
         }, 5000);
-      });
+      };
       
-      this.log.info(`Network monitor started using fs.watch (fallback mode) on ${operstatePath}`);
+      // Monitor operstate
+      const operstateWatcher = fsSync.watch(operstatePath);
+      operstateWatcher.on("change", handleChange);
+      operstateWatcher.on("error", handleError);
+      watchers.push(operstateWatcher);
+      
+      // Monitor carrier si está disponible
+      if (carrierPath && fsSync.existsSync(carrierPath)) {
+        try {
+          const carrierWatcher = fsSync.watch(carrierPath);
+          carrierWatcher.on("change", handleChange);
+          carrierWatcher.on("error", handleError);
+          watchers.push(carrierWatcher);
+          this.log.info(`Network monitor started using fs.watch (fallback mode) on ${operstatePath} and ${carrierPath}`);
+        } catch (error) {
+          this.log.warn(`Could not monitor carrier file ${carrierPath}:`, error);
+          this.log.info(`Network monitor started using fs.watch (fallback mode) on ${operstatePath} only`);
+        }
+      } else {
+        this.log.info(`Network monitor started using fs.watch (fallback mode) on ${operstatePath}`);
+      }
+      
+      // Agregar monitoreo periódico también para fs.watch
+      this.startPeriodicConnectivityCheck();
+      
     } catch (error) {
       this.log.error("Failed to start fs.watch:", error);
     }
@@ -225,6 +352,16 @@ export class NetworkManagerLinux extends NetworkManager {
         this.ethernetInterface = await this.detectEthernetInterface();
         if (!this.ethernetInterface) {
           this.log.warn("No Ethernet interface available");
+          // Configurar estado desconectado
+          this.updateNetworkConfig({
+            interfaceName: "eth0",
+            status: NetworkStatus.DISCONNECTED,
+            dhcpEnabled: true,
+            ipv4Address: "0.0.0.0",
+            subnetMask: "0.0.0.0", 
+            gateway: "0.0.0.0",
+            dnsServers: ["0.0.0.0"]
+          });
           return;
         }
       }
@@ -234,10 +371,79 @@ export class NetworkManagerLinux extends NetworkManager {
       
       // Leer estado operacional desde sysfs
       const operstatePath = `/sys/class/net/${iface}/operstate`;
+      const carrierPath = `/sys/class/net/${iface}/carrier`;
+      
       const operstate = (await fs.readFile(operstatePath, "utf-8")).trim();
       this.log.debug(`Interface ${iface} operstate: ${operstate}`);
       
+      // Leer estado del carrier (detección de cable físico)
+      let hasCarrier = false;
+      let carrierReliable = true;
+      
+      try {
+        const carrier = (await fs.readFile(carrierPath, "utf-8")).trim();
+        hasCarrier = carrier === "1";
+        this.log.debug(`Interface ${iface} carrier: ${carrier} (hasCarrier: ${hasCarrier})`);
+      } catch (error) {
+        this.log.debug(`Cannot read carrier status for ${iface}: ${(error as Error).message}`);
+        carrierReliable = false;
+        // Si no podemos leer carrier, asumimos que está basado en operstate
+        hasCarrier = operstate === "up";
+      }
+      
+      // Si carrier parece no ser confiable (siempre 1), usar prueba de conectividad
+      let hasConnectivity = true;
+      if (carrierReliable && hasCarrier && operstate === "up") {
+        try {
+          // Prueba rápida de conectividad al gateway por defecto
+          const { stdout: gatewayOutput } = await execAsync(`ip -j route show default dev ${iface}`);
+          const routes = JSON.parse(gatewayOutput);
+          if (routes && routes[0] && routes[0].gateway) {
+            const gateway = routes[0].gateway;
+            // Ping rápido (1 segundo timeout, 1 intento)
+            await execAsync(`ping -c 1 -W 1 ${gateway}`, { timeout: 2000 });
+            hasConnectivity = true;
+            this.log.debug(`Connectivity test to gateway ${gateway}: OK`);
+          }
+        } catch (error) {
+          hasConnectivity = false;
+          this.log.debug(`Connectivity test failed - possible physical disconnection: ${(error as Error).message}`);
+        }
+      }
+      
       const isUp = operstate === "up";
+      
+      // Una interfaz está realmente conectada si:
+      // 1. operstate es "up" AND
+      // 2. (tiene carrier OR carrier no es confiable) AND  
+      // 3. tiene conectividad al gateway
+      const isPhysicallyConnected = isUp && (hasCarrier || !carrierReliable) && hasConnectivity;
+      
+      // Si la interfaz está down o no tiene conectividad real, reportar temprano
+      if (!isPhysicallyConnected) {
+        const reasons = [];
+        if (!isUp) reasons.push(`operstate: ${operstate}`);
+        if (!hasCarrier && carrierReliable) reasons.push("no carrier");
+        if (!hasConnectivity) reasons.push("no connectivity to gateway");
+        
+        const reason = reasons.length > 0 ? reasons.join(", ") : "unknown";
+        this.log.warn(`Interface ${iface} is not physically connected (${reason}), network not ready`);
+        
+        // Configurar estado desconectado pero no actualizar si ya estamos en un estado válido
+        // Esto evita sobrescribir una configuración válida durante reintentos
+        if (!this.networkConfig || this.networkConfig.status === NetworkStatus.DISCONNECTED) {
+          this.updateNetworkConfig({
+            interfaceName: iface,
+            status: NetworkStatus.DISCONNECTED,
+            dhcpEnabled: true,
+            ipv4Address: "0.0.0.0",
+            subnetMask: "0.0.0.0",
+            gateway: "0.0.0.0",
+            dnsServers: ["0.0.0.0"]
+          });
+        }
+        return;
+      }
       
       // Obtener configuración IP usando 'ip' command
       const ipCommand = `ip -j addr show ${iface}`;
@@ -362,13 +568,13 @@ export class NetworkManagerLinux extends NetworkManager {
       
       // Mejorar la lógica de detección de estado
       // Una interfaz está conectada si:
-      // 1. El operstate es "up" Y
+      // 1. El operstate es "up" Y tiene carrier (físicamente conectada) Y
       // 2. Tiene una dirección IP válida (no 0.0.0.0) Y
       // 3. La dirección IP no es de loopback
       const hasValidIP = ipv4Address && ipv4Address !== "0.0.0.0" && !ipv4Address.startsWith("127.");
-      const status = isUp && hasValidIP ? NetworkStatus.CONNECTED : NetworkStatus.DISCONNECTED;
+      const status = isPhysicallyConnected && hasValidIP ? NetworkStatus.CONNECTED : NetworkStatus.DISCONNECTED;
       
-      this.log.debug(`Status determination: isUp=${isUp}, hasValidIP=${hasValidIP}, finalStatus=${status}`);
+      this.log.debug(`Status determination: isPhysicallyConnected=${isPhysicallyConnected} (up=${isUp}, carrier=${hasCarrier}, connectivity=${hasConnectivity}), hasValidIP=${hasValidIP}, finalStatus=${status}`);
       
       this.updateNetworkConfig({
         interfaceName: iface,
@@ -454,17 +660,25 @@ export class NetworkManagerLinux extends NetworkManager {
       // Configurar IP estática
       const { ipv4Address, subnetMask, gateway, dnsServers } = config;
       
+      this.log.info(`Configuring static IP: ${ipv4Address}, subnet: ${subnetMask}, gateway: ${gateway}`);
+      
       // Calcular CIDR desde subnet mask
       const cidr = this.subnetMaskToPrefixLen(subnetMask);
       const ipWithCidr = `${ipv4Address}/${cidr}`;
       
-      await execAsync(`nmcli connection modify "${connectionName}" ipv4.method manual`);
-      await execAsync(`nmcli connection modify "${connectionName}" ipv4.addresses "${ipWithCidr}"`);
+      this.log.info(`Setting IP with CIDR: ${ipWithCidr}`);
+      
+      // Configurar método manual y direcciones en un solo comando para evitar que addresses quede vacío
+      await execAsync(`nmcli connection modify "${connectionName}" ipv4.method manual ipv4.addresses "${ipWithCidr}"`);
       await execAsync(`nmcli connection modify "${connectionName}" ipv4.gateway "${gateway}"`);
       
       if (dnsServers && dnsServers.length > 0) {
         const dnsString = dnsServers.join(" ");
+        this.log.info(`Setting DNS servers: ${dnsString}`);
         await execAsync(`nmcli connection modify "${connectionName}" ipv4.dns "${dnsString}"`);
+      } else {
+        this.log.info("No DNS servers provided, clearing DNS configuration");
+        await execAsync(`nmcli connection modify "${connectionName}" ipv4.dns ""`);
       }
     }
     
@@ -519,8 +733,25 @@ export class NetworkManagerLinux extends NetworkManager {
    */
   private subnetMaskToPrefixLen(subnetMask: string): number {
     const parts = subnetMask.split(".").map(Number);
+    if (parts.length !== 4 || parts.some(p => p < 0 || p > 255)) {
+      this.log.warn(`Invalid subnet mask: ${subnetMask}, using default /24`);
+      return 24;
+    }
+    
     const binary = parts.map(p => p.toString(2).padStart(8, "0")).join("");
-    return binary.split("1").length - 1;
+    
+    // Contar bits consecutivos de '1' desde el inicio
+    let prefixLen = 0;
+    for (let i = 0; i < binary.length; i++) {
+      if (binary[i] === '1') {
+        prefixLen++;
+      } else {
+        break;
+      }
+    }
+    
+    this.log.debug(`Subnet mask ${subnetMask} converted to /${prefixLen}`);
+    return prefixLen;
   }
 
   /**

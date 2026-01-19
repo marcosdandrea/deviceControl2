@@ -34,51 +34,105 @@ export type interfaceContextType = {
     applyInterfaceSettings: () => void
 }
 
-const InterfaceContextProvider = ({children, netInterface, onApplyChanges}) => {
-    const [useDhcp, setUseDhcp] = useState(netInterface.dhcp);
-    const [ipv4, setIpv4] = useState(netInterface.ipv4.address || "0.0.0.0/24");
+const InterfaceContextProvider = ({children, netInterface}) => {
+    // Función helper para acceso seguro a propiedades anidadas
+    const safeGet = (obj: any, path: string, defaultValue: any) => {
+        return path.split('.').reduce((current, key) => {
+            return current && current[key] !== undefined ? current[key] : defaultValue;
+        }, obj);
+    };
+
+    // Accesos seguros a las propiedades de netInterface
+    const dhcpEnabled = safeGet(netInterface, 'dhcpEnabled', false);
+    const ipv4Address = safeGet(netInterface, 'ipv4Address', "0.0.0.0/24");
+    const gateway = safeGet(netInterface, 'gateway', "0.0.0.0");
+    const dnsServers = safeGet(netInterface, 'dnsServers', []);
+    const primaryDns = dnsServers[0] || "0.0.0.0";
+    const secondaryDns = dnsServers[1] || "0.0.0.0";
+
+    const [useDhcp, setUseDhcp] = useState(dhcpEnabled);
+    const [ipv4, setIpv4] = useState(ipv4Address);
     const [subnetMaskIpv4, setSubnetMaskIpv4] = useState("0.0.0.0");
-    const [gatewayIpv4, setGatewayIpv4] = useState(netInterface.ipv4.gateway || "0.0.0.0");
-    const [defaultDnsIpv4, setDefaultDnsIpv4] = useState(netInterface.ipv4.dns[0] || "0.0.0.0");
-    const [alternateDnsIpv4, setAlternateDnsIpv4] = useState(netInterface.ipv4.dns[1] || "0.0.0.0");
+    const [gatewayIpv4, setGatewayIpv4] = useState(gateway);
+    const [defaultDnsIpv4, setDefaultDnsIpv4] = useState(primaryDns);
+    const [alternateDnsIpv4, setAlternateDnsIpv4] = useState(secondaryDns);
 
     // Actualizar estados cuando cambie la interfaz de red
     useEffect(() => {
-        setUseDhcp(netInterface.dhcp);
-        setIpv4(netInterface.ipv4.address || "0.0.0.0/24");
-        setGatewayIpv4(netInterface.ipv4.gateway || "0.0.0.0");
-        setDefaultDnsIpv4(netInterface.ipv4.dns[0] || "0.0.0.0");
-        setAlternateDnsIpv4(netInterface.ipv4.dns[1] || "0.0.0.0");
-    }, [netInterface.device, netInterface.dhcp, netInterface.ipv4.address, netInterface.ipv4.gateway, netInterface.ipv4.dns.join(',')]); // Actualizar cuando cambien propiedades relevantes
+        try {
+            const newDhcpEnabled = safeGet(netInterface, 'dhcpEnabled', false);
+            const newIpv4Address = safeGet(netInterface, 'ipv4Address', "0.0.0.0/24");
+            const newGateway = safeGet(netInterface, 'gateway', "0.0.0.0");
+            const newDnsServers = safeGet(netInterface, 'dnsServers', []);
+            const newPrimaryDns = Array.isArray(newDnsServers) ? (newDnsServers[0] || "0.0.0.0") : "0.0.0.0";
+            const newSecondaryDns = Array.isArray(newDnsServers) ? (newDnsServers[1] || "0.0.0.0") : "0.0.0.0";
 
-    useEffect(() =>{
-        //calculate subnet mask from ipv4 address
-        if (ipv4) {
-            const cidr = ipv4.split("/")[1];
-            if (cidr) {
-                const mask = [];
-                let cidrNum = parseInt(cidr, 10);
-                for (let i = 0; i < 4; i++) {
-                    if (cidrNum >= 8) {
-                        mask.push(255);
-                        cidrNum -= 8;
-                    } else {
-                        let val = 0;
-                        for (let j = 0; j < cidrNum; j++) {
-                            val += Math.pow(2, 7 - j);
+            setUseDhcp(newDhcpEnabled);
+            setIpv4(newIpv4Address);
+            setGatewayIpv4(newGateway);
+            setDefaultDnsIpv4(newPrimaryDns);
+            setAlternateDnsIpv4(newSecondaryDns);
+        } catch (error) {
+            console.error("Error updating interface configuration:", error);
+            // Usar valores por defecto en caso de error
+            setUseDhcp(false);
+            setIpv4("0.0.0.0/24");
+            setGatewayIpv4("0.0.0.0");
+            setDefaultDnsIpv4("0.0.0.0");
+            setAlternateDnsIpv4("0.0.0.0");
+        }
+    }, [
+        netInterface?.dhcpEnabled, 
+        netInterface?.ipv4Address, 
+        netInterface?.gateway, 
+        JSON.stringify(netInterface?.dnsServers || [])
+    ]);
+
+    useEffect(() => {
+        try {
+            //calculate subnet mask from ipv4 address
+            if (ipv4 && typeof ipv4 === 'string') {
+                const parts = ipv4.split("/");
+                if (parts.length === 2) {
+                    const cidr = parts[1];
+                    const cidrNum = parseInt(cidr, 10);
+                    
+                    if (!isNaN(cidrNum) && cidrNum >= 0 && cidrNum <= 32) {
+                        const mask = [];
+                        let remainingBits = cidrNum;
+                        
+                        for (let i = 0; i < 4; i++) {
+                            if (remainingBits >= 8) {
+                                mask.push(255);
+                                remainingBits -= 8;
+                            } else if (remainingBits > 0) {
+                                let val = 0;
+                                for (let j = 0; j < remainingBits; j++) {
+                                    val += Math.pow(2, 7 - j);
+                                }
+                                mask.push(val);
+                                remainingBits = 0;
+                            } else {
+                                mask.push(0);
+                            }
                         }
-                        mask.push(val);
-                        cidrNum = 0;
+                        setSubnetMaskIpv4(mask.join("."));
+                    } else {
+                        console.warn("Invalid CIDR notation:", cidr);
+                        setSubnetMaskIpv4("255.255.255.0"); // Default subnet mask
                     }
+                } else {
+                    console.warn("IP address does not contain CIDR notation:", ipv4);
+                    setSubnetMaskIpv4("255.255.255.0"); // Default subnet mask
                 }
-                setSubnetMaskIpv4(mask.join("."));
             } else {
                 setSubnetMaskIpv4("0.0.0.0");
             }
-        } else {
-            setSubnetMaskIpv4("0.0.0.0");
+        } catch (error) {
+            console.error("Error calculating subnet mask:", error);
+            setSubnetMaskIpv4("255.255.255.0"); // Fallback to default
         }
-    },[ipv4]) // Cambiar dependencia de netInterface a ipv4
+    }, [ipv4]);
 
     const updateIpv4 = (value: string) => {
         setIpv4(value);
@@ -100,33 +154,64 @@ const InterfaceContextProvider = ({children, netInterface, onApplyChanges}) => {
         setAlternateDnsIpv4(value);
     }
 
+    // Funciones de validación
+    const isValidIpAddress = (ip: string): boolean => {
+        if (!ip || ip === "0.0.0.0") return false;
+        
+        // Regex mejorada para validar IPv4
+        const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        return ipRegex.test(ip);
+    };
+
+    // Función para validar IP con CIDR
+    const isValidIpWithCidr = (ipWithCidr: string): boolean => {
+        if (!ipWithCidr || ipWithCidr === "0.0.0.0/24") return false;
+        
+        const parts = ipWithCidr.split("/");
+        if (parts.length !== 2) return false;
+        
+        const ip = parts[0];
+        const cidr = parseInt(parts[1]);
+        const isValidIp = isValidIpAddress(ip);
+        const isValidCidr = cidr >= 0 && cidr <= 32;
+        return isValidIp && isValidCidr;
+    };
+
+    // Validaciones dinámicas que se recalculan cuando cambian los valores
+    const ipv4IsValid = useDhcp || isValidIpWithCidr(ipv4);
+    const subnetMaskIsValid = useDhcp || isValidIpAddress(subnetMaskIpv4);
+    const gatewayIsValid = useDhcp || isValidIpAddress(gatewayIpv4);
+    const defaultDnsIsValid = useDhcp || isValidIpAddress(defaultDnsIpv4);
+    // DNS alternativo es válido si está vacío (0.0.0.0) o si es una IP válida
+    const alternateDnsIsValid = useDhcp || (alternateDnsIpv4 === "0.0.0.0" || alternateDnsIpv4 === "" || isValidIpAddress(alternateDnsIpv4));
+
     const value: interfaceContextType = {
         useDhcp,
         setUseDhcp,
         ipv4: {
             value: ipv4,
             set: updateIpv4,
-            isValid: true
+            isValid: ipv4IsValid
         },
         subnetMaskIpv4: {
             value: subnetMaskIpv4,
             set: updateSubnetMaskIpv4,
-            isValid: true
+            isValid: subnetMaskIsValid
         },
         gatewayIpv4: {
             value: gatewayIpv4,
             set: updateGatewayIpv4,
-            isValid: true
+            isValid: gatewayIsValid
         },
         defaultDnsIpv4: {
             value: defaultDnsIpv4,
             set: updateDefaultDnsIpv4,
-            isValid: true
+            isValid: defaultDnsIsValid
         },
         alternateDnsIpv4: {
             value: alternateDnsIpv4,
             set: updateAlternateDnsIpv4,
-            isValid: true
+            isValid: alternateDnsIsValid
         },
         applyInterfaceSettings: () => {
             const settings = {
@@ -136,7 +221,6 @@ const InterfaceContextProvider = ({children, netInterface, onApplyChanges}) => {
                 dns: [defaultDnsIpv4, alternateDnsIpv4].filter(dns => dns !== "0.0.0.0")
             };
             Logger.log('Applying interface settings:', settings);
-            onApplyChanges(netInterface.device, settings);
         }
 
     };

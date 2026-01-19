@@ -1,0 +1,14 @@
+/* Hide cursor completely */
+* {
+    cursor: none !important;
+}
+
+/* Also hide any custom cursors */
+html, body, div, span, button, input, textarea, select, a, img {
+    cursor: none !important;
+}
+
+/* Hide cursor on touch elements */
+*:hover, *:focus, *:active {
+    cursor: none !important;
+}

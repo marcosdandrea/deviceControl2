@@ -9,7 +9,7 @@ import useNetworkInterfaces from "@hooks/useNetworkInterfaces";
 const LicenseChecker = ({ children }) => {
     const { isLicensed, fetching } = useLicense();
     const { isSignedHardware } = usePropietaryHardware()
-    const { networkInterfaces } = useNetworkInterfaces()
+    const { networkConfiguration } = useNetworkInterfaces();
     const port = location.port ? `:${location.port}` : '';
 
     const handleOpenBuilder = () => {
@@ -55,7 +55,7 @@ const LicenseChecker = ({ children }) => {
                         onClick={handleOpenBuilder}>
                         Abrir Builder
                     </Button>
-                    : <p>{`conectándose al panel builder en ${networkInterfaces.filter((iface) => iface.state === "connected" && iface.ipv4?.address).map((iface) => iface.ipv4.address.split("/")[0]).join(", ")}${port}`}</p>
+                    : <p>{`conectándose al panel builder en ${networkConfiguration.ipv4Address}:8080`}</p>
                 }
             </div>
         </div>

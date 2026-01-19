@@ -41,8 +41,11 @@ export abstract class NetworkManager extends EventEmitter implements NetworkMana
       }
     }
 
-    this.fetchNetworkStatus()
+    // Iniciar monitoreo de cambios primero
     this.watchForNetworkChanges()
+    
+    // Iniciar detección de estado con reintentos
+    this.initNetworkStatusWithRetry();
   }
 
   /**
@@ -102,8 +105,15 @@ export abstract class NetworkManager extends EventEmitter implements NetworkMana
    * @param config Configuración de red a validar según la estructura NetworkConfiguration
    */
   protected validateNetworkConfig(config: NetworkConfiguration) {
-    if (!config.dnsServers || !Array.isArray(config.dnsServers) || config.dnsServers.length === 0 || !config.gateway || !config.ipv4Address || !config.subnetMask)
-      throw new Error("Invalid network configuration");
+    // Solo validar campos estáticos cuando no se usa DHCP
+    if (!config.dhcpEnabled) {
+      if (!config.dnsServers || !Array.isArray(config.dnsServers) || config.dnsServers.length === 0) {
+        throw new Error("DNS servers are required for static configuration");
+      }
+      if (!config.gateway || !config.ipv4Address || !config.subnetMask) {
+        throw new Error("IP address, gateway and subnet mask are required for static configuration");
+      }
+    }
   }
 
 
@@ -170,8 +180,80 @@ export abstract class NetworkManager extends EventEmitter implements NetworkMana
    * 
    * @returns NetworkConfiguration con la información actualizada de la conexión ethernet
    */
-  getNetworkStatus(): NetworkConfiguration {
+  async getNetworkStatus(): Promise<NetworkConfiguration> {
+    try {
+      // Forzar actualización desde el sistema operativo
+      await this.fetchNetworkStatus();
+    } catch (error) {
+      this.log.warn("Failed to fetch fresh network status, using cached:", error);
+    }
     return this.networkConfig;
+  }
+
+  /**
+   * Inicializa el estado de red con mecanismo de reintentos
+   * Útil para resolver problemas de timing durante el inicio del sistema
+   */
+  private async initNetworkStatusWithRetry(): Promise<void> {
+    const maxRetries = 5;
+    const baseDelay = 1000; // 1 segundo
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        this.log.info(`Network status initialization attempt ${attempt}/${maxRetries}`);
+        
+        await this.fetchNetworkStatus();
+        
+        // Verificar si obtuvimos una configuración válida
+        if (this.networkConfig && this.hasValidNetworkConfig()) {
+          this.log.info(`Network status initialized successfully on attempt ${attempt}`);
+          return;
+        }
+        
+        // Si llegamos aquí, la red no está lista aún
+        if (attempt < maxRetries) {
+          const delay = baseDelay * Math.pow(1.5, attempt - 1); // Delay progresivo
+          this.log.warn(`Network not ready, retrying in ${delay}ms (attempt ${attempt}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          this.log.warn('Network initialization completed with maximum retries, network may not be ready');
+        }
+        
+      } catch (error) {
+        this.log.error(`Network initialization attempt ${attempt} failed:`, error);
+        
+        if (attempt < maxRetries) {
+          const delay = baseDelay * Math.pow(1.5, attempt - 1);
+          this.log.info(`Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+  }
+
+  /**
+   * Verifica si la configuración de red actual es válida
+   */
+  private hasValidNetworkConfig(): boolean {
+    if (!this.networkConfig) return false;
+    
+    // Considerar válida si tiene una IP que no sea 0.0.0.0 y el estado sea conectado
+    const hasValidIP = this.networkConfig.ipv4Address && 
+                      this.networkConfig.ipv4Address !== '0.0.0.0' &&
+                      !this.networkConfig.ipv4Address.startsWith('127.');
+    
+    const isConnected = this.networkConfig.status === 'connected';
+    
+    return hasValidIP && isConnected;
+  }
+
+  /**
+   * Fuerza una actualización del estado de red con reintentos
+   * Útil para debugging o cuando se sospecha que la red ha cambiado
+   */
+  async refreshNetworkStatusWithRetry(): Promise<void> {
+    this.log.info('Manual network status refresh with retry requested');
+    await this.initNetworkStatusWithRetry();
   }
 
   /**

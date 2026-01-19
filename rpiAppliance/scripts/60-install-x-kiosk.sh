@@ -56,7 +56,13 @@ XINIT_FILE="/home/$KIOSK_USER/.xinitrc"
 
 sed -e "s|{{BROWSER_CMD}}|$BROWSER_CMD|g"     -e "s|{{DC2_UI_URL}}|$DC2_UI_URL|g"     "$XINIT_TPL" > "$XINIT_FILE"
 
-chown "$KIOSK_USER:$KIOSK_USER" "/home/$KIOSK_USER/.bash_profile" "$XINIT_FILE"
+log_info "Copying cursor hiding CSS and JS..."
+CSS_FILE="/home/$KIOSK_USER/hide-cursor.css"
+JS_FILE="/home/$KIOSK_USER/hide-cursor.js"
+cp "$SCRIPT_DIR/../templates/hide-cursor.css" "$CSS_FILE"
+cp "$SCRIPT_DIR/../templates/hide-cursor.js" "$JS_FILE"
+
+chown "$KIOSK_USER:$KIOSK_USER" "/home/$KIOSK_USER/.bash_profile" "$XINIT_FILE" "$CSS_FILE" "$JS_FILE"
 chmod +x "$XINIT_FILE"
 
 log_info "X kiosk environment configured. Reboot to test the full flow."
