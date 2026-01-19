@@ -461,8 +461,14 @@ export class NetworkManagerLinux extends NetworkManager {
         const addr_info = ipData[0].addr_info || [];
         this.log.debug(`Address info count: ${addr_info.length}`);
         
-        // Buscar la primera dirección IPv4 que no sea loopback
+        // Buscar la primera dirección IPv4 PRIMARIA que no sea loopback
+        // Priorizar IPs primarias sobre secundarias
         const ipv4 = addr_info.find((a: any) => 
+          a.family === "inet" && 
+          a.local && 
+          !a.local.startsWith("127.") &&
+          !a.secondary  // Ignorar IPs secundarias
+        ) || addr_info.find((a: any) => 
           a.family === "inet" && 
           a.local && 
           !a.local.startsWith("127.")
@@ -537,27 +543,36 @@ export class NetworkManagerLinux extends NetworkManager {
       // Detectar si es DHCP usando múltiples métodos
       let dhcpDetected = false;
       
-      // Método 1: Verificar si la IP tiene flag "dynamic" en el JSON
+      // Método 1: Verificar si la IP PRIMARIA tiene flag "dynamic" en el JSON
+      // Ignorar IPs secundarias ya que pueden existir configuraciones mixtas
       if (ipData && ipData.length > 0 && ipData[0] && ipData[0].addr_info) {
-        const ipv4Info = ipData[0].addr_info.find((a: any) => a.family === "inet" && a.local && !a.local.startsWith("127."));
+        const ipv4Info = ipData[0].addr_info.find((a: any) => 
+          a.family === "inet" && 
+          a.local && 
+          !a.local.startsWith("127.") &&
+          !a.secondary  // Ignorar IPs secundarias
+        );
         if (ipv4Info && ipv4Info.dynamic === true) {
           dhcpDetected = true;
-          this.log.debug("DHCP detected via 'dynamic' flag in IP data");
+          this.log.debug("DHCP detected via 'dynamic' flag in primary IP data");
         }
       }
       
       // Método 2: Buscar procesos DHCP si el método anterior no funcionó
       if (!dhcpDetected) {
         try {
-          await execAsync(`pgrep -f "dhclient|dhcpcd" | head -1`);
+          // Buscar procesos DHCP reales (no comandos remotos que contengan las palabras)
+          await execAsync(`pgrep -x dhclient || pgrep -x dhcpcd`);
           dhcpDetected = true;
           this.log.debug("DHCP client process detected");
         } catch {
           // Método 3: Verificar archivos de configuración típicos de DHCP
           try {
-            await execAsync(`ls /var/lib/dhcp/dhclient.*.leases 2>/dev/null | head -1`);
-            dhcpDetected = true;
-            this.log.debug("DHCP lease files found");
+            const { stdout } = await execAsync(`ls /var/lib/dhcp/dhclient.*.leases 2>/dev/null`);
+            if (stdout.trim()) {
+              dhcpDetected = true;
+              this.log.debug("DHCP lease files found");
+            }
           } catch {
             this.log.debug("No DHCP indicators found, assuming static IP");
           }
@@ -652,10 +667,8 @@ export class NetworkManagerLinux extends NetworkManager {
     }
     
     if (config.dhcpEnabled) {
-      // Configurar DHCP
-      await execAsync(`nmcli connection modify "${connectionName}" ipv4.method auto`);
-      await execAsync(`nmcli connection modify "${connectionName}" ipv4.dns ""`);
-      await execAsync(`nmcli connection modify "${connectionName}" ipv4.gateway ""`);
+      // Configurar DHCP - limpiar configuración estática en el orden correcto
+      await execAsync(`nmcli connection modify "${connectionName}" ipv4.method auto ipv4.addresses "" ipv4.gateway "" ipv4.dns ""`);
     } else {
       // Configurar IP estática
       const { ipv4Address, subnetMask, gateway, dnsServers } = config;

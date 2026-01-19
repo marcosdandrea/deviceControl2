@@ -35,6 +35,8 @@ const InterfaceSettings = () => {
   const popupWindow = usePopupWindow();
 
   const handleApplyChanges = async () => {
+    console.log("🌐 handleApplyChanges called - useDhcp:", useDhcp, "ipv4.value:", ipv4.value);
+    
     // Validar que el socket esté disponible
     if (!socket || !socket.connected) {
       console.error("Socket connection not available");
@@ -88,40 +90,91 @@ const InterfaceSettings = () => {
     console.log("Applying network configuration:", config);
 
     try {
-      // Usar el contexto de red para aplicar la configuración
-      await updateNetworkConfiguration(config);
-      
-      // Si usa DHCP, mostrar alerta y desconectar
+      // Si cambia a DHCP, mostrar advertencia ANTES de aplicar cambios
       if (useDhcp) {
+        console.log("🌐 Switching to DHCP - showing warning before applying changes");
+        
         // Cerrar el popup si existe (antes de mostrar el alert)
         if (popupWindow && !popupWindow.closed) {
           popupWindow.close();
         }
 
-        alert(
-          "Sistema configurado en DHCP.\n\nPor favor, verifique la nueva dirección IP en la pantalla de control del dispositivo para volver a acceder al panel.",
+        // Mostrar advertencia al usuario
+        const userConfirmed = confirm(
+          "⚠️ CAMBIO A DHCP AUTOMÁTICO\n\n" +
+          "El sistema obtendrá una nueva dirección IP automáticamente del router.\n\n" +
+          "Para volver a acceder al panel de control:\n" +
+          "1. Observe la nueva IP que se muestra en la pantalla del dispositivo\n" +
+          "2. Ingrese manualmente esa nueva IP en su navegador\n\n" +
+          "¿Desea continuar con el cambio a DHCP automático?"
         );
 
-        // Desconectar el socket
-        if (socket) {
-          socket.disconnect();
+        if (!userConfirmed) {
+          console.log("🌐 User cancelled DHCP change");
+          return;
         }
+
+        // Aplicar configuración DHCP
+        console.log("🌐 Applying DHCP configuration");
+        updateNetworkConfiguration(config).catch(error => {
+          console.log("🌐 DHCP config failed (expected due to connection loss):", error.message);
+        });
+
+        // Desconectar socket después de 3 segundos (sin mostrar temporizador)
+        setTimeout(() => {
+          console.log("🌐 Disconnecting socket after DHCP change");
+          if (socket) {
+            socket.disconnect();
+          }
+        }, 3000);
+
+        return; // Salir aquí para evitar ejecutar el resto del flujo
       }
-      // Si no usa DHCP y tiene una IP válida, mostrar countdown
-      else if (!useDhcp && ipv4.value) {
+      
+      // Si no usa DHCP y tiene una IP válida, preparar countdown ANTES de aplicar cambios
+      if (!useDhcp && ipv4.value) {
+        console.log("🌐 Checking for IP redirect - DHCP disabled, IP value:", ipv4.value);
+        
         // Extraer IP de manera segura
         const ipWithCidr = ipv4.value;
         const newIp = ipWithCidr.includes("/") ? ipWithCidr.split("/")[0] : ipWithCidr;
         
-        // Validar que la IP extraída sea válida
-        if (newIp && newIp !== "0.0.0.0") {
+        console.log("🌐 Extracted new IP:", newIp);
+        
+        // Obtener la IP actual de la página
+        const currentIp = window.location.hostname;
+        console.log("🌐 Current IP:", currentIp);
+        
+        // Si la IP es válida y diferente, iniciar countdown ANTES de aplicar cambios
+        if (newIp && newIp !== "0.0.0.0" && newIp !== currentIp) {
+          console.log("🌐 Will start countdown for redirect to:", newIp, "after applying network config");
           setRedirectIp(newIp);
-          setShowCountdown(true);
+          
+          // Iniciar la configuración de red sin esperar
+          console.log("🌐 Starting network configuration (no await)");
+          updateNetworkConfiguration(config).catch(error => {
+            console.log("🌐 Network config failed (expected due to connection loss):", error.message);
+          });
+          
+          // Esperar un momento para que se inicie la configuración y luego mostrar countdown
+          setTimeout(() => {
+            console.log("🌐 Starting countdown for redirect");
+            setShowCountdown(true);
+          }, 2000);
+          
+          return; // Salir aquí para evitar ejecutar el resto
         } else {
-          console.error("Invalid IP address for redirect:", newIp);
+          console.log("🌐 No redirect needed - same IP or invalid:", { newIp, currentIp, isValid: newIp !== "0.0.0.0" });
         }
       }
+      
+      // Para casos sin redirección, usar el flujo normal
+      console.log("🌐 Using normal flow - applying network configuration");
+      await updateNetworkConfiguration(config);
+      console.log("🌐 updateNetworkConfiguration completed successfully");
+      
     } catch (error) {
+      console.error("🌐 Error in try block:", error);
       console.error("Error applying network configuration:", error);
       alert(`Error al aplicar configuración de red: ${error.message || error}`);
     }
@@ -178,22 +231,28 @@ const InterfaceSettings = () => {
           </Form.Item>
         </Form>
         <div className={style.footer}>
-          {showCountdown ? (
-            <RedirectCountdown
-              newIp={redirectIp}
-              onCancel={handleCancelRedirect}
-              isInPopup={!!popupWindow}
-              popupWindow={popupWindow}
-            />
-          ) : (
-            <Button 
-              onClick={() => handleApplyChanges()} 
-              type="primary"
-              disabled={!isConfigurationValid}
-            >
-              Aplicar Cambios
-            </Button>
-          )}
+          <div className={style.footerContent}>
+            {showCountdown && (
+              <div className={style.countdownSection}>
+                <RedirectCountdown
+                  newIp={redirectIp}
+                  initialSeconds={10}
+                  onCancel={handleCancelRedirect}
+                  isInPopup={!!popupWindow}
+                  popupWindow={popupWindow}
+                />
+              </div>
+            )}
+            <div className={style.buttonSection}>
+              <Button 
+                onClick={() => handleApplyChanges()} 
+                type="primary"
+                disabled={!isConfigurationValid || showCountdown}
+              >
+                Aplicar Cambios
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

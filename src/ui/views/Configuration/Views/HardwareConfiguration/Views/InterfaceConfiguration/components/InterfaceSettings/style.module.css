@@ -40,6 +40,22 @@
     z-index: 1000;
 }
 
+.footerContent {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.countdownSection {
+    display: flex;
+    align-items: center;
+}
+
+.buttonSection {
+    display: flex;
+    align-items: center;
+}
+
 @media (max-width: 480px) {
     .footer{
         right: 0.5rem;

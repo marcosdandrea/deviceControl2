@@ -86,8 +86,34 @@ export const NetworkInterfacesProvider = ({ children }: { children: ReactNode })
             }
 
             // Aplicar la configuración de red
-            emit(NetworkCommands.setNetworkConfiguration, networkConfiguration, async (response: boolean | Error) => {
-                if (!(response instanceof Error) && response) {
+            emit(NetworkCommands.setNetworkConfiguration, networkConfiguration, async (...args: any[]) => {
+                Logger.log("🌐 Callback received with args:", args);
+                
+                // Manejar ambos casos: callback(error, result) o callback(result)
+                let error: string | null = null;
+                let success: boolean = false;
+                
+                if (args.length === 1) {
+                    // Caso: callback(result) - el backend solo envía un parámetro
+                    const result = args[0];
+                    if (result === null) {
+                        // null significa éxito en este contexto
+                        success = true;
+                    } else if (typeof result === 'string') {
+                        // string significa error
+                        error = result;
+                    } else if (typeof result === 'boolean') {
+                        // boolean directo
+                        success = result;
+                    }
+                } else if (args.length === 2) {
+                    // Caso: callback(error, result) - patrón estándar Node.js
+                    [error, success] = args;
+                }
+                
+                Logger.log("🌐 Parsed error:", error, "success:", success);
+                
+                if (!error && success) {
                     message.success("Configuración de red aplicada exitosamente.");
                     Logger.log("🌐 Network configuration updated successfully");
                     
@@ -103,9 +129,10 @@ export const NetworkInterfacesProvider = ({ children }: { children: ReactNode })
                         }
                     }, 2000); // Esperar 2 segundos antes de actualizar el estado
                 } else {
-                    Logger.error("Error updating network configuration:", response);
-                    message.error("Error al aplicar la configuración de red.");
-                    reject(response instanceof Error ? response : new Error("Failed to update network configuration"));
+                    const errorMessage = error || "Error desconocido al aplicar la configuración de red";
+                    Logger.error("Error updating network configuration:", errorMessage);
+                    message.error(`Error al aplicar la configuración de red: ${errorMessage}`);
+                    reject(new Error(errorMessage));
                 }
             });
         });

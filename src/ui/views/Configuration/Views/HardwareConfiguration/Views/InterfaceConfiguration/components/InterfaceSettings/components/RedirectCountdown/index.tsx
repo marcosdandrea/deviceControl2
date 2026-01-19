@@ -24,6 +24,9 @@ const RedirectCountdown: React.FC<RedirectCountdownProps> = ({
     useEffect(() => {
         if (secondsLeft <= 0) {
             
+            // Ocultar el componente de countdown antes de redirigir
+            onCancel();
+            
             // Construir la nueva URL
             const protocol = window.location.protocol;
             const port = window.location.port ? `:${window.location.port}` : '';
@@ -60,17 +63,15 @@ const RedirectCountdown: React.FC<RedirectCountdownProps> = ({
 
     return (
         <div className={style.countdownContainer}>
-            <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                <Text className={style.message}>
-                    Cambios aplicados exitosamente
-                </Text>
+            <Space direction="horizontal" size="small" style={{ width: '100%' }}>
                 <Text className={style.redirect}>
-                    Redirigiendo a <strong>{newIp}</strong> en {secondsLeft} segundo{secondsLeft !== 1 ? 's' : ''}...
+                    Redireccionando a la nueva ubicación en {secondsLeft}...
                 </Text>
                 <Button 
                     onClick={onCancel}
-                    type="default">
-                    Cancelar Redirección
+                    type="default"
+                    size="small">
+                    Cancelar
                 </Button>
             </Space>
         </div>
