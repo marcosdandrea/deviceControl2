@@ -9,7 +9,20 @@ require_root
 check_required_user
 load_ui_url
 
+# Set default screen blanking values if not provided
+ENABLE_SCREEN_BLANKING="${ENABLE_SCREEN_BLANKING:-false}"
+SCREEN_BLANKING_TIME="${SCREEN_BLANKING_TIME:-300}"
+
+# Calculate screen blanking time in minutes for Xorg config
+BLANKING_MINUTES=$((SCREEN_BLANKING_TIME / 60))
+[[ $BLANKING_MINUTES -eq 0 ]] && BLANKING_MINUTES=1
+
 log_info "===== Step 6: Installing X Server, LightDM and Browser ====="
+if [[ "$ENABLE_SCREEN_BLANKING" == "true" ]]; then
+  log_info "Screen blanking: Habilitado (${BLANKING_MINUTES} minutos)"
+else
+  log_info "Screen blanking: Deshabilitado"
+fi
 echo ""
 
 log_step "Installing X Server packages..."
@@ -28,13 +41,13 @@ log_step "Configuring X Server to hide cursor completely..."
 # Create Xorg configuration to hide cursor at system level
 mkdir -p /etc/X11/xorg.conf.d
 
-# Configure input devices to not show cursor
-cat > /etc/X11/xorg.conf.d/20-nocursor.conf << 'EOF'
+# Configure input devices to not show cursor and screen blanking settings
+cat > /etc/X11/xorg.conf.d/20-nocursor.conf << EOF
 Section "ServerFlags"
-    Option "BlankTime" "0"
-    Option "StandbyTime" "0" 
-    Option "SuspendTime" "0"
-    Option "OffTime" "0"
+    Option "BlankTime" "$([[ "$ENABLE_SCREEN_BLANKING" == "true" ]] && echo "$BLANKING_MINUTES" || echo "0")"
+    Option "StandbyTime" "$([[ "$ENABLE_SCREEN_BLANKING" == "true" ]] && echo "$BLANKING_MINUTES" || echo "0")" 
+    Option "SuspendTime" "$([[ "$ENABLE_SCREEN_BLANKING" == "true" ]] && echo "$BLANKING_MINUTES" || echo "0")"
+    Option "OffTime" "$([[ "$ENABLE_SCREEN_BLANKING" == "true" ]] && echo "$BLANKING_MINUTES" || echo "0")"
     Option "DontZap" "true"
     Option "DontVTSwitch" "true"
 EndSection
@@ -174,10 +187,18 @@ LOGFILE="/tmp/kiosk-session.log"
 exec > "\$LOGFILE" 2>&1
 echo "=== Kiosk session started at \$(date) ==="
 
-# Disable screensaver and power management
-xset s off
-xset -dpms
-xset s noblank
+# Configure screen blanking based on user choice
+if [[ "$ENABLE_SCREEN_BLANKING" == "true" ]]; then
+  # Enable screensaver and power management
+  xset s $SCREEN_BLANKING_TIME $SCREEN_BLANKING_TIME
+  xset +dpms
+  xset dpms $SCREEN_BLANKING_TIME $SCREEN_BLANKING_TIME $SCREEN_BLANKING_TIME
+else
+  # Disable screensaver and power management
+  xset s off
+  xset -dpms
+  xset s noblank
+fi
 
 # Hide cursor completely using multiple methods
 # Method 1: Set cursor theme to blank

@@ -15,6 +15,7 @@ import tasksServices from './tasks.services';
 import hardwareServices from './hardware.services';
 import { NetworkCommands } from '@common/commands/net.commands';
 import networkServices from './network.services';
+import { ScreenCommands } from '@common/commands/screen.commands';
 
 
 
@@ -45,7 +46,10 @@ const init = (io: import('socket.io').Server) => {
         //network
         socket.on(NetworkCommands.getNetworkStatus, networkServices.getNetworkStatus);
         socket.on(NetworkCommands.setNetworkConfiguration, networkServices.setNetworkConfiguration);
-        //socket.on(NetworkEvents.NETWORK_GET_CONFIGURATION, networkServices.getNetworkStatus);
+        
+        //screen
+        socket.on(ScreenCommands.turnScreenOn, hardwareServices.turnScreenOn);
+        socket.on(ScreenCommands.turnScreenOff, hardwareServices.turnScreenOff);
 
         //app
         socket.on(appCommands.getTriggerTypes, appServices.getAvailableTriggers);

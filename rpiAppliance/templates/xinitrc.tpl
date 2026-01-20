@@ -5,10 +5,18 @@ LOGFILE="/tmp/kiosk-session.log"
 exec > "$LOGFILE" 2>&1
 echo "=== Kiosk session started at $(date) ==="
 
-# Disable screensaver and power management
-xset s off
-xset -dpms
-xset s noblank
+# Configure screen blanking based on user choice
+if [[ "{{ENABLE_SCREEN_BLANKING}}" == "true" ]]; then
+  # Enable screensaver and power management
+  xset s {{SCREEN_BLANKING_TIME}} {{SCREEN_BLANKING_TIME}}
+  xset +dpms
+  xset dpms {{SCREEN_BLANKING_TIME}} {{SCREEN_BLANKING_TIME}} {{SCREEN_BLANKING_TIME}}
+else
+  # Disable screensaver and power management
+  xset s off
+  xset -dpms
+  xset s noblank
+fi
 
 # Hide cursor completely using multiple methods
 # Method 1: Create invisible cursor using xsetroot

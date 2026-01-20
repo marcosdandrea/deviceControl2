@@ -54,7 +54,15 @@ log_info "Creating .xinitrc for kiosk user..."
 XINIT_TPL="$SCRIPT_DIR/../templates/xinitrc.tpl"
 XINIT_FILE="/home/$KIOSK_USER/.xinitrc"
 
-sed -e "s|{{BROWSER_CMD}}|$BROWSER_CMD|g"     -e "s|{{DC2_UI_URL}}|$DC2_UI_URL|g"     "$XINIT_TPL" > "$XINIT_FILE"
+# Set default screen blanking values if not provided
+ENABLE_SCREEN_BLANKING="${ENABLE_SCREEN_BLANKING:-false}"
+SCREEN_BLANKING_TIME="${SCREEN_BLANKING_TIME:-300}"
+
+sed -e "s|{{BROWSER_CMD}}|$BROWSER_CMD|g" \
+    -e "s|{{DC2_UI_URL}}|$DC2_UI_URL|g" \
+    -e "s|{{ENABLE_SCREEN_BLANKING}}|$ENABLE_SCREEN_BLANKING|g" \
+    -e "s|{{SCREEN_BLANKING_TIME}}|$SCREEN_BLANKING_TIME|g" \
+    "$XINIT_TPL" > "$XINIT_FILE"
 
 log_info "Copying cursor hiding CSS and JS..."
 CSS_FILE="/home/$KIOSK_USER/hide-cursor.css"
