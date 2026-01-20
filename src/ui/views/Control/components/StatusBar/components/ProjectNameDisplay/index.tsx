@@ -1,6 +1,5 @@
 import React, { useContext } from 'react';
 import style from './style.module.css';
-import Text from '@components/Text';
 import { ProjectContext } from '@contexts/projectContextProvider';
 import { MdLock } from 'react-icons/md';
 import { Color } from '@common/theme/colors';
@@ -16,10 +15,15 @@ const ProjectNameDisplay = () => {
             {project?.password &&
                 <MdLock color={Color.black} />
             }
-            <Text
-                text={project?.name || `Device Control ${version}`}
-                fontFamily='Open Sans SemiBold'
-                size={15} />
+            <span
+                title='Project name place'
+                style={{ 
+                    color: "black",
+                    fontFamily: 'Open Sans SemiBold',
+                    fontSize: 15
+                }}>
+                {project?.name || `Device Control ${version}`}
+            </span>
         </div>);
 }
 
