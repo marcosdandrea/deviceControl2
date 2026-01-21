@@ -9,6 +9,23 @@ require_root
 check_required_user
 load_ui_url
 
+# Clean previous kiosk configs so reinstall always overwrites
+log_step "Stopping LightDM if running and cleaning old configs..."
+systemctl stop lightdm.service 2>/dev/null || true
+
+USER_HOME=$(eval echo ~$DC2_USER)
+OPENBOX_DIR="$USER_HOME/.config/openbox"
+
+# Remove stale Xorg/LightDM/Openbox configs that could block a reinstall
+rm -f /etc/X11/xorg.conf
+rm -f /etc/X11/xorg.conf.d/10-modesetting.conf
+rm -f /etc/X11/xorg.conf.d/20-nocursor.conf
+rm -f /etc/lightdm/lightdm.conf.d/90-nocursor.conf
+rm -f /usr/local/bin/setup-kiosk-session
+rm -f "$OPENBOX_DIR/autostart"
+rm -rf "$USER_HOME/.config/openbox"
+mkdir -p "$OPENBOX_DIR"
+
 # Set default screen blanking values if not provided
 ENABLE_SCREEN_BLANKING="${ENABLE_SCREEN_BLANKING:-false}"
 SCREEN_BLANKING_TIME="${SCREEN_BLANKING_TIME:-300}"
@@ -67,53 +84,29 @@ Section "InputClass"
 EndSection
 EOF
 
-# Create invisible cursor theme
-mkdir -p /usr/share/icons/blank/cursors
-echo "Create blank cursor files for X11"
+log_step "Configuring Xorg to force modesetting on /dev/dri/card1..."
+cat > /etc/X11/xorg.conf.d/10-modesetting.conf << 'EOF'
+Section "Device"
+  Identifier "PrimaryGPU"
+  Driver "modesetting"
+  Option "kmsdev" "/dev/dri/card1"
+  Option "PrimaryGPU" "true"
+EndSection
 
-# Create empty cursor file
-cat > /tmp/create_blank_cursor.c << 'EOF'
-#include <X11/Xcursor/Xcursor.h>
-#include <stdio.h>
+Section "Monitor"
+  Identifier "Monitor0"
+  Option "DPMS" "false"
+EndSection
 
-int main() {
-    XcursorImage *image = XcursorImageCreate(1, 1);
-    if (!image) return 1;
-    
-    image->xhot = 0;
-    image->yhot = 0;
-    image->delay = 0;
-    
-    // Fill with transparent pixels
-    for (int i = 0; i < image->width * image->height; i++) {
-        image->pixels[i] = 0x00000000; // Transparent
-    }
-    
-    XcursorImageDestroy(image);
-    return 0;
-}
+Section "Screen"
+  Identifier "Screen0"
+  Device "PrimaryGPU"
+  Monitor "Monitor0"
+EndSection
 EOF
 
-# Alternative: Create simple invisible cursor using existing tools
-mkdir -p /usr/share/pixmaps
-cat > /usr/share/pixmaps/blank.xpm << 'EOF'
-/* XPM */
-static char * blank_xpm[] = {
-"1 1 1 1",
-" 	c None",
-" "};
-EOF
-
-# Create blank cursor theme
-mkdir -p /usr/share/icons/blank/{cursors,index.theme}
-echo '[Icon Theme]
-Name=Blank
-Comment=Invisible cursor theme' > /usr/share/icons/blank/index.theme
-
-# Create actual blank cursor files
-for cursor in default arrow left_ptr hand2 watch xterm; do
-    printf '\x00\x00\x00\x00\x00\x00\x00\x00' > /usr/share/icons/blank/cursors/$cursor
-done
+# Simple approach: just use unclutter to hide cursor
+echo "Using unclutter for cursor hiding - simpler and more reliable"
 
 log_step "Configuring LightDM to use invisible cursor..."
 # Configure LightDM to use blank cursor theme
@@ -233,19 +226,23 @@ done
 echo "Waiting for HTTP server..."
 sleep 3
 
-# Launch browser in kiosk mode
+# Launch browser in kiosk mode with audio and performance optimizations
 echo "Launching browser to: $DC2_UI_URL"
-$BROWSER_CMD \\
-  --user-stylesheet=file:///tmp/nocursor.css \\
-  --noerrdialogs \\
-  --kiosk \\
-  --disable-infobars \\
-  --disable-session-crashed-bubble \\
-  --disable-features=TranslateUI \\
-  --incognito \\
-  --touch-events=enabled \\
-  --disable-gesture-requirement-for-media-playbook \\
-  --autoplay-policy=no-user-gesture-required \\
+$BROWSER_CMD \
+  --user-stylesheet=file:///tmp/nocursor.css \
+  --noerrdialogs \
+  --kiosk \
+  --disable-infobars \
+  --disable-session-crashed-bubble \
+  --disable-features=TranslateUI \
+  --incognito \
+  --touch-events=enabled \
+  --disable-gesture-requirement-for-media-playback \
+  --autoplay-policy=no-user-gesture-required \
+  --allow-running-insecure-content \
+  --disable-web-security \
+  --no-sandbox \
+  --user-data-dir=/tmp/chrome-kiosk \
   $DC2_UI_URL
 EOF
 

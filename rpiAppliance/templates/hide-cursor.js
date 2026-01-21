@@ -58,5 +58,80 @@
         }
     });
     
+    // Habilitar reproducción automática de audio sin interacción del usuario
+    const enableAudioAutoplay = () => {
+        // Crear un contexto de audio dummy y resumirlo
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            const audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => {
+                    console.log('Audio context resumed for autoplay');
+                }).catch(e => {
+                    console.warn('Could not resume audio context:', e);
+                });
+            }
+        }
+        
+        // Interceptar y habilitar automáticamente todos los elementos de audio/video
+        const mediaElements = document.querySelectorAll('audio, video');
+        mediaElements.forEach(element => {
+            element.muted = false;
+            element.autoplay = true;
+            element.setAttribute('autoplay', '');
+            element.removeAttribute('controls');
+            
+            // Remover cualquier restricción de gesto
+            element.addEventListener('loadstart', () => {
+                element.play().catch(() => {});
+            });
+        });
+        
+        // Observer para nuevos elementos multimedia
+        const observer = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) { // Element node
+                        if (node.matches && node.matches('audio, video')) {
+                            node.muted = false;
+                            node.autoplay = true;
+                            node.setAttribute('autoplay', '');
+                            node.removeAttribute('controls');
+                            node.addEventListener('loadstart', () => {
+                                node.play().catch(() => {});
+                            });
+                        }
+                        
+                        // También buscar en los hijos
+                        const mediaChildren = node.querySelectorAll && node.querySelectorAll('audio, video');
+                        if (mediaChildren) {
+                            mediaChildren.forEach(element => {
+                                element.muted = false;
+                                element.autoplay = true;
+                                element.setAttribute('autoplay', '');
+                                element.removeAttribute('controls');
+                                element.addEventListener('loadstart', () => {
+                                    element.play().catch(() => {});
+                                });
+                            });
+                        }
+                    }
+                });
+            });
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    };
+    
+    // Ejecutar optimizaciones de audio al cargar la página
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', enableAudioAutoplay);
+    } else {
+        enableAudioAutoplay();
+    }
+    
     console.log('Cursor hiding script loaded for kiosk mode');
 })();

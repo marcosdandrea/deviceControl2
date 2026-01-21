@@ -23,15 +23,18 @@ export class ScreenController {
 
     private async checkCompatibility(): Promise<boolean> {
         try {
-            for (const command of this.requiredCommands) {
-                await execAsync(`which ${command}`);
-            }
-            this.log.info('Sistema compatible: todos los comandos requeridos están disponibles', {
+            // Verificar que pinctrl existe
+            await execAsync('which pinctrl');
+            
+            // Verificar que podemos ejecutar sudo pinctrl sin contraseña
+            await execAsync('sudo -n pinctrl help > /dev/null 2>&1');
+            
+            this.log.info('Sistema compatible: pinctrl disponible con permisos sudo', {
                 commands: this.requiredCommands
             });
             return true;
         } catch (error) {
-            this.log.error('Sistema no compatible: comandos requeridos no encontrados', {
+            this.log.error('Sistema no compatible: pinctrl no disponible o sin permisos sudo', {
                 commands: this.requiredCommands,
                 error: error
             });
@@ -47,7 +50,7 @@ export class ScreenController {
         }
 
         try {
-            await execAsync('pinctrl set 18 op dh');
+            await execAsync('sudo pinctrl set 18 op dh');
             this.log.info('Pantalla encendida');
         } catch (error) {
             throw new Error(`Error al encender la pantalla: ${error}`);
@@ -62,7 +65,7 @@ export class ScreenController {
         }
 
         try {
-            await execAsync('pinctrl set 18 op dl');
+            await execAsync('sudo pinctrl set 18 op dl');
             this.log.info('Pantalla apagada');
         } catch (error) {
             throw new Error(`Error al apagar la pantalla: ${error}`);

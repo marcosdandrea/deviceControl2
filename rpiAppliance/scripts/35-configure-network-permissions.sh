@@ -8,10 +8,10 @@ source "$SCRIPT_DIR/00-common.sh"
 require_root
 check_os_version
 
-log_info "===== Step 3.5: Configuring Network Management Permissions ====="
+log_info "===== Step 3.5: Configuring Network & Hardware Permissions ====="
 echo ""
 
-log_step "Configuring network permissions for user: $DC2_USER"
+log_step "Configuring network and hardware permissions for user: $DC2_USER"
 
 # Add user to netdev group if it exists (Debian/Ubuntu)
 if getent group netdev >/dev/null 2>&1; then
@@ -22,13 +22,13 @@ else
     log_info "netdev group not found, skipping group assignment"
 fi
 
-# Configure sudoers for nmcli commands
-SUDOERS_FILE="/etc/sudoers.d/devicecontrol-network"
-log_step "Creating sudoers configuration for network commands..."
+# Configure sudoers for nmcli and hardware commands
+SUDOERS_FILE="/etc/sudoers.d/devicecontrol-permissions"
+log_step "Creating sudoers configuration for network and hardware commands..."
 
 cat > "$SUDOERS_FILE" << EOF
-# DeviceControl2 - Allow network configuration commands without password
-# This file allows the DC2 user to execute specific network management commands
+# DeviceControl2 - Allow network and hardware configuration commands without password
+# This file allows the DC2 user to execute specific management commands
 # without requiring a password prompt
 
 # Allow nmcli commands for network configuration
@@ -39,6 +39,9 @@ $DC2_USER ALL=(ALL) NOPASSWD: /usr/bin/ip addr show, /usr/bin/ip route show, /us
 
 # Allow systemctl for network services if needed
 $DC2_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart NetworkManager, /usr/bin/systemctl reload NetworkManager
+
+# Allow pinctrl commands for screen/hardware control
+$DC2_USER ALL=(ALL) NOPASSWD: /usr/bin/pinctrl
 EOF
 
 # Set proper permissions for sudoers file
@@ -111,7 +114,7 @@ EOF
 
 chmod +x "$TEST_SCRIPT"
 
-log_info "Network permissions configured successfully"
+log_info "Network and hardware permissions configured successfully"
 log_info "Test script created at: $TEST_SCRIPT"
 log_info "After installation, you can test with: sudo -u $DC2_USER $TEST_SCRIPT"
 

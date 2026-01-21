@@ -8,8 +8,9 @@ source "$SCRIPT_DIR/00-common.sh"
 # Initialize variables
 CLEAN_INSTALL="false"
 INSTALL_TYPE=""
+# Screen blanking deshabilitado por defecto para optimización kiosk
 ENABLE_SCREEN_BLANKING="false"
-SCREEN_BLANKING_TIME="300"
+SCREEN_BLANKING_TIME="0"
 
 # Function to show main menu
 show_main_menu() {
@@ -17,92 +18,20 @@ show_main_menu() {
   echo ""
   echo "======================================================================="
   echo ""
-  echo "         DeviceControl2 - Raspberry Pi Installer"
+  echo "         DeviceControl 2 - Raspberry Pi Installer"
   echo ""
   echo "======================================================================="
   echo ""
   echo "¿Qué desea hacer?"
   echo ""
-  echo "  1) Solo actualizar DeviceControl2"
-  echo "  2) Instalar/Reinstalar toda la configuración desde cero"
+  echo "  1) Actualizar DeviceControl 2 (Solo si ya ejecutó la instalación completa)"
+  echo "  2) Instalar/Reinstalar toda la configuración completa desde cero"
   echo "  3) Salir"
   echo ""
   echo -n "Seleccione una opción (1-3): "
 }
 
-# Function to show screen blanking configuration menu
-show_screen_blanking_menu() {
-  clear
-  echo ""
-  echo "======================================================================="
-  echo ""
-  echo "         Configuración de Screen Blanking"
-  echo ""
-  echo "======================================================================="
-  echo ""
-  echo -n "¿Desea habilitar el screen blanking (apagado automático de pantalla)? (s/n): "
-  read -r blanking_choice
-  
-  if [[ $blanking_choice =~ ^[SsYy]$ ]]; then
-    ENABLE_SCREEN_BLANKING="true"
-    echo ""
-    echo "Tiempos disponibles para el screen blanking:"
-    echo ""
-    echo "  1) 1 minuto (60 segundos)"
-    echo "  2) 3 minutos (180 segundos)"
-    echo "  3) 5 minutos (300 segundos) [Por defecto]"
-    echo "  4) 10 minutos (600 segundos)"
-    echo "  5) 15 minutos (900 segundos)"
-    echo "  6) Personalizado"
-    echo ""
-    echo -n "Seleccione el tiempo (1-6) [3]: "
-    read -r time_choice
-    
-    case "$time_choice" in
-      1)
-        SCREEN_BLANKING_TIME="60"
-        ;;
-      2)
-        SCREEN_BLANKING_TIME="180"
-        ;;
-      3|"")
-        SCREEN_BLANKING_TIME="300"
-        ;;
-      4)
-        SCREEN_BLANKING_TIME="600"
-        ;;
-      5)
-        SCREEN_BLANKING_TIME="900"
-        ;;
-      6)
-        echo ""
-        echo -n "Ingrese el tiempo en segundos (mínimo 30): "
-        read -r custom_time
-        if [[ "$custom_time" =~ ^[0-9]+$ ]] && [[ "$custom_time" -ge 30 ]]; then
-          SCREEN_BLANKING_TIME="$custom_time"
-        else
-          echo "Tiempo inválido. Usando 5 minutos por defecto."
-          SCREEN_BLANKING_TIME="300"
-        fi
-        ;;
-      *)
-        echo "Opción inválida. Usando 5 minutos por defecto."
-        SCREEN_BLANKING_TIME="300"
-        ;;
-    esac
-    
-    echo ""
-    echo "Screen blanking habilitado: $(($SCREEN_BLANKING_TIME / 60)) minutos y $(($SCREEN_BLANKING_TIME % 60)) segundos"
-  else
-    ENABLE_SCREEN_BLANKING="false"
-    echo ""
-    echo "Screen blanking deshabilitado."
-  fi
-  
-  echo ""
-  echo -n "Presione ENTER para continuar..."
-  read -r
-}
+
 
 # Parse arguments (for backward compatibility)
 while [[ $# -gt 0 ]]; do
@@ -151,12 +80,15 @@ if [[ -z "$INSTALL_TYPE" ]]; then
   case "$choice" in
     1)
       INSTALL_TYPE="update"
+      export FORCE_DOWNLOAD="true"
       ;;
     2)
       INSTALL_TYPE="full"
       CLEAN_INSTALL="true"
       export FORCE_DOWNLOAD="true"
-      show_screen_blanking_menu
+      # Screen blanking deshabilitado por defecto para kiosk
+      ENABLE_SCREEN_BLANKING="false"
+      SCREEN_BLANKING_TIME="300"
       ;;
     3)
       echo ""
@@ -176,7 +108,7 @@ clear
 echo ""
 echo "======================================================================="
 echo ""
-echo "         DeviceControl2 - Raspberry Pi Installer"
+echo "         DeviceControl 2 - Raspberry Pi Installer"
 echo ""
 echo "======================================================================="
 echo ""
@@ -208,11 +140,7 @@ if [[ "$INSTALL_TYPE" == "update" ]]; then
   
 elif [[ "$INSTALL_TYPE" == "full" ]]; then
   log_info "Modo: Instalación/Reinstalación completa"
-  if [[ "$ENABLE_SCREEN_BLANKING" == "true" ]]; then
-    log_info "Screen blanking: Habilitado ($(($SCREEN_BLANKING_TIME / 60))m $(($SCREEN_BLANKING_TIME % 60))s)"
-  else
-    log_info "Screen blanking: Deshabilitado"
-  fi
+  log_info "Configuración optimizada para kiosk (screen blanking deshabilitado)"
   echo ""
 fi
 
@@ -245,6 +173,7 @@ log_info "Starting installation process..."
 echo ""
 
 # Run installation scripts
+"$SCRIPT_DIR/05-force-screen-on.sh"
 "$SCRIPT_DIR/10-install-base.sh"
 "$SCRIPT_DIR/20-install-node.sh"
 "$SCRIPT_DIR/30-create-users.sh"
@@ -262,6 +191,7 @@ echo ""
 log_info "Installation completed successfully!"
 echo ""
 log_info "After reboot, the system will:"
+log_info "  - Force screen on at boot (prevents staying off from previous shutdown)"
 log_info "  - Show Plymouth splash screen during boot"
 log_info "  - Auto-login as '$DC2_USER' on TTY1"
 log_info "  - Start X Server automatically"

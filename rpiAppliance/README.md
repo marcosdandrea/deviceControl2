@@ -37,12 +37,36 @@ sudo reboot
 The installer performs these steps automatically:
 
 1. **10-install-base.sh** - System updates and base packages
-2. **20-install-node.sh** - Node.js v20 via NVM
-3. **30-download-dc2.sh** - Download DeviceControl2 from GitHub
-4. **40-configure-autologin.sh** - Configure passwordless auto-login
-5. **50-create-service.sh** - Create systemd service for DC2
-6. **60-install-xserver.sh** - Install X Server, Openbox, and Chromium
-7. **70-configure-plymouth.sh** - Configure boot splash screen
+2. **20-install-node.sh** - Node.js v20 via NVM  
+3. **25-configure-audio.sh** - Audio system configuration for kiosk mode
+4. **30-download-dc2.sh** - Download DeviceControl2 from GitHub
+5. **40-configure-autologin.sh** - Configure passwordless auto-login
+6. **50-create-service.sh** - Create systemd service for DC2
+7. **60-install-xserver.sh** - Install X Server, Openbox, and Chromium
+8. **70-configure-plymouth.sh** - Configure boot splash screen
+
+## Kiosk Optimizations
+
+The installer now includes optimizations specifically for kiosk mode:
+
+### Audio Configuration
+- **Automatic audio playback** without user interaction required
+- **ALSA and PulseAudio** configured for immediate audio output
+- **Audio permissions** properly set for the kiosk user
+- **Volume levels** automatically set to 80% on startup
+
+### Browser Optimizations
+- **Hardware acceleration** enabled for better performance
+- **Audio autoplay** policy set to allow media without user gestures
+- **Screen blanking disabled** by default for continuous display
+- **Cursor completely hidden** using multiple methods
+- **Touch events** enabled for touchscreen interfaces
+- **Kiosk mode** with all distractions removed
+
+### Menu Changes
+- **Update option** now automatically forces download (equivalent to --force-download)
+- **Screen blanking configuration** removed from interactive setup
+- **Simplified installation** process focused on kiosk deployment
 
 ## Options
 
@@ -89,6 +113,12 @@ Run the diagnostic script to check installation status:
 ```bash
 cd /media/devicecontrol/YOUR_USB_NAME/rpiAppliance/scripts
 sudo ./99-diagnose.sh
+```
+
+Test audio configuration:
+
+```bash
+sudo ./test-audio-kiosk.sh
 ```
 
 ## Troubleshooting

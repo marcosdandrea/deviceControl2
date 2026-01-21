@@ -54,9 +54,9 @@ log_info "Creating .xinitrc for kiosk user..."
 XINIT_TPL="$SCRIPT_DIR/../templates/xinitrc.tpl"
 XINIT_FILE="/home/$KIOSK_USER/.xinitrc"
 
-# Set default screen blanking values if not provided
+# Set default screen blanking values if not provided (disabled for kiosk optimization)
 ENABLE_SCREEN_BLANKING="${ENABLE_SCREEN_BLANKING:-false}"
-SCREEN_BLANKING_TIME="${SCREEN_BLANKING_TIME:-300}"
+SCREEN_BLANKING_TIME="${SCREEN_BLANKING_TIME:-0}"
 
 sed -e "s|{{BROWSER_CMD}}|$BROWSER_CMD|g" \
     -e "s|{{DC2_UI_URL}}|$DC2_UI_URL|g" \

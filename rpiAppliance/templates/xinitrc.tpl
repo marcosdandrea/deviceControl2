@@ -70,10 +70,14 @@ done
 # Small delay to allow Openbox to start
 sleep 2
 
+# Initialize audio system for kiosk mode
+echo "Initializing audio system..."
+/usr/local/bin/init-kiosk-audio
+
 echo "Launching browser: {{BROWSER_CMD}}"
 echo "Target URL: {{DC2_UI_URL}}"
 
-# Launch browser in kiosk mode pointing to DC2 UI
+# Launch browser in kiosk mode pointing to DC2 UI with optimizations
 {{BROWSER_CMD}} \
   --noerrdialogs \
   --kiosk \
@@ -91,7 +95,16 @@ echo "Target URL: {{DC2_UI_URL}}"
   --force-color-profile=srgb \
   --disable-ipc-flooding-protection \
   --touch-events=enabled \
-  --disable-gesture-requirement-for-media-playbook \
+  --disable-gesture-requirement-for-media-playback \
   --autoplay-policy=no-user-gesture-required \
+  --allow-running-insecure-content \
+  --disable-features=VizDisplayCompositor \
+  --enable-features=VaapiVideoDecoder \
+  --use-gl=egl \
+  --enable-accelerated-video-decode \
+  --enable-gpu-rasterization \
+  --enable-oop-rasterization \
+  --disable-dev-shm-usage \
+  --disable-software-rasterizer \
   --user-data-dir=/tmp/chrome-kiosk \
   --app={{DC2_UI_URL}}
