@@ -5,7 +5,7 @@ import { ChildProcess } from 'child_process';
 import { Log } from '@src/utils/log';
 import { broadcastToClients } from "@src/services/ipcServices/index.js";
 
-const log = Log.createInstance('Network Manager', true);
+const log = Log.createInstance('Network Manager', false);
 
 /**
  * Clase base para el manejo de conexiones Ethernet
@@ -25,7 +25,7 @@ export abstract class NetworkManager extends EventEmitter implements NetworkMana
   networkConfig: NetworkConfiguration;
   protected networkMonitor: ChildProcess | null = null;
   protected log: Log;
-  private static logger = Log.createInstance(`Network Manager [static:${process.platform}]`, true);
+  private static logger = Log.createInstance(`Network Manager [static:${process.platform}]`, false);
 
   constructor(networkConfig?: NetworkConfiguration) {
     super();

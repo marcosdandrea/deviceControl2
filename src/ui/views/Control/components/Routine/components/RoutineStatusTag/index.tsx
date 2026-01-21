@@ -7,11 +7,13 @@ import { Color } from '@common/theme/colors';
 import { MdAutorenew, MdDone, MdError, MdHelp, MdStopCircle } from "react-icons/md";
 import { RoutineContext } from '@contexts/routineContextProvider';
 import { globalRoutineStatusContext } from '@views/Control/components/RoutineList';
+import { useSounds } from '@hooks/useSounds';
 
 const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) => {
 
     const { routine, getColor } = useContext(RoutineContext)
     const {setGlobalRoutineStatus} = useContext<any>(globalRoutineStatusContext);
+    const {playErrorSound, playSuccessSound} = useSounds();
 
     const [color, setColor] = useState<string>(Color.unknown);
     const [icon, setIcon] = useState<React.ReactNode>(null);
@@ -42,17 +44,29 @@ const RoutineStatusTag = ({ event }: { event: { event: string, data: any } }) =>
             case routineEvents.routineRunning:
                 return true;
             case routineEvents.routineCompleted:
-                return false;
+                {
+                    playSuccessSound();
+                    return false
+                }
             case routineEvents.routineAutoCheckingConditions:
                 return false;
             case routineEvents.routineAborted:
-                return false;
+                {
+                    playErrorSound();
+                    return false
+                }
             case routineEvents.routineFailed:
-                return false;
+                {
+                    playErrorSound();
+                    return false
+                }
             case routineEvents.routineIdle:
                 return false;
             case routineEvents.routineTimeout:
-                return false;
+                {
+                    playErrorSound();
+                    return false
+                }
             default:
                 return false;
         }

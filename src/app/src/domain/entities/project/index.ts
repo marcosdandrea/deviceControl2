@@ -13,6 +13,7 @@ import { ServerManager } from "@src/services/server/serverManager";
 import {removeRoutine} from "@src/domain/useCases/routine"
 import { nanoid } from "nanoid";
 import { NetworkConfiguration } from "@common/types/network";
+import { soundTheme } from "@common/types/sound.type";
 
 
 export interface ProjectConstructor {
@@ -31,6 +32,8 @@ export interface ProjectConstructor {
     password?: string | null; // Optional password for the project
     showGroupsInControlView: boolean; // Flag to show groups in control view
     networkConfiguration?: NetworkConfiguration;
+    soundTheme: soundTheme;
+    screenAutoOffTimeMs: number;
 }
 
 export class Project extends EventEmitter implements ProjectInterface {
@@ -50,6 +53,8 @@ export class Project extends EventEmitter implements ProjectInterface {
     password?: string | null;
     showGroupsInControlView: boolean;
     networkConfiguration: NetworkConfiguration;
+    soundTheme: soundTheme;
+    screenAutoOffTimeMs: number;
     
     private static readonly appVersion: string = App.getAppVersion()
     private unsavedChanges: boolean = false; // Flag to track unsaved changes
@@ -85,6 +90,8 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.logger = Log.createInstance(`Project "${this.name}" (${this.id})`, true);
         this.showGroupsInControlView = props.showGroupsInControlView || false;
         this.logger.info("Project instance created");
+        this.soundTheme = props.soundTheme;
+        this.screenAutoOffTimeMs = props.screenAutoOffTimeMs;
 
         Project.Instance = this; // Set the singleton instance
     }
@@ -293,7 +300,9 @@ export class Project extends EventEmitter implements ProjectInterface {
             showGroupsInControlView: this.showGroupsInControlView,
             routines: this.routines.map(routine => routine.toJson()),
             triggers: this.getTrigger().map(trigger => trigger.toJson()),
-            tasks: this.getTask().map(task => task.toJson())
+            tasks: this.getTask().map(task => task.toJson()),
+            soundTheme: this.soundTheme,
+            screenAutoOffTimeMs: this.screenAutoOffTimeMs
         };
     }
 }

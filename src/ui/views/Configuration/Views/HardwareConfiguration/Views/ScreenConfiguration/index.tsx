@@ -1,9 +1,8 @@
 import React from "react";
 import style from "./style.module.css";
 import { Form } from "antd";
-import ScreenContextProvider from "./context";
+import { ScreenControllerContextProvider } from "@contexts/ScreenControllerContextProvider";
 import AutoTurnOff from "./components/ScreenAutoTurnOff";
-import Brightness from "./components/ScreenBrightness";
 import Text from "@components/Text";
 
 const ScreenConfiguration = () => {
@@ -16,7 +15,7 @@ const ScreenConfiguration = () => {
     );
 
     return (
-        <ScreenContextProvider>
+        <ScreenControllerContextProvider isPreview={true}>
             <div className={style.screenConfiguration}>
                 <Text className={style.header}>
                     Configuración de Pantalla
@@ -27,14 +26,9 @@ const ScreenConfiguration = () => {
                         label={LabelCap("Apagar Automáticamente")}>
                         <AutoTurnOff />
                     </Form.Item>
-                    <Form.Item
-                        className={style.item}
-                        label={LabelCap("Brillo de Pantalla")}>
-                        <Brightness />
-                    </Form.Item>
                 </Form>
             </div>
-        </ScreenContextProvider >);
+        </ScreenControllerContextProvider>);
 }
 
 export default ScreenConfiguration;

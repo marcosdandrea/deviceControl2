@@ -1,6 +1,7 @@
 import { LoadingMessage } from '@components/LoadingMessage';
 import React, { Suspense, useMemo } from 'react';
 import { HashRouter, Routes, Route } from "react-router-dom";
+import SoundContextProvider from "@contexts/SoundContextProvider";
 
 // Lazy loading de componentes
 const Builder = React.lazy(() => import('@views/Builder'));
@@ -21,7 +22,7 @@ const Navigation = React.memo(() => {
 
     return (
         <HashRouter>
-            <Suspense fallback={<LoadingMessage message='Iniciando...' />}>
+                <Suspense fallback={<LoadingMessage message='Iniciando...' />}>
                 <Routes>
                     <Route path="/control" element={<Control isPreview={false} />} />
                     <Route path="/controlPreview" element={<Control isPreview={true} />} />
@@ -35,7 +36,7 @@ const Navigation = React.memo(() => {
                     <Route path='/builder/:groupId/:routineId/trigger/:triggerId' element={<Builder />} />
                     <Route path='*' element={<Builder />} />
                 </Routes>
-            </Suspense>
+                </Suspense>
         </HashRouter>
     )
 });

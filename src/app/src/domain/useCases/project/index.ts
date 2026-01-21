@@ -40,6 +40,18 @@ const defaultProject = {
    routines: [],
    triggers: [],
    tasks: [],
+   soundTheme: {
+      enabledSounds: {
+         click: true,
+         enable: true,
+         disable: true,
+         welcome: true,
+         error: true,
+         success: true,
+      },
+      volume: 0.8,
+   },
+   screenAutoOffTimeMs: 0,
 } as unknown as ProjectConstructor;
 
 export const createNewProject = async (): Promise<Project> => {

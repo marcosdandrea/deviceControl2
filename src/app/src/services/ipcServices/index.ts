@@ -16,6 +16,8 @@ import hardwareServices from './hardware.services';
 import { NetworkCommands } from '@common/commands/net.commands';
 import networkServices from './network.services';
 import { ScreenCommands } from '@common/commands/screen.commands';
+import localizationCommands from '@common/commands/localization.commands';
+import * as localizationServices from './localization.services';
 
 
 
@@ -50,6 +52,12 @@ const init = (io: import('socket.io').Server) => {
         //screen
         socket.on(ScreenCommands.turnScreenOn, hardwareServices.turnScreenOn);
         socket.on(ScreenCommands.turnScreenOff, hardwareServices.turnScreenOff);
+
+        //localization
+        socket.on(localizationCommands.getCurrentTimezone, localizationServices.getCurrentTimezone);
+        socket.on(localizationCommands.setTimezone, localizationServices.setTimezone);
+        socket.on(localizationCommands.listAvailableTimezones, localizationServices.listAvailableTimezones);
+        socket.on(localizationCommands.validateTimezone, localizationServices.validateTimezone);
 
         //app
         socket.on(appCommands.getTriggerTypes, appServices.getAvailableTriggers);

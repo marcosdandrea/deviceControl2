@@ -4,27 +4,18 @@ export const ScreenContext = React.createContext({});
 
 export type screenContextType = {
     autoTurnOff: {
-        value: boolean,
-        set: React.Dispatch<React.SetStateAction<boolean>>
-    },
-    brightness: {
         value: number,
         set: React.Dispatch<React.SetStateAction<number>>
     }
 };
 
-const ScreenContextProvider = ({children}) => {
-    const [autoTurnOff, setAutoTurnOff] = React.useState(false);
-    const [brightness, setBrightness] = React.useState(5);
+const ScreenContextProvider = ({children}:{children: React.ReactNode}) => {
+    const [autoTurnOff, setAutoTurnOff] = React.useState(0);
 
     const value = {
         autoTurnOff: {
             value: autoTurnOff,
             set: setAutoTurnOff
-        },
-        brightness: {
-            value: brightness,
-            set: setBrightness
         }
     } as screenContextType;
 

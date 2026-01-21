@@ -10,6 +10,7 @@ import { TriggerTypes } from "@common/types/trigger.type";
 import { SocketIOContext } from "@components/SocketIOProvider";
 import useSystemServerPorts from "@hooks/useSystemServerPorts";
 import routineCommands from "@common/commands/routine.commands";
+import { useSounds } from "@hooks/useSounds";
 
 const PlayRoutineButton = ({ event, enabled }: { event: { event: string, data: any }, enabled: boolean }) => {
 
@@ -21,6 +22,7 @@ const PlayRoutineButton = ({ event, enabled }: { event: { event: string, data: a
     const [buttonColor, setButtonColor] = useState(Color.completed);
     const [showButton, setShowButton] = useState(true);
     const [apiTrigger, setApiTrigger] = useState(null);
+    const {playClickSound} = useSounds();
 
     const updateIcon = (status: RoutineStatus) => {
         switch (status) {
@@ -92,6 +94,7 @@ const PlayRoutineButton = ({ event, enabled }: { event: { event: string, data: a
             let baseUrl = window.location.origin.split(":").slice(0, 2).join(":");
             const url = `${baseUrl}:${generalServerPort}${apiTrigger?.params?.endpoint?.value || ""}`;
             fetch(url)
+            playClickSound()
         } if (event?.event === routineEvents.routineRunning) {
             emit(routineCommands.abort, routine.id);
         }

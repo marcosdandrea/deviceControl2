@@ -13,24 +13,24 @@ const isSignedHarware = async (payload: any, callback: Function): Promise<boolea
 const turnScreenOn = async (payload: any, callback: Function): Promise<void> => {
     try {
         const { ScreenController } = await import("@src/services/hardwareManagement/screen/index.js");
-        const screenController = new ScreenController();
+        const screenController = ScreenController.getInstance();
         await screenController.turnOn();
-        callback?.(null, true);
+        callback?.({ success: true });
     } catch (error) {
         log.error(`Error turning screen on: ${(error as Error).message}`);
-        callback?.((error as Error).message, false);
+        callback?.({ success: false, error: (error as Error).message });
     }
 }
 
 const turnScreenOff = async (payload: any, callback: Function): Promise<void> => {
     try {
         const { ScreenController } = await import("@src/services/hardwareManagement/screen/index.js");
-        const screenController = new ScreenController();
+        const screenController = ScreenController.getInstance();
         await screenController.turnOff();
-        callback?.(null, true);
+        callback?.({ success: true });
     } catch (error) {
         log.error(`Error turning screen off: ${(error as Error).message}`);
-        callback?.((error as Error).message, false);
+        callback?.({ success: false, error: (error as Error).message });
     }
 }   
 

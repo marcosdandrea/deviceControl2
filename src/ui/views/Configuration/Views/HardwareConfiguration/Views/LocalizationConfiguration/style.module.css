@@ -1,0 +1,125 @@
+.localizationConfiguration {
+    height: 100%;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.title {
+    margin: 0 0 32px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #ffffff;
+    text-align: center;
+}
+
+.simpleSelector {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.selectRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    min-width: 120px;
+    text-align: left;
+}
+
+.nativeSelect {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #303030;
+    border-radius: 6px;
+    background-color: #141414;
+    color: #ffffff;
+    font-size: 14px;
+    min-height: 40px;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23ffffff" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 12px;
+    padding-right: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.nativeSelect:hover {
+    border-color: #1890ff;
+}
+
+.nativeSelect:focus {
+    outline: none;
+    border-color: #1890ff;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.nativeSelect:disabled {
+    background-color: #262626;
+    color: #8c8c8c;
+    cursor: not-allowed;
+    border-color: #424242;
+}
+
+.nativeSelect optgroup {
+    background-color: #1f1f1f;
+    color: #1890ff;
+    font-weight: 600;
+    padding: 8px 12px;
+}
+
+.nativeSelect option {
+    background-color: #141414;
+    color: #ffffff;
+    padding: 8px 12px;
+}
+
+.nativeSelect option:hover {
+    background-color: #1890ff;
+    color: #ffffff;
+}
+
+.buttonContainer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Estilos responsivos para pantallas pequeñas */
+@media (max-width: 768px) {
+    .localizationConfiguration {
+        padding: 16px;
+    }
+    
+    .title {
+        font-size: 20px;
+        margin-bottom: 24px;
+    }
+    
+    .simpleSelector {
+        max-width: 100%;
+    }
+    
+    .selectRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .label {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .nativeSelect {
+        width: 100%;
+    }
+}

@@ -14,6 +14,7 @@ import RoutineSlider from "./components/RoutineSlider";
 import { SocketIOContext } from "@components/SocketIOProvider";
 import routineCommands from "@common/commands/routine.commands";
 import { MdCheckCircle, MdDoDisturbOn } from "react-icons/md";
+import { useSounds } from "@hooks/useSounds";
 
 type Props = {
     routineData: RoutineType;
@@ -23,6 +24,7 @@ const Routine = React.memo(({ routineData }: Props) => {
 
     const {emit} = useContext(SocketIOContext)
     const containerRef = React.useRef<HTMLDivElement | null>(null);
+    const {playEnableSound, playDisableSound} = useSounds();
 
     const eventsToListen = useMemo(() => [
         routineEvents.routineCompleted,
@@ -38,10 +40,12 @@ const Routine = React.memo(({ routineData }: Props) => {
 
     const handleOnEnableRoutine = () => {
         emit(routineCommands.enableRoutine, { routineId: routineData.id })
+        playEnableSound();
     }
 
     const handleOnDisableRoutine = () => {
         emit(routineCommands.disableRoutine, { routineId: routineData.id })
+        playDisableSound();
     }
 
     return (

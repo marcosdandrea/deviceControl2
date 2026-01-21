@@ -5,31 +5,44 @@ import { Log } from '@src/utils/log.js';
 const execAsync = promisify(exec);
 
 export class ScreenController {
+    private static instance: ScreenController;
     private readonly requiredCommands = ['pinctrl'];
-    private isCompatible = false;
+    private compatibilityPromise: Promise<boolean>;
     private log = Log.createInstance('ScreenController', true);
 
-    constructor() {
-        this.checkCompatibility();
+    private constructor() {
+        this.compatibilityPromise = this.checkCompatibility();
     }
 
-    private async checkCompatibility(): Promise<void> {
+    public static getInstance(): ScreenController {
+        if (!ScreenController.instance) {
+            ScreenController.instance = new ScreenController();
+        }
+        return ScreenController.instance;
+    }
+
+    private async checkCompatibility(): Promise<boolean> {
         try {
             for (const command of this.requiredCommands) {
                 await execAsync(`which ${command}`);
             }
-            this.isCompatible = true;
+            this.log.info('Sistema compatible: todos los comandos requeridos están disponibles', {
+                commands: this.requiredCommands
+            });
+            return true;
         } catch (error) {
-            this.isCompatible = false;
             this.log.error('Sistema no compatible: comandos requeridos no encontrados', {
                 commands: this.requiredCommands,
                 error: error
             });
+            return false;
         }
     }
 
     async turnOn(): Promise<void> {
-        if (!this.isCompatible) {
+        const isCompatible = await this.compatibilityPromise;
+        
+        if (!isCompatible) {
             throw new Error('Sistema no compatible. No se pueden ejecutar los comandos requeridos.');
         }
 
@@ -42,7 +55,9 @@ export class ScreenController {
     }
 
     async turnOff(): Promise<void> {
-        if (!this.isCompatible) {
+        const isCompatible = await this.compatibilityPromise;
+        
+        if (!isCompatible) {
             throw new Error('Sistema no compatible. No se pueden ejecutar los comandos requeridos.');
         }
 

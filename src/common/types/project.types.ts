@@ -1,6 +1,7 @@
 import { GroupType } from "./commons.type";
 import { NetworkConfiguration } from "./network";
 import { RoutineInterface, RoutineType } from "./routine.type";
+import { soundTheme } from "./sound.type";
 import { TaskType } from "./task.type";
 import { TriggerType } from "./trigger.type";
 
@@ -19,6 +20,8 @@ export type projectType = {
     password?: string | null; // Optional password for the project
     showGroupsInControlView: boolean; // Flag to show groups in control view
     networkConfiguration: NetworkConfiguration;
+    soundTheme: soundTheme;
+    screenAutoOffTimeMs: number;
 }
 
 
