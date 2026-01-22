@@ -1,3 +1,8 @@
+body.kiosk,
+body.kiosk * {
+  cursor: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII="), auto !important;
+}
+
 @font-face {
   font-family: "Open Sans Regular";
   src: url("./assets/fonts/OpenSans-Regular.ttf");
