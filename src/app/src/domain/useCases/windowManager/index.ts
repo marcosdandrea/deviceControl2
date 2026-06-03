@@ -7,7 +7,57 @@ const log = Log.createInstance("windowManagerUseCase", false)
 
 let mainWindow: import('electron').BrowserWindow | null = null
 
-const fullscreen = process.argv.includes('--fullscreen') || process.argv.includes('--f') || process.env.FULLSCREEN === 'true'
+const mainFullscreen =
+    process.argv.includes('--main-fullscreen') ||
+    process.argv.includes('--fullscreen') ||
+    process.argv.includes('--f') ||
+    process.env.FULLSCREEN === 'true';
+
+/**
+ * Resolve the target Electron Display object from CLI/env args.
+ *
+ * Priority:
+ *   1. --display-id=<id>   (exact Electron display id)
+ *   2. --screen=<N>        (1-based index)
+ *   3. DISPLAY_ID env var
+ *   4. SCREEN env var
+ *   5. Fallback: index 0
+ */
+const getTargetDisplay = (
+    screen: import('electron').Screen,
+    displays: import('electron').Display[]
+): import('electron').Display => {
+    const primaryDisplay = screen.getPrimaryDisplay();
+
+    // 1. --display-id=<id>
+    const displayIdArg = process.argv.find(a => /^--display-id=\d+$/.test(a));
+    if (displayIdArg) {
+        const id = parseInt(displayIdArg.replace('--display-id=', ''), 10);
+        const found = displays.find(d => d.id === id);
+        if (found) return found;
+        log.warn(`--display-id=${id} not found among connected displays. Falling back to primary display (id=${primaryDisplay.id}).`);
+        return primaryDisplay;
+    }
+
+    // 2. DISPLAY_ID env var
+    if (process.env.DISPLAY_ID) {
+        const id = parseInt(process.env.DISPLAY_ID, 10);
+        const found = displays.find(d => d.id === id);
+        if (found) return found;
+        log.warn(`DISPLAY_ID=${id} not found among connected displays. Falling back to primary display (id=${primaryDisplay.id}).`);
+        return primaryDisplay;
+    }
+
+    // 3. --screen=N (1-based index)
+    const screenArg = process.argv.find(a => /^--screen=\d+$/.test(a)) || process.env.SCREEN;
+    if (screenArg) {
+        const n = parseInt(screenArg.replace(/^--screen=/, ''), 10);
+        if (!isNaN(n) && n >= 1 && displays[n - 1]) return displays[n - 1];
+    }
+
+    // 4. Fallback: primary display
+    return primaryDisplay;
+}
 
 // Configurar handler para abrir URLs externas
 const setupIpcHandlers = async () => {
@@ -55,12 +105,23 @@ export const createMainWindow = async () => {
     const mainServer = serverManager.ServerManager.getInstance("main")
     const addresses = mainServer.getNetworkInterfaces()
 
+    // Mover ventana al display solicitado
+    const { screen } = await import('electron');
+    const displays = screen.getAllDisplays();
+    const targetDisplay = getTargetDisplay(screen, displays);
+    log.info(`Target display: id=${targetDisplay.id}, bounds=${JSON.stringify(targetDisplay.bounds)}`);
+    win.setBounds(targetDisplay.bounds);
+
     if (isDev()) {
         win.loadURL('http://localhost:5123/#/control');
         win.webContents.openDevTools({ mode: "detach" })
+        if (mainFullscreen) {
+            win.maximize()
+            win.setFullScreen(true)
+        }
     } else {
         win.loadURL(`http://${addresses[0]}:${mainServer.port}/#/control`);
-        if (fullscreen) {
+        if (mainFullscreen) {
             win.maximize()
             win.setFullScreen(true)
         }

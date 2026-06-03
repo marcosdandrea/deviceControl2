@@ -162,6 +162,19 @@ const coreProcesses = async () => {
       electronApp = app;
       app.whenReady().then(async () => {
         try {
+          // Log all connected displays so the user can identify monitor IDs
+          const { screen } = await import('electron');
+          const displays = screen.getAllDisplays();
+          log.info(`[MONITORS] ${displays.length} display(s) detected:`);
+          displays.forEach((d, i) => {
+            log.info(
+              `[MONITORS]   [${i + 1}] id=${d.id} | label="${d.label ?? ''}" | ` +
+              `bounds=${JSON.stringify(d.bounds)} | scaleFactor=${d.scaleFactor} | ` +
+              `internal=${(d as any).internal ?? 'N/A'}`
+            );
+          });
+          log.info('[MONITORS] Use --display-id=<id> to target a specific monitor, or --screen=<N> for 1-based index.');
+
           const { createSplashWindow } = await import('@src/domain/useCases/windowManager/index.js')
           await createSplashWindow();
 
