@@ -237,6 +237,7 @@ $BROWSER_CMD \
   --disable-features=TranslateUI \
   --incognito \
   --touch-events=enabled \
+  --disable-pinch \
   --disable-gesture-requirement-for-media-playback \
   --autoplay-policy=no-user-gesture-required \
   --allow-running-insecure-content \

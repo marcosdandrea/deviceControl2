@@ -5,7 +5,6 @@ import { EventManager } from '@src/services/eventManager';
 import routineEvents from '@common/events/routine.events';
 import projectEvents from '@common/events/project.events';
 import { broadcastToClients } from '@src/services/ipcServices';
-import { deleteFile as removeFile } from '@src/services/fileSystem';
 import { Task } from '@src/domain/entities/task';
 import { createNewJobByType } from '@src/domain/entities/job/types';
 import { createNewConditionByType } from '@src/domain/entities/conditions/types';
@@ -19,53 +18,12 @@ import { getUserDataPath } from '@src/utils/paths';
 const log = Log.createInstance("routineUseCase", true);
 const eventManager = new EventManager();
 
-const EXECUTIONS_LOG_DEPTH_PER_ROUTINE = Number(process.env.EXECUTIONS_LOG_DEPTH_PER_ROUTINE || "0");
-
 // Registro: por cada rutina guardamos sólo WeakRef y disposers (no retenemos fuerte la instancia)
 type RoutineCleanup = {
   ref: WeakRef<Routine>;
   disposers: Array<() => void>;
 };
 const routineRegistry = new Map<string, RoutineCleanup>();
-
-const enforceExecutionLogDepthForRoutine = async (routineId: string) => {
-  if (!EXECUTIONS_LOG_DEPTH_PER_ROUTINE || EXECUTIONS_LOG_DEPTH_PER_ROUTINE <= 0) {
-    return;
-  }
-
-  const logBaseDir = path.join(await getUserDataPath(), "logs");
-  const routineLogPath = path.join(logBaseDir, "routines", routineId);
-
-  try {
-    const files = await fs.readdir(routineLogPath);
-    const jsonFiles = files.filter(file => file.endsWith(".json"));
-
-    if (jsonFiles.length <= EXECUTIONS_LOG_DEPTH_PER_ROUTINE) {
-      return;
-    }
-
-    const filesWithStats = await Promise.all(jsonFiles.map(async file => {
-      const filePath = path.join(routineLogPath, file);
-      const stats = await fs.stat(filePath);
-      const sortValue = stats.birthtimeMs || stats.ctimeMs || stats.mtimeMs;
-      return { filePath, sortValue };
-    }));
-
-    filesWithStats.sort((a, b) => a.sortValue - b.sortValue);
-
-    const filesToRemove = filesWithStats.slice(0, filesWithStats.length - EXECUTIONS_LOG_DEPTH_PER_ROUTINE);
-
-    await Promise.all(filesToRemove.map(async file => {
-      await removeFile(file.filePath);
-    }));
-  } catch (error) {
-    const err = error as NodeJS.ErrnoException;
-    if (err?.code !== "ENOENT") {
-      broadcastToClients(systemEvents.appLogError, { message: `Failed to enforce execution log depth for routine ${routineId}: ${String(error)}` });
-      log.warn(`Failed to enforce execution log depth for routine ${routineId}: ${String(error)}`);
-    }
-  }
-};
 
 export const createRoutine = async (routineData, projectData): Promise<Routine> => {
   const currentProject = Project.getInstance();
@@ -176,7 +134,6 @@ export const createRoutine = async (routineData, projectData): Promise<Routine> 
       await fs.mkdir(path.dirname(logFilePath), { recursive: true });
       await fs.writeFile(logFilePath, JSON.stringify(data));
       log.info(`Execution log for routine ${id} saved to ${logFilePath}`);
-      await enforceExecutionLogDepthForRoutine(id);
       await broadcastToClients(projectEvents.executionsUpdated, { routineId: id });
 
     } catch (error) {

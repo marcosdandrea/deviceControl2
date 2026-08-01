@@ -4,6 +4,7 @@ import { App, ConfigProvider, theme } from "antd";
 import SystemNotifications from "@components/SystemNotifications";
 import BuilderView from "./components/BuilderView";
 import LicenceContextProvider from "@contexts/LicenceContextProvider";
+import UpdateContextProvider from "@contexts/UpdateContextProvider";
 import { LoadingMessage } from "@components/LoadingMessage";
 
 const Builder = () => {
@@ -16,12 +17,14 @@ const Builder = () => {
       }}>
       <App>
         <PasswordProtection>
-          <SystemNotifications />
-          <Suspense fallback={<LoadingMessage message='Comprobando Licencia...' />}>
-            <LicenceContextProvider>
-              <BuilderView />
-            </LicenceContextProvider>
-          </Suspense>
+          <UpdateContextProvider>
+            <SystemNotifications />
+            <Suspense fallback={<LoadingMessage message='Comprobando Licencia...' />}>
+              <LicenceContextProvider>
+                <BuilderView />
+              </LicenceContextProvider>
+            </Suspense>
+          </UpdateContextProvider>
         </PasswordProtection>
       </App>
     </ConfigProvider>

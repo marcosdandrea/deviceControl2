@@ -95,6 +95,7 @@ echo "Target URL: {{DC2_UI_URL}}"
   --force-color-profile=srgb \
   --disable-ipc-flooding-protection \
   --touch-events=enabled \
+  --disable-pinch \
   --disable-gesture-requirement-for-media-playback \
   --autoplay-policy=no-user-gesture-required \
   --allow-running-insecure-content \

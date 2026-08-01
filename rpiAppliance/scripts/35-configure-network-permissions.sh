@@ -39,9 +39,6 @@ $DC2_USER ALL=(ALL) NOPASSWD: /usr/bin/ip addr show, /usr/bin/ip route show, /us
 
 # Allow systemctl for network services if needed
 $DC2_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart NetworkManager, /usr/bin/systemctl reload NetworkManager
-
-# Allow pinctrl commands for screen/hardware control
-$DC2_USER ALL=(ALL) NOPASSWD: /usr/bin/pinctrl
 EOF
 
 # Set proper permissions for sudoers file

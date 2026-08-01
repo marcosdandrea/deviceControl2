@@ -13,6 +13,7 @@ The installer will automatically:
 - Set password to `pesp1102` 
 - Configure SSH access for remote connections
 - Add user to sudo group for administrative tasks
+- Create a dedicated `admin` user for remote SSH console access (see [Remote SSH Access](#remote-ssh-access))
 
 ## Quick Start
 
@@ -37,13 +38,14 @@ sudo reboot
 The installer performs these steps automatically:
 
 1. **10-install-base.sh** - System updates and base packages
-2. **20-install-node.sh** - Node.js v20 via NVM  
-3. **25-configure-audio.sh** - Audio system configuration for kiosk mode
-4. **30-download-dc2.sh** - Download DeviceControl2 from GitHub
-5. **40-configure-autologin.sh** - Configure passwordless auto-login
-6. **50-create-service.sh** - Create systemd service for DC2
-7. **60-install-xserver.sh** - Install X Server, Openbox, and Chromium
-8. **70-configure-plymouth.sh** - Configure boot splash screen
+2. **15-create-admin-user.sh** - Create the `admin` user for remote SSH console access
+3. **20-install-node.sh** - Node.js v20 via NVM  
+4. **25-configure-audio.sh** - Audio system configuration for kiosk mode
+5. **30-download-dc2.sh** - Download DeviceControl2 from GitHub
+6. **40-configure-autologin.sh** - Configure passwordless auto-login
+7. **50-create-service.sh** - Create systemd service for DC2
+8. **60-install-xserver.sh** - Install X Server, Openbox, and Chromium
+9. **70-configure-plymouth.sh** - Configure boot splash screen
 
 ## Kiosk Optimizations
 
@@ -152,8 +154,9 @@ sudo ./run-all.sh --force-download
 
 ## System Details
 
-- **User**: devicecontrol (created automatically with password `pesp1102`)
-- **SSH Access**: Enabled for remote connections
+- **User**: devicecontrol (created automatically with password `pesp1102`; ends up passwordless after autologin is configured, see [SSH Access](#ssh-access))
+- **User**: admin (created for remote SSH console access with password `hgcibm/e`, see [Remote SSH Access](#remote-ssh-access))
+- **SSH Access**: Enabled for remote connections via the `admin` user
 - **Install Directory**: /opt/devicecontrol2
 - **Service**: devicecontrol.service
 - **UI Port**: 8080
@@ -168,9 +171,39 @@ ssh devicecontrol@<raspberry-pi-ip>
 # Password: pesp1102
 ```
 
+> ⚠️ **Note**: `40-configure-autologin.sh` removes the password of `devicecontrol`
+> (`passwd -d`) so LightDM can auto-login without a prompt. After a full
+> installation this account has **no usable password**, so it cannot log in
+> over SSH (and `sudo` cannot be authenticated either). Use the `admin` user
+> below for remote access instead.
+
+## Remote SSH Access
+
+`15-create-admin-user.sh` creates a dedicated `admin` user, separate from
+`devicecontrol`, meant to be your permanent way of getting a remote console
+on the appliance:
+
+- Created with a home directory and `/bin/bash` shell
+- Added to the `sudo` group
+- Password set to `hgcibm/e` (hardcoded in `00-common.sh` as `ADMIN_PASSWORD`)
+- Ensures `openssh-server` is installed and the `ssh` service is enabled
+
+Connect with:
+```bash
+ssh admin@<raspberry-pi-ip>
+# Password: hgcibm/e
+```
+
+If the installer is re-run and `admin` already exists, user creation is
+skipped (its password is left untouched). To change the password later:
+```bash
+sudo passwd admin
+```
+
 ## Notes
 
 - The installer creates the `devicecontrol` user automatically if it doesn't exist
+- The installer creates a separate `admin` user with sudo, meant for remote SSH console access (see [Remote SSH Access](#remote-ssh-access))
 - SSH server is installed and configured for remote access
 - If splash.png is not found in the DC2 package, Plymouth configuration is skipped
 - All installation is done in `/opt/devicecontrol2`

@@ -12,7 +12,7 @@ const resolveResource = async (...segments: string[]) => {
     return path.join(process.cwd(), "resources", ...segments);
   }
   
-  const { app } = await import("electron");
+  const { app } = require("electron");
   if (app.isPackaged) {
     // electron-builder places extraResources under process.resourcesPath
     return path.join((process as any).resourcesPath, ...segments)
@@ -31,7 +31,7 @@ export const createApp = async () => {
           return;
         }
         
-        const { app, nativeImage } = await import("electron");
+        const { app, nativeImage } = require("electron");
         
         // Prefer .icns on macOS; fallback to PNG if missing
         const macIcnsPath = await resolveResource("icons", "mac", "icon.icns")

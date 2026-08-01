@@ -2,33 +2,43 @@
 import React, { useState } from "react";
 import ToolbarButton from "../ToolbarButton";
 import { FaGear } from "react-icons/fa6";
-import PopoutWindow from "@components/PopUpWindow";
+import FloatingWindow from "@components/FloatingWindow";
 import Configuration from "@views/Configuration";
-import { Tooltip } from "antd";
+import { Badge, Tooltip } from "antd";
+import useUpdates from "@hooks/useUpdates";
 
 
 const OpenConfigButton = () => {
   const [open, setOpen] = useState(false);
+  const { status } = useUpdates();
 
   return (
     <>
-      <Tooltip placement="bottom" title="Abrir configuración del proyecto" arrow>
-        <div>
+      <Tooltip
+        placement="bottom"
+        title={status?.updateAvailable
+          ? `Abrir configuración del proyecto (actualización v${status.latestVersion} disponible)`
+          : "Abrir configuración del proyecto"}
+        arrow>
+        <Badge
+          size="default"
+          status="processing"
+          color="var(--secondary)"
+          count={status?.updateAvailable ? 1 : 0}
+          dot>
           <ToolbarButton
             icon={<FaGear size={15} />}
             onClick={() => setOpen(true)}
           />
-        </div>
+        </Badge>
       </Tooltip>
       {open && (
-        <PopoutWindow
+        <FloatingWindow
           title="Configuración del Proyecto"
-          features="width=900,height=650,left=200,top=100,resizable=yes"
           onClose={() => setOpen(false)}
         >
-          {/* pasás la función de cerrar */}
           <Configuration onSaved={() => setOpen(false)} />
-        </PopoutWindow>
+        </FloatingWindow>
       )}
     </>
   );

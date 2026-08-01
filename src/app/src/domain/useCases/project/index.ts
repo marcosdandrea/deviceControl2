@@ -51,7 +51,9 @@ const defaultProject = {
       },
       volume: 0.8,
    },
-   screenAutoOffTimeMs: 0,
+   screenAutoOffTimeMs: 60000,
+   maxBrightness: 100,
+   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 } as unknown as ProjectConstructor;
 
 export const createNewProject = async (): Promise<Project> => {
@@ -239,6 +241,17 @@ export const loadProject = async (projectData: projectType): Promise<Project> =>
       nm.NetworkManager.getInstance(project.networkConfiguration);
    } catch (error) {
       log.error("Failed to initialize NetworkManager with project configuration:", error);
+   }
+
+   //reaplicar la zona horaria guardada en el proyecto
+   try {
+      const { isLinux } = await import("@src/utils/index.js");
+      if (isLinux && project.timezone) {
+         const { LocalizationManager } = await import("@src/services/hardwareManagement/Localization/index.js");
+         await LocalizationManager.getInstance().setTimezone(project.timezone);
+      }
+   } catch (error) {
+      log.error("Failed to apply project timezone:", error);
    }
 
    return Promise.resolve(project)

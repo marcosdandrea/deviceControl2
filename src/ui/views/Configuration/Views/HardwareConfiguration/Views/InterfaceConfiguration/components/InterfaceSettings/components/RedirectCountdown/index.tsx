@@ -8,48 +8,29 @@ interface RedirectCountdownProps {
     newIp: string;
     initialSeconds?: number;
     onCancel: () => void;
-    isInPopup?: boolean;
-    popupWindow?: Window | null;
 }
 
-const RedirectCountdown: React.FC<RedirectCountdownProps> = ({ 
-    newIp, 
-    initialSeconds = 5, 
+const RedirectCountdown: React.FC<RedirectCountdownProps> = ({
+    newIp,
+    initialSeconds = 5,
     onCancel,
-    isInPopup = false,
-    popupWindow = null
 }) => {
     const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
 
     useEffect(() => {
         if (secondsLeft <= 0) {
-            
+
             // Ocultar el componente de countdown antes de redirigir
             onCancel();
-            
+
             // Construir la nueva URL
             const protocol = window.location.protocol;
             const port = window.location.port ? `:${window.location.port}` : '';
             const newUrl = `${protocol}//${newIp}${port}`;
-            
+
             Logger.log('Target URL:', newUrl);
-            
-            // Si estamos en un popup, redirigir la ventana principal y cerrar el popup
-            if (isInPopup && popupWindow && !popupWindow.closed) {
-                try {
-                    // Redirigir la ventana principal
-                    window.location.href = newUrl;
-                    // Cerrar el popup
-                    setTimeout(() => {
-                        popupWindow.close();
-                    }, 500);
-                } catch (error) {
-                    Logger.error('Error redirecting or closing popup:', error);
-                }
-            } else {
-                // Si no es popup, redirigir esta ventana
-                window.location.href = newUrl;
-            }
+
+            window.location.href = newUrl;
             return;
         }
 
@@ -59,7 +40,7 @@ const RedirectCountdown: React.FC<RedirectCountdownProps> = ({
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [secondsLeft, newIp, isInPopup, popupWindow]);
+    }, [secondsLeft, newIp]);
 
     return (
         <div className={style.countdownContainer}>

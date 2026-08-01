@@ -1,0 +1,60 @@
+.panel {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--app-background);
+    border: 1px solid var(--component-border);
+    border-radius: 8px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    overflow: auto;
+    resize: both;
+    min-width: 480px;
+    min-height: 360px;
+    z-index: 500;
+}
+
+.titleBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 40px;
+    flex-shrink: 0;
+    padding: 0 8px 0 16px;
+    background-color: var(--component-background);
+    border-bottom: 1px solid var(--component-border);
+    border-radius: 8px 8px 0 0;
+    cursor: move;
+    user-select: none;
+}
+
+.title {
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.closeButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.closeButton:hover {
+    background-color: var(--error);
+    color: var(--white);
+}
+
+.content {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}

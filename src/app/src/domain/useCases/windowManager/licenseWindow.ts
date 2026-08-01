@@ -1,4 +1,4 @@
-
+/*
 export const showLicenseWindow = async (electronApp: Electron.App): Promise<void> => {
   return new Promise<void>(async (resolve) => {
     const { WindowManager } = await import('@src/services/windowManager/index.js');
@@ -25,3 +25,4 @@ export const showLicenseWindow = async (electronApp: Electron.App): Promise<void
     ipcMain.once('submit-license', async (event, licenseKey: string) => {
       const { setSystemLicense } = await import('@src/services/licensing/index.js');
       const success = await setSystemLicense(licenseKey);
+      */

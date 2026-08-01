@@ -1,0 +1,61 @@
+.logRetentionConfiguration {
+    padding: 24px;
+    height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.header {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    text-decoration: underline;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.card {
+    background-color: var(--component-background);
+    border: 1px solid var(--component-border);
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 480px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.rowLabel {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.rowHint {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.cleanupResult {
+    margin-top: 16px;
+}

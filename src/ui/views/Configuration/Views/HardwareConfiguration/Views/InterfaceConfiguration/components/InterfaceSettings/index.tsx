@@ -10,7 +10,7 @@ import DefaultDns from "./components/LanDefaultDns";
 import AlternateDns from "./components/LanAlternateDns";
 import RedirectCountdown from "./components/RedirectCountdown";
 import { InterfaceContext, interfaceContextType } from "../../context";
-import { usePopupWindow } from "@components/PopUpWindow";
+import { useFloatingWindow } from "@components/FloatingWindow";
 import { SocketIOContext } from "@components/SocketIOProvider";
 import { NetworkCommands } from "@common/commands/net.commands";
 import { NetworkConfiguration, NetworkStatus } from "@common/types/network";
@@ -32,7 +32,7 @@ const InterfaceSettings = () => {
   const { updateNetworkConfiguration } = useNetworkInterfaces();
   const [showCountdown, setShowCountdown] = React.useState(false);
   const [redirectIp, setRedirectIp] = React.useState("");
-  const popupWindow = usePopupWindow();
+  const floatingWindow = useFloatingWindow();
 
   const handleApplyChanges = async () => {
     console.log("🌐 handleApplyChanges called - useDhcp:", useDhcp, "ipv4.value:", ipv4.value);
@@ -93,13 +93,9 @@ const InterfaceSettings = () => {
       // Si cambia a DHCP, mostrar advertencia ANTES de aplicar cambios
       if (useDhcp) {
         console.log("🌐 Switching to DHCP - showing warning before applying changes");
-        
-        // Cerrar el popup si existe (antes de mostrar el alert)
-        if (popupWindow && !popupWindow.closed) {
-          popupWindow.close();
-        }
 
-        // Mostrar advertencia al usuario
+        // Mostrar advertencia al usuario ANTES de tocar el popup o aplicar nada,
+        // para que cancelar realmente cancele (antes se cerraba el popup incluso si el usuario cancelaba).
         const userConfirmed = confirm(
           "⚠️ CAMBIO A DHCP AUTOMÁTICO\n\n" +
           "El sistema obtendrá una nueva dirección IP automáticamente del router.\n\n" +
@@ -119,6 +115,9 @@ const InterfaceSettings = () => {
         updateNetworkConfiguration(config).catch(error => {
           console.log("🌐 DHCP config failed (expected due to connection loss):", error.message);
         });
+
+        // Recién ahora, con el cambio ya confirmado y disparado, cerrar el panel flotante
+        floatingWindow?.close();
 
         // Desconectar socket después de 3 segundos (sin mostrar temporizador)
         setTimeout(() => {
@@ -238,8 +237,6 @@ const InterfaceSettings = () => {
                   newIp={redirectIp}
                   initialSeconds={10}
                   onCancel={handleCancelRedirect}
-                  isInPopup={!!popupWindow}
-                  popupWindow={popupWindow}
                 />
               </div>
             )}

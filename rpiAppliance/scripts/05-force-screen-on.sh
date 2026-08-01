@@ -17,29 +17,30 @@ cat > /usr/local/bin/force-screen-on << 'EOF'
 #!/bin/bash
 # Force screen on at boot - prevents screen staying off from previous devicecontrol shutdown
 
-# Wait for GPIO to be available
+BRIGHTNESS_FILE="/sys/class/backlight/pwm-backlight/brightness"
+MAX_BRIGHTNESS_FILE="/sys/class/backlight/pwm-backlight/max_brightness"
+
+# Wait for the backlight sysfs interface to be available
 timeout=30
 counter=0
 while [ $counter -lt $timeout ]; do
-    if [ -e /dev/gpiochip0 ]; then
-        echo "GPIO available, forcing screen on"
+    if [ -e "$BRIGHTNESS_FILE" ]; then
+        echo "Backlight sysfs available, forcing screen on"
         break
     fi
     sleep 1
     counter=$((counter + 1))
 done
 
-# Force screen on using the same command as devicecontrol
-if command -v pinctrl >/dev/null 2>&1; then
-    pinctrl set 18 op dh
-    echo "Screen forced on successfully"
+# Force screen on using the same sysfs interface as devicecontrol.
+# Do NOT use pinctrl here: GPIO18 is the PWM backlight pin (dtoverlay=pwm-backlight),
+# forcing it via pinctrl hijacks it away from the pwm-backlight kernel driver.
+if [ -f "$BRIGHTNESS_FILE" ]; then
+    MAX_BRIGHTNESS=$(cat "$MAX_BRIGHTNESS_FILE" 2>/dev/null || echo 99)
+    echo "$MAX_BRIGHTNESS" > "$BRIGHTNESS_FILE"
+    echo "Screen forced on successfully (brightness=$MAX_BRIGHTNESS)"
 else
-    echo "Warning: pinctrl command not found, cannot force screen on"
-    # Fallback: try to turn on screen using vcgencmd
-    if command -v vcgencmd >/dev/null 2>&1; then
-        vcgencmd display_power 1
-        echo "Screen forced on using vcgencmd fallback"
-    fi
+    echo "Warning: $BRIGHTNESS_FILE not found, cannot force screen on"
 fi
 EOF
 

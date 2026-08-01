@@ -1,5 +1,6 @@
 import { NetworkConfiguration } from "@common/types/network";
 import { Log } from "@src/utils/log";
+import { assertLinuxFeature } from "@src/utils/index.js";
 import { error } from "console";
 
 const log = Log.createInstance("Network IPC Service", true);
@@ -28,6 +29,7 @@ export const setNetworkConfiguration = async (args: any, callback: Function) => 
     log.info("Setting network configuration...");
     log.info("Received configuration:", JSON.stringify(args, null, 2));
     try {
+        assertLinuxFeature("Configuración de red cableada");
         const config: NetworkConfiguration = args;
         if (!config) {
             throw new Error("No network configuration provided");

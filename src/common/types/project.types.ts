@@ -22,6 +22,8 @@ export type projectType = {
     networkConfiguration: NetworkConfiguration;
     soundTheme: soundTheme;
     screenAutoOffTimeMs: number;
+    maxBrightness: number; // Brillo máximo de pantalla, porcentaje 1-100
+    timezone?: string; // Zona horaria del sistema asociada al proyecto
 }
 
 

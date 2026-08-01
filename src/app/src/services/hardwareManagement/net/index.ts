@@ -234,7 +234,7 @@ export abstract class NetworkManager extends EventEmitter implements NetworkMana
   /**
    * Verifica si la configuración de red actual es válida
    */
-  private hasValidNetworkConfig(): boolean {
+  protected hasValidNetworkConfig(): boolean {
     if (!this.networkConfig) return false;
     
     // Considerar válida si tiene una IP que no sea 0.0.0.0 y el estado sea conectado

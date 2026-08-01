@@ -11,7 +11,7 @@ const fullscreen = process.argv.includes('--fullscreen') || process.argv.include
 
 // Configurar handler para abrir URLs externas
 const setupIpcHandlers = async () => {
-    const { ipcMain, shell } = await import('electron');
+    const { ipcMain, shell } = require('electron');
     
     ipcMain.on('open-external', (event, url: string) => {
         log.info(`Opening external URL: ${url}`);

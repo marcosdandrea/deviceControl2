@@ -16,7 +16,7 @@ export const getVersion = async () => {
         if (isDev() || isHeadless) {
             packagePath = path.join(process.cwd(), 'package.json');
         } else {
-            const { app } = await import('electron');
+            const { app } = require('electron');
             packagePath = path.join(app.getAppPath(), 'package.json');
         }
         

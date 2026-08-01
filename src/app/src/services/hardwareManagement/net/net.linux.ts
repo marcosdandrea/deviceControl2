@@ -1,10 +1,12 @@
 import { NetworkConfiguration, NetworkStatus } from "@common/types/network";
+import { NetworkEvents } from "@common/events/network.events";
 import { NetworkManager } from "./index.js";
 import { exec, spawn, ChildProcess } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs/promises";
 import * as fsSync from "fs";
 import * as path from "path";
+import { hasCompletedFirstRun, markFirstRunCompleted } from "./networkFirstRun.state.js";
 
 const execAsync = promisify(exec);
 
@@ -30,6 +32,114 @@ export class NetworkManagerLinux extends NetworkManager {
 
   constructor(networkConfig?: NetworkConfiguration) {
     super(networkConfig);
+
+    this.ensureFirstRunNetworkConfigured().catch(error =>
+      this.log.error("First-run network initialization failed:", error)
+    );
+  }
+
+  /**
+   * En el primer arranque de la app, intenta obtener una IP por DHCP durante un tiempo
+   * acotado. Si no lo logra, aplica la IP estática de respaldo (fallback) definida por env.
+   * Solo se ejecuta una vez en la vida del dispositivo (estado persistido en userData).
+   */
+  private async ensureFirstRunNetworkConfigured(): Promise<void> {
+    if (await hasCompletedFirstRun()) return;
+
+    const dhcpTimeoutMs = Number(process.env.NETWORK_FIRST_RUN_DHCP_TIMEOUT_MS ?? 20000);
+    this.log.info(`First run detected: waiting up to ${dhcpTimeoutMs}ms for DHCP to yield a valid IP...`);
+
+    const gotDhcpIp = await this.waitForValidNetworkConfig(dhcpTimeoutMs);
+
+    if (!gotDhcpIp) {
+      this.log.warn("DHCP did not yield a valid IP on first run, applying fallback static IP");
+      await this.applyFallbackStaticConfiguration();
+    } else {
+      this.log.info("DHCP successfully assigned a valid IP on first run");
+    }
+
+    await markFirstRunCompleted();
+  }
+
+  /**
+   * Sondea el estado de red hasta obtener una configuración válida (IP real + conectado)
+   * o hasta agotar el timeout. Usado tanto en el primer arranque como al verificar
+   * un cambio de IP hecho desde el panel.
+   */
+  private async waitForValidNetworkConfig(timeoutMs: number, pollIntervalMs = 1000): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      await this.fetchNetworkStatus();
+      if (this.hasValidNetworkConfig()) return true;
+      await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+    }
+
+    return false;
+  }
+
+  /**
+   * Aplica la IP estática de respaldo (DEFAULT_STATIC_IP) directamente con nmcli/ip,
+   * evitando el path público setNetworkConfiguration()/validateNetworkConfig() ya que
+   * esta config de respaldo no tiene gateway ni DNS (conexión directa punto a punto).
+   */
+  private async applyFallbackStaticConfiguration(): Promise<void> {
+    if (!this.ethernetInterface) {
+      this.ethernetInterface = await this.detectEthernetInterface();
+    }
+    if (!this.ethernetInterface) {
+      this.log.error("Cannot apply fallback static IP: no Ethernet interface detected");
+      return;
+    }
+
+    const fallbackConfig: NetworkConfiguration = {
+      interfaceName: this.ethernetInterface,
+      status: NetworkStatus.UNKNOWN,
+      dhcpEnabled: false,
+      ipv4Address: process.env.DEFAULT_STATIC_IP || "192.168.10.1",
+      subnetMask: process.env.DEFAULT_STATIC_SUBNET_MASK || "255.255.255.0",
+      gateway: "",
+      dnsServers: []
+    };
+
+    try {
+      const hasNetworkManager = await execAsync("which nmcli").then(() => true).catch(() => false);
+
+      if (hasNetworkManager) {
+        await this.setNetworkConfigWithNetworkManager(this.ethernetInterface, fallbackConfig);
+      } else {
+        await this.setNetworkConfigWithIpCommands(this.ethernetInterface, fallbackConfig);
+      }
+
+      setTimeout(() => this.fetchNetworkStatus(), 2000);
+      this.log.info(`Fallback static IP ${fallbackConfig.ipv4Address} applied`);
+    } catch (error) {
+      this.log.error("Failed to apply fallback static IP:", error);
+    }
+  }
+
+  /**
+   * Verifica que un cambio de configuración aplicado desde el panel haya logrado
+   * conectividad real dentro de un timeout. Si no, revierte automáticamente a la IP
+   * de respaldo para que el equipo nunca quede inaccesible.
+   */
+  private async verifyConnectivityAndRevertIfNeeded(appliedConfig: NetworkConfiguration): Promise<void> {
+    const timeoutMs = Number(process.env.NETWORK_CHANGE_VERIFY_TIMEOUT_MS ?? 15000);
+    const isReachable = await this.waitForValidNetworkConfig(timeoutMs);
+
+    if (isReachable) return;
+
+    const fallbackIp = process.env.DEFAULT_STATIC_IP || "192.168.10.1";
+
+    // Evita revertir en bucle si la config que falló ya era la propia IP de respaldo
+    if (!appliedConfig.dhcpEnabled && appliedConfig.ipv4Address === fallbackIp) {
+      this.log.warn("Fallback IP itself failed to establish connectivity; not reverting further");
+      return;
+    }
+
+    this.log.warn(`New network configuration failed to connect within ${timeoutMs}ms, reverting to fallback static IP`);
+    await this.applyFallbackStaticConfiguration();
+    this.dispatchEvent(NetworkEvents.NETWORK_REVERTED_TO_FALLBACK, this.networkConfig);
   }
 
   /**
@@ -642,8 +752,14 @@ export class NetworkManagerLinux extends NetworkManager {
       
       // Actualizar estado después de configurar
       setTimeout(() => this.fetchNetworkStatus(), 2000);
-      
+
       this.log.info("Network configuration applied successfully");
+
+      // Verificar en segundo plano que la nueva configuración logre conectividad;
+      // si no, revertir automáticamente a la IP de respaldo (no bloquea esta respuesta)
+      this.verifyConnectivityAndRevertIfNeeded(config).catch(error =>
+        this.log.error("Error during post-change connectivity verification:", error)
+      );
     } catch (error) {
       this.log.error("Failed to set network configuration:", error);
       throw error;

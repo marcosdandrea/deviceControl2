@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button, Spin, Alert, Modal, Divider } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import useLocalization from "@hooks/useLocalization";
+import useProject from "@hooks/useProject";
 import style from "./style.module.css";
 
 const { confirm } = Modal;
@@ -13,9 +14,10 @@ const LocalizationConfiguration: React.FC = () => {
         loading, 
         error, 
         refreshTimezone, 
-        setTimezone 
+        setTimezone
     } = useLocalization();
-    
+    const { project, setProject } = useProject({ fetchProject: false });
+
     const [selectedTimezone, setSelectedTimezone] = useState<string>("");
     const [changingTimezone, setChangingTimezone] = useState(false);
 
@@ -53,6 +55,9 @@ const LocalizationConfiguration: React.FC = () => {
                 try {
                     const success = await setTimezone(selectedTimezone);
                     if (success) {
+                        if (project) {
+                            setProject({ ...project, timezone: selectedTimezone });
+                        }
                         Modal.success({
                             title: 'Zona horaria cambiada exitosamente',
                             content: 'La aplicación se reiniciará en unos segundos para aplicar los cambios.',

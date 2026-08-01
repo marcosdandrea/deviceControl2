@@ -163,18 +163,23 @@ const InterfaceContextProvider = ({children, netInterface}) => {
         return ipRegex.test(ip);
     };
 
-    // Función para validar IP con CIDR
+    // Función para validar IP con CIDR opcional. El backend reporta la IP obtenida
+    // por DHCP sin sufijo "/cidr" (ver net.linux.ts/net.mac.ts/net.win.ts), por lo que
+    // ese sufijo debe ser opcional acá; de lo contrario, al desactivar DHCP el valor
+    // heredado se marca como inválido aunque la IP en sí sea correcta.
     const isValidIpWithCidr = (ipWithCidr: string): boolean => {
         if (!ipWithCidr || ipWithCidr === "0.0.0.0/24") return false;
-        
+
         const parts = ipWithCidr.split("/");
-        if (parts.length !== 2) return false;
-        
+        if (parts.length > 2) return false;
+
         const ip = parts[0];
+        if (!isValidIpAddress(ip)) return false;
+
+        if (parts.length === 1) return true;
+
         const cidr = parseInt(parts[1]);
-        const isValidIp = isValidIpAddress(ip);
-        const isValidCidr = cidr >= 0 && cidr <= 32;
-        return isValidIp && isValidCidr;
+        return cidr >= 0 && cidr <= 32;
     };
 
     // Validaciones dinámicas que se recalculan cuando cambian los valores

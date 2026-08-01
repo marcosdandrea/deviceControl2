@@ -1,4 +1,6 @@
 import systemEvents from '@common/events/system.events';
+import updateEvents from '@common/events/update.events';
+import { UpdateStatus } from '@common/types/update.type';
 import { SocketIOContext } from '@components/SocketIOProvider';
 import { App, message } from 'antd';
 import { nanoid } from 'nanoid';
@@ -101,6 +103,20 @@ const SystemNotifications = () => {
         });
     }
 
+    const handleOnUpdateAvailable = (data: UpdateStatus) => {
+        if (!data?.updateAvailable) return;
+        const text = `Hay una actualización disponible: v${data.latestVersion}`;
+        if (!canShowMessage(text)) return;
+        updateLastMessage(text);
+        const messageId = nanoid()
+        message.open({
+            type: 'info',
+            content: MessageContent({text, messageId}),
+            key: messageId,
+            duration: 8,
+        });
+    }
+
 
     useEffect(() => {
         if (!socket) return;
@@ -109,12 +125,14 @@ const SystemNotifications = () => {
         socket.on(systemEvents.appLogError , handleOnErrorLog);
         socket.on(systemEvents.appLogWarning , handleOnWarningLog);
         socket.on(systemEvents.appLogSuccess , handleOnSuccessLog);
+        socket.on(updateEvents.updateAvailable , handleOnUpdateAvailable);
 
         return () => {
             socket.off(systemEvents.appLogInfo , handleOnInfoLog);
             socket.off(systemEvents.appLogError , handleOnErrorLog);
             socket.off(systemEvents.appLogWarning , handleOnWarningLog);
             socket.off(systemEvents.appLogSuccess , handleOnSuccessLog);
+            socket.off(updateEvents.updateAvailable , handleOnUpdateAvailable);
         }
     }, [socket]);
 

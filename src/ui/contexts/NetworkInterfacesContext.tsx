@@ -74,6 +74,12 @@ export const NetworkInterfacesProvider = ({ children }: { children: ReactNode })
         setNetworkConfiguration(networkConfiguration);
     }, []);
 
+    const handleNetworkRevertedToFallback = useCallback((networkConfiguration: NetworkConfiguration) => {
+        Logger.log("🌐 NetworkInterfacesContext - NETWORK_REVERTED_TO_FALLBACK event received:", networkConfiguration);
+        message.warning(`No se pudo establecer conexión con la nueva configuración. Se restauró la IP de respaldo (${networkConfiguration.ipv4Address}).`);
+        setNetworkConfiguration(networkConfiguration);
+    }, []);
+
     const updateNetworkConfiguration = useCallback(async (networkConfiguration: NetworkConfiguration): Promise<void> => {
         message.info(`Intentando aplicar cambios. Si se encontraba conectado mediante esta interfaz podría quedar desconectado.`);
 
@@ -152,6 +158,7 @@ export const NetworkInterfacesProvider = ({ children }: { children: ReactNode })
         socket.on(NetworkEvents.NETWORK_DISCONNECTED, handleIntefaceDisconnection);
         socket.on(NetworkEvents.NETWORK_CONNECTED, handleInterfaceConnection);
         socket.on(NetworkEvents.NETWORK_UPDATED, handleInterfacesChanged);
+        socket.on(NetworkEvents.NETWORK_REVERTED_TO_FALLBACK, handleNetworkRevertedToFallback);
 
         // Obtener el estado inicial de las interfaces de red
         getNetworkStatus()
@@ -161,6 +168,7 @@ export const NetworkInterfacesProvider = ({ children }: { children: ReactNode })
             socket.off(NetworkEvents.NETWORK_DISCONNECTED, handleIntefaceDisconnection);
             socket.off(NetworkEvents.NETWORK_CONNECTED, handleInterfaceConnection);
             socket.off(NetworkEvents.NETWORK_UPDATED, handleInterfacesChanged);
+            socket.off(NetworkEvents.NETWORK_REVERTED_TO_FALLBACK, handleNetworkRevertedToFallback);
         };
     }, [socket, handleInterfacesChanged]);
 

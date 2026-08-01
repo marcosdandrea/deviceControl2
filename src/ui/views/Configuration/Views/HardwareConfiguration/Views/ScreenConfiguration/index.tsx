@@ -3,6 +3,7 @@ import style from "./style.module.css";
 import { Form } from "antd";
 import { ScreenControllerContextProvider } from "@contexts/ScreenControllerContextProvider";
 import AutoTurnOff from "./components/ScreenAutoTurnOff";
+import MaxBrightness from "./components/MaxBrightness";
 import Text from "@components/Text";
 
 const ScreenConfiguration = () => {
@@ -25,6 +26,11 @@ const ScreenConfiguration = () => {
                         className={style.item}
                         label={LabelCap("Apagar Automáticamente")}>
                         <AutoTurnOff />
+                    </Form.Item>
+                    <Form.Item
+                        className={style.item}
+                        label={LabelCap("Brillo Máximo")}>
+                        <MaxBrightness />
                     </Form.Item>
                 </Form>
             </div>

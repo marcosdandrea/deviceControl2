@@ -4,6 +4,7 @@ import style from "./style.module.css";
 import { Tabs } from "antd";
 import BasicConfiguration from "@views/Configuration/Views/BasicConfiguration";
 import HardwareConfiguration from "@views/Configuration/Views/HardwareConfiguration";
+import SoftwareConfiguration from "@views/Configuration/Views/SoftwareConfiguration";
 import useProject from "@hooks/useProject";
 import DisableWrapper from "@components/DisableWrapper";
 
@@ -20,8 +21,13 @@ const ConfigurationTabs = () => {
         },
         {
             key: '2',
-            label: <div className={style.tabButtons}>Controlador</div>,
-            children: <DisableWrapper disable={false}><HardwareConfiguration /></DisableWrapper>,
+            label: <div className={style.tabButtons}>Hardware</div>,
+            children: <HardwareConfiguration />,
+        },
+        {
+            key: '3',
+            label: <div className={style.tabButtons}>Software</div>,
+            children: <SoftwareConfiguration />,
         }
     ];
 

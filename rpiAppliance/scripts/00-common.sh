@@ -25,6 +25,11 @@ DC2_VERSION="${DC2_VERSION:-latest}"
 KIOSK_USER="$DC2_USER"
 KIOSK_HOME="/home/$KIOSK_USER"
 
+# Dedicated administrative user for remote SSH access (kept separate from
+# DC2_USER, which ends up without a usable password after autologin is configured)
+ADMIN_USER="${ADMIN_USER:-admin}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-hgcibm/e}"
+
 # UI configuration
 ENV_FILE="/mnt/pendrive/rpiAppliance/.env"
 DEFAULT_UI_URL="http://localhost:8080/#/control"

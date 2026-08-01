@@ -43,6 +43,9 @@ export class WindowManager {
                 
                 this.windows.set(name, window);
 
+                // Evita que el usuario pueda hacer zoom con el gesto de dos dedos (pinch-zoom)
+                window.webContents.setVisualZoomLevelLimits(1, 1).catch(() => {});
+
                 window.on('closed', () => {
                     log.info(`Window ${name && id} closed`);
                     this.windows.delete(name);

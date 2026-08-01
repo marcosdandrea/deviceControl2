@@ -3,10 +3,10 @@ import style from "./style.module.css";
 import { Tabs } from "antd";
 import NetInterfaceConfiguration from "../../Views/InterfaceConfiguration";
 import WifiConfiguration from "../../Views/WifiConfiguration";
-import { MdLan, MdOutlineKey, MdOutlineScreenshotMonitor, MdOutlineWifi, MdAccessTime } from "react-icons/md";
+import { MdLan, MdOutlineScreenshotMonitor, MdOutlineWifi, MdAccessTime } from "react-icons/md";
 import { HiSpeakerWave } from "react-icons/hi2";
 import usePropietaryHardware from "@hooks/usePropietaryHardware";
-import LicenseManager from "../../Views/LicenseManager";
+import usePlatform from "@hooks/usePlatform";
 import ScreenConfiguration from "../../Views/ScreenConfiguration";
 import SoundConfiguration from "../../Views/SoundConfiguration";
 import LocalizationConfiguration from "../../Views/LocalizationConfiguration";
@@ -14,6 +14,7 @@ import LocalizationConfiguration from "../../Views/LocalizationConfiguration";
 const HardwareTabNavigation = () => {
 
     const { isSignedHardware } = usePropietaryHardware();
+    const { isLinux } = usePlatform();
 
     const tabs = [
 /*         {
@@ -36,30 +37,26 @@ const HardwareTabNavigation = () => {
         {
             key: '1',
             requirePropietaryHardware: true,
+            requireLinux: true,
             label: <div className={style.label}><MdLan />Redes</div>,
             children: <NetInterfaceConfiguration />,
         },
         {
             key: '2',
-            requirePropietaryHardware: false,
-            label: <div className={style.label}><MdOutlineKey />Licencia</div>,
-            children: <LicenseManager/>,
-        },
-        {
-            key: '3',
             requirePropietaryHardware: true,
             label: <div className={style.label}><MdOutlineScreenshotMonitor />Pantalla</div>,
             children: <ScreenConfiguration />,
         },
         {
-            key: '4',
+            key: '3',
             requirePropietaryHardware: false,
             label: <div className={style.label}><HiSpeakerWave />Sonido</div>,
             children: <SoundConfiguration />,
         },
         {
-            key: '5',
+            key: '4',
             requirePropietaryHardware: false,
+            requireLinux: true,
             label: <div className={style.label}><MdAccessTime />Zona Horaria</div>,
             children: <LocalizationConfiguration />,
         }
@@ -74,7 +71,10 @@ const HardwareTabNavigation = () => {
                 }}
                 className={style.tabs}
                 tabPosition="left"
-                items={tabs.filter(tab => !tab.requirePropietaryHardware || isSignedHardware)}
+                items={tabs.filter(tab =>
+                    (!tab.requirePropietaryHardware || isSignedHardware) &&
+                    (!tab.requireLinux || isLinux)
+                )}
                 popupClassName="popup-tabs"
             />
         </div>

@@ -34,6 +34,8 @@ export interface ProjectConstructor {
     networkConfiguration?: NetworkConfiguration;
     soundTheme: soundTheme;
     screenAutoOffTimeMs: number;
+    maxBrightness?: number;
+    timezone?: string;
 }
 
 export class Project extends EventEmitter implements ProjectInterface {
@@ -55,7 +57,9 @@ export class Project extends EventEmitter implements ProjectInterface {
     networkConfiguration: NetworkConfiguration;
     soundTheme: soundTheme;
     screenAutoOffTimeMs: number;
-    
+    maxBrightness: number;
+    timezone: string;
+
     private static readonly appVersion: string = App.getAppVersion()
     private unsavedChanges: boolean = false; // Flag to track unsaved changes
     private static Instance: Project | null = null; // Singleton instance
@@ -92,6 +96,8 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.logger.info("Project instance created");
         this.soundTheme = props.soundTheme;
         this.screenAutoOffTimeMs = props.screenAutoOffTimeMs;
+        this.maxBrightness = props.maxBrightness ?? 100;
+        this.timezone = props.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
         Project.Instance = this; // Set the singleton instance
     }
@@ -285,6 +291,33 @@ export class Project extends EventEmitter implements ProjectInterface {
         return this.networkConfiguration;
     }
 
+    setScreenAutoOffTimeMs(ms: number): void {
+        if (typeof ms !== "number" || ms < 0) {
+            throw new Error("screenAutoOffTimeMs must be a non-negative number");
+        }
+        this.screenAutoOffTimeMs = ms;
+        this.updatedAt = new Date();
+        this.logger.info(`Screen auto-off time set to ${ms}ms for project "${this.name}"`);
+    }
+
+    setMaxBrightness(percentage: number): void {
+        if (typeof percentage !== "number" || percentage < 1 || percentage > 100) {
+            throw new Error("maxBrightness must be a number between 1 and 100");
+        }
+        this.maxBrightness = percentage;
+        this.updatedAt = new Date();
+        this.logger.info(`Max brightness set to ${percentage}% for project "${this.name}"`);
+    }
+
+    setTimezone(timezone: string): void {
+        if (!timezone || typeof timezone !== "string") {
+            throw new Error("timezone must be a valid string");
+        }
+        this.timezone = timezone;
+        this.updatedAt = new Date();
+        this.logger.info(`Timezone set to "${timezone}" for project "${this.name}"`);
+    }
+
     toJson(): projectType {
         return {
             id: this.id,
@@ -302,7 +335,9 @@ export class Project extends EventEmitter implements ProjectInterface {
             triggers: this.getTrigger().map(trigger => trigger.toJson()),
             tasks: this.getTask().map(task => task.toJson()),
             soundTheme: this.soundTheme,
-            screenAutoOffTimeMs: this.screenAutoOffTimeMs
+            screenAutoOffTimeMs: this.screenAutoOffTimeMs,
+            maxBrightness: this.maxBrightness,
+            timezone: this.timezone
         };
     }
 }

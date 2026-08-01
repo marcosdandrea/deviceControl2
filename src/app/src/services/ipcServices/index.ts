@@ -1,6 +1,6 @@
 import projectServices from './projects.services';
 import { Log } from '@src/utils/log';
-import { checkTCPPortAvailability, checkUDPPortAvailability, getAppVersion, getServerIp, getServerPorts, getSystemTime } from './system.services';
+import { checkTCPPortAvailability, checkUDPPortAvailability, getAppVersion, getServerIp, getServerPorts, getSystemTime, getIsLinux, getLogRetentionDays, setLogRetentionDays, runLogsCleanupNow } from './system.services';
 import projectCommands from '@common/commands/project.commands';
 import { ServerManager } from '../server/serverManager';
 import projectsServices from './projects.services';
@@ -18,6 +18,8 @@ import networkServices from './network.services';
 import { ScreenCommands } from '@common/commands/screen.commands';
 import localizationCommands from '@common/commands/localization.commands';
 import * as localizationServices from './localization.services';
+import updateCommands from '@common/commands/update.commands';
+import updateServices from './update.services';
 
 
 
@@ -39,7 +41,11 @@ const init = (io: import('socket.io').Server) => {
         socket.on(systemCommands.checkUDPPortAvailability, checkUDPPortAvailability);
         socket.on(systemCommands.checkTCPPortAvailability, checkTCPPortAvailability);
         socket.on(systemCommands.getIsSignedHardware, hardwareServices.isSignedHarware);
-        
+        socket.on(systemCommands.getIsLinux, getIsLinux);
+        socket.on(systemCommands.getLogRetentionDays, getLogRetentionDays);
+        socket.on(systemCommands.setLogRetentionDays, setLogRetentionDays);
+        socket.on(systemCommands.runLogsCleanupNow, runLogsCleanupNow);
+
         //license
         socket.on(appCommands.setLicense, appServices.setLicense);
         socket.on(appCommands.checkLicense, appServices.checkLicense);
@@ -52,12 +58,20 @@ const init = (io: import('socket.io').Server) => {
         //screen
         socket.on(ScreenCommands.turnScreenOn, hardwareServices.turnScreenOn);
         socket.on(ScreenCommands.turnScreenOff, hardwareServices.turnScreenOff);
+        socket.on(ScreenCommands.setAutoOffTimeMs, hardwareServices.setScreenAutoOffTimeMs);
+        socket.on(ScreenCommands.setMaxBrightness, hardwareServices.setMaxBrightness);
 
         //localization
         socket.on(localizationCommands.getCurrentTimezone, localizationServices.getCurrentTimezone);
         socket.on(localizationCommands.setTimezone, localizationServices.setTimezone);
         socket.on(localizationCommands.listAvailableTimezones, localizationServices.listAvailableTimezones);
         socket.on(localizationCommands.validateTimezone, localizationServices.validateTimezone);
+
+        //update
+        socket.on(updateCommands.checkForUpdates, updateServices.checkForUpdates);
+        socket.on(updateCommands.getUpdateStatus, updateServices.getUpdateStatus);
+        socket.on(updateCommands.installUpdate, updateServices.installUpdate);
+        socket.on(updateCommands.rollbackUpdate, updateServices.rollbackUpdate);
 
         //app
         socket.on(appCommands.getTriggerTypes, appServices.getAvailableTriggers);

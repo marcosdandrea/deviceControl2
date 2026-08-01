@@ -33,7 +33,7 @@ const handleFatalError = async (error: Error) => {
   log.error('Device Control has encounter an error and it will exit:', error.message);
   if (!isHeadless) {
     try {
-      const { dialog } = await import('electron');
+      const { dialog } = require('electron');
       dialog.showErrorBox('Fatal Error', `Device Control has encounter an error and it will exit:\n\n${error.message}`);
       electronApp?.quit();
     } catch (dialogError) {
@@ -144,7 +144,13 @@ const coreProcesses = async () => {
     } catch (error) {
       log.error('Cannot load last project:', error);
     }
-    
+
+    const { startAutoCheck } = await import('@src/services/update/index.js');
+    startAutoCheck();
+
+    const { startDailyCleanup } = await import('@src/services/logCleanup/index.js');
+    startDailyCleanup();
+
   } catch (error) {
     // Re-lanzar el error para que sea manejado por el nivel superior
     throw error;
@@ -159,8 +165,10 @@ const coreProcesses = async () => {
       await coreProcesses();
     } else {
 
-      const { app } = await import('electron');
+      const { app } = require('electron');
       electronApp = app;
+      // Deshabilita el gesto de pinch-zoom (dos dedos) a nivel de Chromium
+      app.commandLine.appendSwitch('disable-pinch');
       app.whenReady().then(async () => {
         try {
           const { createSplashWindow } = await import('@src/domain/useCases/windowManager/index.js')
