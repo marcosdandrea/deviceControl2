@@ -14,10 +14,15 @@ const log = Log.createInstance("UpdateService", true);
 
 const GITHUB_OWNER = "marcosdandrea";
 const GITHUB_REPO = "deviceControl2";
-const GITHUB_API_HEADERS = {
+// El repo es privado: la API de releases y la descarga de assets requieren autenticación.
+// Token de solo lectura (fine-grained, "Contents: read" únicamente sobre este repo).
+const GITHUB_TOKEN = process.env.GITHUB_UPDATE_TOKEN;
+const githubHeaders = (accept: string): Record<string, string> => ({
     "User-Agent": "DeviceControl2-UpdateService",
-    "Accept": "application/vnd.github+json",
-};
+    "Accept": accept,
+    ...(GITHUB_TOKEN ? { "Authorization": `Bearer ${GITHUB_TOKEN}` } : {}),
+});
+const GITHUB_API_HEADERS = githubHeaders("application/vnd.github+json");
 
 const STATE_FILENAME = "update-state.json";
 const BACKUP_DIRNAME = ".update-backup";
@@ -26,7 +31,9 @@ const SWAPPED_ITEMS = ["main.js", "dist-react", "resources"];
 
 export const isHeadless = process.argv.includes("--headless") || process.argv.includes("--h") || process.env.HEADLESS === "true";
 
-type GithubAsset = { name: string; browser_download_url: string };
+// "url" es el endpoint de la API para el asset (requerido para descargar desde un repo privado,
+// vía Accept: application/octet-stream). "browser_download_url" solo funciona sin auth en repos públicos.
+type GithubAsset = { name: string; url: string; browser_download_url: string };
 type GithubRelease = {
     tag_name: string;
     name: string;
@@ -136,7 +143,10 @@ const selectBestRelease = (releases: GithubRelease[], currentVersion: string, in
 
 const findWebpackAssetUrl = (release: GithubRelease): string | null => {
     const asset = release.assets.find((a) => a.name === "webpack.zip");
-    return asset?.browser_download_url ?? null;
+    if (!asset) return null;
+    // Con token configurado, usamos el endpoint de la API (funciona en repos privados);
+    // sin token, caemos a la URL pública directa (solo válida si el repo es público).
+    return GITHUB_TOKEN ? asset.url : asset.browser_download_url;
 };
 
 export const checkForUpdates = async (includePrerelease = false): Promise<UpdateStatus> => {
@@ -292,7 +302,7 @@ export const installUpdate = async (): Promise<UpdateStatus> => {
         const latestVersion = best.tag_name.replace(/^v/i, "");
 
         broadcastToClients(updateEvents.updateInstallProgress, { stage: "downloading", latestVersion });
-        const response = await fetch(downloadUrl, { headers: GITHUB_API_HEADERS });
+        const response = await fetch(downloadUrl, { headers: githubHeaders("application/octet-stream") });
         if (!response.ok) {
             throw new Error(`No se pudo descargar webpack.zip (HTTP ${response.status})`);
         }
