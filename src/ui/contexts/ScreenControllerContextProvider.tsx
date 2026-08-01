@@ -28,40 +28,25 @@ export const ScreenControllerContextProvider = ({children, isPreview = false}: {
     const [autoOffTimeMs, setAutoOffTimeMs] = React.useState<number>(0);
     const [maxBrightness, setMaxBrightnessState] = React.useState<number>(100);
     const autoOffTimmerRef = React.useRef<NodeJS.Timeout | null>(null);
-    const [opacity, setOpacity] = React.useState<number>(1);
-    const [isTransitioning, setIsTransitioning] = React.useState<boolean>(false);
     const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
-    const transitionDuration = 500; // milisegundos
 
-    // Función para apagar la pantalla
+    // Función para apagar la pantalla. El fundido visual ya lo hace el backend (transición
+    // de brillo sobre el backlight real); acá solo se marca el estado y se manda el comando.
     const turnOffScreen = React.useCallback(() => {
-        // Limpiar el temporizador al apagar la pantalla manualmente
         if (autoOffTimmerRef.current) {
             clearTimeout(autoOffTimmerRef.current);
             autoOffTimmerRef.current = null
         }
 
-        // Comenzar transición de fade out
-        setIsTransitioning(true);
-        setOpacity(0);
-        // Marcar el estado como apagado de inmediato (no esperar la confirmación del backend)
-        // para que una interacción del usuario durante la transición dispare turnOnScreen()
-        // en lugar de simplemente reiniciar el temporizador con la pantalla ya oscura.
         setScreenStateSync(ScreenState.OFF);
 
-        // Esperar que termine la transición antes de apagar la pantalla
-        setTimeout(() => {
-            emit(ScreenCommands.turnScreenOff, null, (response: { success: boolean; error?: string }) => {
-                if (!response.success) {
-                    console.error('Error turning off screen:', response.error);
-                    // En caso de error, restaurar la opacidad y el estado
-                    setOpacity(1);
-                    setScreenStateSync(ScreenState.ON);
-                }
-                setIsTransitioning(false);
-            })
-        }, transitionDuration);
-    }, [emit, transitionDuration, setScreenStateSync]);
+        emit(ScreenCommands.turnScreenOff, null, (response: { success: boolean; error?: string }) => {
+            if (!response.success) {
+                console.error('Error turning off screen:', response.error);
+                setScreenStateSync(ScreenState.ON);
+            }
+        })
+    }, [emit, setScreenStateSync]);
 
     // Función para refrescar el temporizador de apagado automático
     const refreshScreenAutoOffTimmer = React.useCallback(() => {
@@ -101,15 +86,9 @@ export const ScreenControllerContextProvider = ({children, isPreview = false}: {
         }, timeMs);
     }, [turnOffScreen]);
 
-    // Función para encender la pantalla
+    // Función para encender la pantalla. El fundido visual lo hace el backend sobre el
+    // backlight real; acá solo se marca el estado y se manda el comando.
     const turnOnScreen = React.useCallback((shouldStartTimer: boolean = false) => {
-        // Si estamos en transición de apagado, cancelarla
-        if (isTransitioning) {
-            setIsTransitioning(false);
-        }
-
-        // Inmediatamente mostrar la pantalla con transición
-        setOpacity(1);
         setScreenStateSync(ScreenState.ON);
 
         emit(ScreenCommands.turnScreenOn, null, (response: { success: boolean; error?: string }) => {
@@ -122,11 +101,10 @@ export const ScreenControllerContextProvider = ({children, isPreview = false}: {
                 console.error('Error turning on screen:', response.error);
                 // El comando de hardware falló: revertir al estado apagado para no dejar
                 // la UI creyendo que la pantalla está encendida cuando no lo está.
-                setOpacity(0);
                 setScreenStateSync(ScreenState.OFF);
             }
         })
-    }, [emit, isTransitioning, refreshScreenAutoOffTimmer, setScreenStateSync]);
+    }, [emit, refreshScreenAutoOffTimmer, setScreenStateSync]);
 
     useEffect(() => {
         // Si no tenemos proyecto aún, no hacer nada
@@ -222,9 +200,9 @@ export const ScreenControllerContextProvider = ({children, isPreview = false}: {
     }, [project, setProject, emit]);
 
     // Al iniciar la app, forzar el encendido físico de la pantalla una sola vez.
-    // El estado inicial en memoria (ON, opacity 1) es solo una suposición del front-end;
-    // el hardware puede haber quedado apagado de una sesión anterior. Esto sincroniza
-    // ambos lados sin ambigüedad, sin esperar a que el usuario toque la pantalla.
+    // El estado inicial en memoria (ON) es solo una suposición del front-end; el hardware
+    // puede haber quedado apagado de una sesión anterior. Esto sincroniza ambos lados sin
+    // ambigüedad, sin esperar a que el usuario toque la pantalla.
     React.useEffect(() => {
         if (!isPreview) {
             turnOnScreen(false);
@@ -262,12 +240,7 @@ export const ScreenControllerContextProvider = ({children, isPreview = false}: {
             setMaxBrightness: updateMaxBrightness
         }}>
             <div
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    opacity: opacity,
-                    transition: `opacity ${transitionDuration}ms ease-in-out`
-                }}
+                style={{ width: '100%', height: '100%' }}
                 onClick={handleUserInteraction}
                 onTouchStart={handleUserInteraction}
                 onKeyDown={handleUserInteraction}

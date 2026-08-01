@@ -14,4 +14,5 @@ export default {
     groupAdded: "project:groupAdded",
     groupRemoved: "project:groupRemoved",
     networkConfigurationChanged: "project:networkConfigurationChanged",
+    screenSettingsChanged: "project:screenSettingsChanged",
 } as const;

@@ -298,6 +298,12 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.screenAutoOffTimeMs = ms;
         this.updatedAt = new Date();
         this.logger.info(`Screen auto-off time set to ${ms}ms for project "${this.name}"`);
+        // Notifica a todas las sesiones conectadas (p. ej. el propio kiosco en /control),
+        // que de otra forma seguirían operando con el valor viejo en memoria hasta recargar.
+        this.dispatchEvent(projectEvents.screenSettingsChanged, {
+            screenAutoOffTimeMs: this.screenAutoOffTimeMs,
+            maxBrightness: this.maxBrightness
+        });
     }
 
     setMaxBrightness(percentage: number): void {
@@ -307,6 +313,10 @@ export class Project extends EventEmitter implements ProjectInterface {
         this.maxBrightness = percentage;
         this.updatedAt = new Date();
         this.logger.info(`Max brightness set to ${percentage}% for project "${this.name}"`);
+        this.dispatchEvent(projectEvents.screenSettingsChanged, {
+            screenAutoOffTimeMs: this.screenAutoOffTimeMs,
+            maxBrightness: this.maxBrightness
+        });
     }
 
     setTimezone(timezone: string): void {
