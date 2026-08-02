@@ -1,30 +1,16 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { useContext } from "react";
-import { Input, Space } from "antd";
+import { Typography } from "antd";
 import { configContext } from "@views/Configuration/context";
+import SettingRow from "@components/SettingRow";
 
 const CreatedAt = React.memo(() => {
-    const { createdAt, labelFlex, inputFlex } = useContext(configContext);
-
-    const compactStyle = useMemo(() => ({ flex: 1 }), []);
-    const labelStyle = useMemo(() => ({ 
-        flex: labelFlex, 
-        color: "inherit" 
-    }), [labelFlex]);
-    const inputStyle = useMemo(() => ({ 
-        flex: inputFlex, 
-        pointerEvents: "none" 
-    }), [inputFlex]);
+    const { createdAt } = useContext(configContext);
 
     return (
-      <Space.Compact style={compactStyle}>
-        <Input value="Creado el" disabled style={labelStyle} />
-        <Input
-          style={inputStyle}
-          value={createdAt.toLocaleString()}
-        />
-      </Space.Compact>
-
+      <SettingRow label="Creado el">
+        <Typography.Text type="secondary">{createdAt.toLocaleString()}</Typography.Text>
+      </SettingRow>
     );
 });
 

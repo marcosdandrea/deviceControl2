@@ -18,8 +18,6 @@ interface ConfigContextProps {
     setDescription?: React.Dispatch<React.SetStateAction<string>>;
     updatedAt: Date;
     appVersion: string;
-    labelFlex?: number;
-    inputFlex?: number;
     showGroupsInControlView: boolean;
 }
 
@@ -70,8 +68,6 @@ export const ConfigContextProvider = ({ children }) => {
     }, [project]);
 
     const value = {
-        labelFlex: 1,
-        inputFlex: 2.5,
         project,
         setProject,
         password,

@@ -1,10 +1,10 @@
 import React, { useContext, useEffect } from "react";
-import style from "./style.module.css";
-import { Input, Space } from "antd";
+import { Input } from "antd";
 import { configContext } from "@views/Configuration/context";
+import SettingRow from "@components/SettingRow";
 
 const PasswordField = () => {
-  const { password, setPassword, passwordError, setPasswordError, inputFlex, labelFlex } =
+  const { password, setPassword, passwordError, setPasswordError } =
     useContext(configContext);
 
     const [firstPassword, setFirstPassword] = React.useState<string>(password);
@@ -36,32 +36,30 @@ const PasswordField = () => {
   }, [firstPassword, repeatPassword]);
 
   return (
-    <div className={style.passwordField}>
-      <Space.Compact style={{ flex: 1 }}>
-        <Input value="Contraseña" disabled style={{ flex: labelFlex, color: "inherit" }} />
+    <>
+      <SettingRow label="Contraseña" description={passwordError || undefined}>
         <Input.Password
           visibilityToggle={false}
           spellCheck="false"
           status={passwordError ? "error" : ""}
-          style={{ flex: inputFlex }}
+          style={{ width: 320 }}
           placeholder="Ingrese una contraseña numérica para bloquear el proyecto"
           value={firstPassword}
           onChange={handleOnFirstPasswordChange}
         />
-      </Space.Compact>
-      <Space.Compact style={{ flex: 1 }}>
-        <Input value="Repetir la contraseña" disabled style={{ flex: labelFlex, color: "inherit" }} />
+      </SettingRow>
+      <SettingRow label="Repetir la contraseña">
         <Input.Password
           visibilityToggle={false}
           spellCheck="false"
           status={passwordError ? "error" : ""}
-          style={{ flex: inputFlex }}
+          style={{ width: 320 }}
           placeholder="Repita la contraseña numérica para bloquear el proyecto"
           value={repeatPassword}
           onChange={handleOnSecondPasswordChange}
         />
-      </Space.Compact>
-    </div>
+      </SettingRow>
+    </>
   );
 };
 

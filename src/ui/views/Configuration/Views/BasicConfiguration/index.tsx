@@ -9,6 +9,7 @@ import PasswordField from "./components/Password";
 import style from "./style.module.css";
 import Footer from "./components/Footer";
 import ShowGroupsInControlView from "./components/ShowGroupsInControlView";
+import SettingsSection from "@components/SettingsSection";
 
 const BasicConfiguration = () => {
     const onSaved = () => {
@@ -18,14 +19,16 @@ const BasicConfiguration = () => {
     return (
         <div className={style.basicConfiguration}>
             <div className={style.body}>
-                <ProjectAppVersion />
-                <ProjectName />
-                <Description />
-                <CreatedBy />
-                <CreatedAt />
-                <LastModified />
-                <PasswordField />
-                <ShowGroupsInControlView />
+                <SettingsSection title="Información del Proyecto">
+                    <ProjectName />
+                    <Description />
+                    <ShowGroupsInControlView />
+                    <PasswordField />
+                    <CreatedBy />
+                    <CreatedAt />
+                    <LastModified />
+                    <ProjectAppVersion />
+                </SettingsSection>
             </div>
             <Footer onSaved={onSaved} />
         </div>

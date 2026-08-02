@@ -1,7 +1,8 @@
 import React, { useContext } from "react";
 import style from "./style.module.css";
-import { Button, Form } from "antd";
-import Text from "@components/Text";
+import { Button, Divider } from "antd";
+import SettingsSection from "@components/SettingsSection";
+import SettingRow from "@components/SettingRow";
 import EnableDhcp from "./components/LanEnableDhcp";
 import StaticIp from "./components/LanStaticIp";
 import Gateway from "./components/LanGateway";
@@ -17,9 +18,6 @@ import { NetworkConfiguration, NetworkStatus } from "@common/types/network";
 import { useNetworkInterfaces } from "@contexts/NetworkInterfacesContext";
 
 const InterfaceSettings = () => {
-  const LabelCap = (label: string) => (
-    <Text className={style.label}>{label}</Text>
-  );
   const {
     ipv4,
     useDhcp,
@@ -195,60 +193,46 @@ const InterfaceSettings = () => {
 
   return (
     <div className={style.interfaceSettings}>
-      <Text className={style.header}>Configuracion de Red Cableada</Text>
-      <div className={style.body}>
-        <Form className={style.form}>
-          <Form.Item className={style.item} label={LabelCap("Usar DHCP")}>
-            <EnableDhcp />
-          </Form.Item>
-          <Form.Item className={style.item} label={LabelCap("IP Estática")}>
-            <StaticIp />
-          </Form.Item>
-          <Form.Item
-            className={style.item}
-            label={LabelCap("Puerta de Enlace")}
-          >
-            <Gateway />
-          </Form.Item>
-          <Form.Item
-            className={style.item}
-            label={LabelCap("Máscara de Subred")}
-          >
-            <SubnetMask />
-          </Form.Item>
-          <Form.Item
-            className={style.item}
-            label={LabelCap("DNS Principal")}
-          >
-            <DefaultDns />
-          </Form.Item>
-          <Form.Item
-            className={style.item}
-            label={LabelCap("DNS Alternativo")}
-          >
-            <AlternateDns />
-          </Form.Item>
-        </Form>
-        <div className={style.footer}>
-          <div className={style.footerContent}>
-            {showCountdown && (
-              <div className={style.countdownSection}>
-                <RedirectCountdown
-                  newIp={redirectIp}
-                  initialSeconds={10}
-                  onCancel={handleCancelRedirect}
-                />
-              </div>
-            )}
-            <div className={style.buttonSection}>
-              <Button 
-                onClick={() => handleApplyChanges()} 
-                type="primary"
-                disabled={!isConfigurationValid || showCountdown}
-              >
-                Aplicar Cambios
-              </Button>
+      <SettingsSection title="Configuración de Red Cableada">
+        <SettingRow label="Usar DHCP">
+          <EnableDhcp />
+        </SettingRow>
+        <SettingRow label="IP Estática">
+          <StaticIp />
+        </SettingRow>
+        <SettingRow label="Puerta de Enlace">
+          <Gateway />
+        </SettingRow>
+        <SettingRow label="Máscara de Subred">
+          <SubnetMask />
+        </SettingRow>
+        <SettingRow label="DNS Principal">
+          <DefaultDns />
+        </SettingRow>
+        <SettingRow label="DNS Alternativo">
+          <AlternateDns />
+        </SettingRow>
+      </SettingsSection>
+      <div className={style.footer}>
+        <Divider className={style.divider} />
+        <div className={style.footerContent}>
+          {showCountdown && (
+            <div className={style.countdownSection}>
+              <RedirectCountdown
+                newIp={redirectIp}
+                initialSeconds={10}
+                onCancel={handleCancelRedirect}
+              />
             </div>
+          )}
+          <div className={style.buttonSection}>
+            <Button
+              onClick={() => handleApplyChanges()}
+              type="primary"
+              disabled={!isConfigurationValid || showCountdown}
+            >
+              Aplicar Cambios
+            </Button>
           </div>
         </div>
       </div>

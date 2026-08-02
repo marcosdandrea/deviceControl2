@@ -1,38 +1,23 @@
 import React from "react";
 import style from "./style.module.css";
-import { Form } from "antd";
 import { ScreenControllerContextProvider } from "@contexts/ScreenControllerContextProvider";
 import AutoTurnOff from "./components/ScreenAutoTurnOff";
 import MaxBrightness from "./components/MaxBrightness";
-import Text from "@components/Text";
+import SettingsSection from "@components/SettingsSection";
+import SettingRow from "@components/SettingRow";
 
 const ScreenConfiguration = () => {
-
-    const LabelCap = (label: string) => (
-        <span
-            className={style.labels}>
-            {label}
-        </span>
-    );
-
     return (
         <ScreenControllerContextProvider isPreview={true}>
             <div className={style.screenConfiguration}>
-                <Text className={style.header}>
-                    Configuración de Pantalla
-                </Text>
-                <Form>
-                    <Form.Item
-                        className={style.item}
-                        label={LabelCap("Apagar Automáticamente")}>
+                <SettingsSection title="Configuración de Pantalla">
+                    <SettingRow label="Apagar Automáticamente">
                         <AutoTurnOff />
-                    </Form.Item>
-                    <Form.Item
-                        className={style.item}
-                        label={LabelCap("Brillo Máximo")}>
+                    </SettingRow>
+                    <SettingRow label="Brillo Máximo">
                         <MaxBrightness />
-                    </Form.Item>
-                </Form>
+                    </SettingRow>
+                </SettingsSection>
             </div>
         </ScreenControllerContextProvider>);
 }

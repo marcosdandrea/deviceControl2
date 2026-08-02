@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import style from './style.module.css';
-import { Button, message } from 'antd';
+import { Button, Divider, message } from 'antd';
 import { configContext } from '@views/Configuration/context';
 
 const Footer = ({onSaved}) => {
@@ -37,7 +37,7 @@ const Footer = ({onSaved}) => {
     }
 
     return ( <div className={style.footer}>
-        <div className={style.divisionLine} />
+        <Divider className={style.divider} />
         <Button type="primary" onClick={handleOnSave}>Guardar</Button>
     </div>);
 }

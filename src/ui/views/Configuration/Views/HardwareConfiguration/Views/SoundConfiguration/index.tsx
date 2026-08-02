@@ -4,18 +4,18 @@ import { SoundContext } from "@contexts/SoundContextProvider";
 import { enabledSounds } from "@common/types/sound.type";
 import { HiSpeakerWave } from "react-icons/hi2";
 import { MdVolumeUp, MdVolumeOff } from "react-icons/md";
+import SettingsSection from "@components/SettingsSection";
+import SettingRow from "@components/SettingRow";
 import style from "./style.module.css";
 
 const SoundConfiguration = () => {
     const soundContext = useContext(SoundContext);
-    
+
     if (!soundContext) {
         return <div>Error: SoundContext not available</div>;
     }
-    
+
     const { soundTheme, updateSoundSetting } = soundContext;
-    
-    console.log('SoundConfiguration rendered with theme:', soundTheme);
 
     const soundItems = [
         {
@@ -58,40 +58,25 @@ const SoundConfiguration = () => {
 
     return (
         <div className={style.soundConfiguration}>
-            <div className={style.header}>
-                <HiSpeakerWave />
-                Configuración de Sonido
-            </div>
-            
-            <div className={style.description}>
-                Configure qué sonidos desea que reproduzca el sistema durante su funcionamiento
-            </div>
-
-            <div>
+            <SettingsSection
+                title="Configuración de Sonido"
+                icon={<HiSpeakerWave />}
+                description="Configure qué sonidos desea que reproduzca el sistema durante su funcionamiento"
+            >
                 {soundItems.map((item) => (
-                    <div key={item.key} className={style.soundCard}>
-                        <div className={style.cardContent}>
-                            <div className={style.soundInfo}>
-                                <div className={style.soundIcon}>
-                                    {item.icon}
-                                </div>
-                                <div className={style.soundDetails}>
-                                    <div className={style.soundLabel}>
-                                        {item.label}
-                                    </div>
-                                    <div className={style.soundDescription}>
-                                        {item.description}
-                                    </div>
-                                </div>
-                            </div>
-                            <Switch
-                                checked={soundTheme.enabledSounds[item.key]}
-                                onChange={(checked) => updateSoundSetting(item.key, checked)}
-                            />
-                        </div>
-                    </div>
+                    <SettingRow
+                        key={item.key}
+                        icon={item.icon}
+                        label={item.label}
+                        description={item.description}
+                    >
+                        <Switch
+                            checked={soundTheme.enabledSounds[item.key]}
+                            onChange={(checked) => updateSoundSetting(item.key, checked)}
+                        />
+                    </SettingRow>
                 ))}
-            </div>
+            </SettingsSection>
         </div>
     );
 };

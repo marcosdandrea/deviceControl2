@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useContext } from "react";
-import { Input, Space } from "antd";
+import { Input } from "antd";
 import { configContext } from "@views/Configuration/context";
+import SettingRow from "@components/SettingRow";
 import useDebounce from "@hooks/useDebounce";
 
 const Description = () => {
-  const { description, setDescription, labelFlex, inputFlex } = useContext(configContext);
+  const { description, setDescription } = useContext(configContext);
   const [localValue, setLocalValue] = useState(description || "");
   const debouncedValue = useDebounce(localValue, 500);
 
@@ -26,20 +27,15 @@ const Description = () => {
   };
 
   return (
-    <Space.Compact style={{ flex: 1 }}>
-      <Input
-        value="Descripción"
-        disabled
-        style={{ flex: labelFlex, color: "inherit" }}
-      />
+    <SettingRow label="Descripción" vertical>
       <Input.TextArea
-        style={{ flex: inputFlex, resize: "none" }}
+        style={{ resize: "none" }}
         value={localValue}
         onChange={handleOnDescriptionChange}
         rows={3}
         maxLength={200}
       />
-    </Space.Compact>
+    </SettingRow>
   );
 };
 

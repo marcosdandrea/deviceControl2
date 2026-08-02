@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useContext } from "react";
-import { Input, Space } from "antd";
+import { Input } from "antd";
 import { configContext } from "@views/Configuration/context";
+import SettingRow from "@components/SettingRow";
 import useDebounce from "@hooks/useDebounce";
 
 const ProjectName = () => {
-    const { projectName, setProjectName, labelFlex, inputFlex } = useContext(configContext);
+    const { projectName, setProjectName } = useContext(configContext);
     const [localValue, setLocalValue] = useState(projectName);
     const debouncedValue = useDebounce(localValue, 300);
 
@@ -26,16 +27,14 @@ const ProjectName = () => {
     };
 
     return (
-      <Space.Compact style={{ flex: 1 }}>
-        <Input value="Nombre del proyecto" disabled style={{ flex: labelFlex, color: "inherit" }} />
+      <SettingRow label="Nombre del proyecto">
         <Input
-          style={{ flex: inputFlex}}
+          style={{ width: 320 }}
           value={localValue}
           status={localValue.trim() === "" || localValue.length < 3 ? "error" : ""}
           onChange={handleOnChangeProjectName}
         />
-      </Space.Compact>
-
+      </SettingRow>
     );
 };
 

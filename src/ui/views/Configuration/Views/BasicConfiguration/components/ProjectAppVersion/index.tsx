@@ -1,31 +1,16 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { useContext } from "react";
-import { Input, Space } from "antd";
+import { Typography } from "antd";
 import { configContext } from "@views/Configuration/context";
+import SettingRow from "@components/SettingRow";
 
 const ProjectAppVersion = React.memo(() => {
-    const { appVersion, labelFlex, inputFlex } = useContext(configContext);
-
-    const compactStyle = useMemo(() => ({ flex: 1 }), []);
-    const labelStyle = useMemo(() => ({ 
-        flex: labelFlex, 
-        color: "inherit" 
-    }), [labelFlex]);
-    const inputStyle = useMemo(() => ({ 
-        flex: inputFlex, 
-        pointerEvents: "none" 
-    }), [inputFlex]);
+    const { appVersion } = useContext(configContext);
 
     return (
-      <Space.Compact style={compactStyle}>
-        <Input value="Creado con la versión" disabled style={labelStyle} />
-        <Input
-          style={inputStyle}
-          value={appVersion}
-          
-        />
-      </Space.Compact>
-
+      <SettingRow label="Creado con la versión">
+        <Typography.Text type="secondary">{appVersion}</Typography.Text>
+      </SettingRow>
     );
 });
 

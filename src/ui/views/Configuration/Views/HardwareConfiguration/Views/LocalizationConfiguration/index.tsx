@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { Button, Spin, Alert, Modal, Divider } from "antd";
+import { Button, Spin, Alert, Modal, Divider, Select } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import useLocalization from "@hooks/useLocalization";
 import useProject from "@hooks/useProject";
+import SettingsSection from "@components/SettingsSection";
+import SettingRow from "@components/SettingRow";
 import style from "./style.module.css";
 
 const { confirm } = Modal;
@@ -78,19 +80,25 @@ const LocalizationConfiguration: React.FC = () => {
         });
     };
 
-    const groupedTimezones = React.useMemo(() => {
-        if (!availableTimezones.length) return {};
-        
-        return availableTimezones.reduce((acc, timezone) => {
-            const parts = timezone.split('/');
-            const region = parts[0] || 'Other';
-            
-            if (!acc[region]) {
-                acc[region] = [];
-            }
+    const timezoneOptions = React.useMemo(() => {
+        if (!availableTimezones.length) return [];
+
+        const grouped = availableTimezones.reduce((acc, timezone) => {
+            const region = timezone.split('/')[0] || 'Other';
+            if (!acc[region]) acc[region] = [];
             acc[region].push(timezone);
             return acc;
         }, {} as Record<string, string[]>);
+
+        return Object.keys(grouped)
+            .sort()
+            .map(region => ({
+                label: region,
+                title: region,
+                options: grouped[region]
+                    .sort()
+                    .map(timezone => ({ label: timezone, value: timezone })),
+            }));
     }, [availableTimezones]);
 
     // Establecer la zona horaria actual como seleccionada cuando se carga
@@ -113,8 +121,6 @@ const LocalizationConfiguration: React.FC = () => {
 
     return (
         <div className={style.localizationConfiguration}>
-            <h2 className={style.title}>Configuración de Zona Horaria</h2>
-            
             {error && (
                 <Alert
                     type="error"
@@ -125,39 +131,21 @@ const LocalizationConfiguration: React.FC = () => {
                 />
             )}
 
-            <div className={style.simpleSelector}>
-                <div className={style.selectRow}>
-                    <label className={style.label} htmlFor="timezone-select">
-                        Zona Horaria:
-                    </label>
-                    <select
-                        id="timezone-select"
-                        className={style.nativeSelect}
-                        value={selectedTimezone || currentTimezone?.timezone || ""}
-                        onChange={(e) => handleTimezoneChange(e.target.value)}
+            <SettingsSection title="Configuración de Zona Horaria">
+                <SettingRow label="Zona horaria" vertical>
+                    <Select
+                        showSearch
+                        style={{ width: "100%" }}
+                        placeholder="Seleccione una zona horaria..."
+                        value={selectedTimezone || currentTimezone?.timezone || undefined}
+                        onChange={handleTimezoneChange}
                         disabled={changingTimezone || loading}
-                    >
-                        <option value="">Seleccione una zona horaria...</option>
-                        {Object.keys(groupedTimezones)
-                            .sort()
-                            .map(region => (
-                                <optgroup key={region} label={region}>
-                                    {groupedTimezones[region]
-                                        .sort()
-                                        .map(timezone => (
-                                            <option key={timezone} value={timezone}>
-                                                {timezone}
-                                            </option>
-                                        ))
-                                    }
-                                </optgroup>
-                            ))
-                        }
-                    </select>
-                </div>
-                
+                        options={timezoneOptions}
+                        optionFilterProp="label"
+                    />
+                </SettingRow>
                 <div className={style.buttonContainer}>
-                    <Button 
+                    <Button
                         type="primary"
                         onClick={handleApplyTimezone}
                         disabled={!selectedTimezone || selectedTimezone === currentTimezone?.timezone}
@@ -166,7 +154,7 @@ const LocalizationConfiguration: React.FC = () => {
                         {changingTimezone ? "Aplicando..." : "Aplicar"}
                     </Button>
                 </div>
-            </div>
+            </SettingsSection>
         </div>
     );
 };
