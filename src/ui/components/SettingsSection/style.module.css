@@ -6,16 +6,28 @@
     overflow: visible;
 }
 
+.section :global(.ant-card-head) {
+    padding: 0 20px;
+    min-height: 44px;
+    border-bottom: none;
+}
+
+.section :global(.ant-card-body) {
+    padding: 0 20px 16px;
+}
+
 .title {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-weight: 600;
+    font-size: 14px;
 }
 
 .description {
     display: block;
-    margin-bottom: 1rem;
+    font-size: 11.5px;
+    margin: 3px 0 12px;
 }
 
 .rows {

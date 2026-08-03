@@ -1,0 +1,14 @@
+.wrapper {
+    max-width: 560px;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+}
+
+.banner {
+    margin-top: 14px;
+}

@@ -1,0 +1,10 @@
+.configurationView {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #1c1c1e;
+    row-gap: 0.5rem;
+}

@@ -1,0 +1,24 @@
+.logRetentionConfiguration {
+    height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.footer {
+    flex-shrink: 0;
+    padding: 0 16px;
+}
+
+.divider {
+    margin: 12px 0;
+}
+
+.footerContent {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.cleanupResult {
+    margin-top: 16px;
+}

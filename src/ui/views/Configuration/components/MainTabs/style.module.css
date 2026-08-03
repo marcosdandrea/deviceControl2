@@ -1,0 +1,27 @@
+.bar {
+    display: flex;
+    background: #1c1c1e;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.tab {
+    padding: 13px 20px;
+    font-size: 12.5px;
+    color: #8b8b90;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.tab.active {
+    font-weight: 600;
+    color: #e8e8ea;
+    border-bottom-color: #ff9307;
+}
+
+.tab.disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}

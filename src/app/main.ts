@@ -128,6 +128,10 @@ const coreProcesses = async () => {
 
     log.info(`General purpose server started on port ${generalServer.port}.`);
 
+    log.info('Verifying screen backlight pin mode');
+    const { ScreenController } = await import('@src/services/hardwareManagement/screen/index.js');
+    await ScreenController.getInstance().ensureBacklightPinMode();
+
     log.info('Initializing Network Manager Service')
     const { NetworkManager } = await import('@src/services/hardwareManagement/net/index.js');
     const nm = await NetworkManager.getInstance();

@@ -1,0 +1,38 @@
+.configurationTabs {
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.5rem;
+    overflow: hidden;
+    padding-right: 10px;
+    height: 100%;
+}
+
+.tabButtons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+}
+
+.tabs :global(.ant-tabs-tab) {
+    margin: 0 !important;
+    padding: 13px 20px;
+    font-size: 12.5px;
+}
+
+.tabs :global(.ant-tabs-tab-active) :global(.ant-tabs-tab-btn) {
+    font-weight: 600;
+}
+
+.tabs :global(.ant-tabs-ink-bar) {
+    height: 2px;
+}
+
+:global(.ant-tabs),
+:global(.ant-tabs-content-holder),
+:global(.ant-tabs-tabpane),
+:global(.ant-tabs-tabpane-active),
+:global(.ant-tabs-content),
+:global(.ant-tabs-content-top) {
+    height: 100% !important;
+}

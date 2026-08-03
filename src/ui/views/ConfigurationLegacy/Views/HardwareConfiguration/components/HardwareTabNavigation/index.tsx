@@ -1,0 +1,82 @@
+import React from "react";
+import style from "./style.module.css";
+import { Tabs } from "antd";
+import NetInterfaceConfiguration from "../../Views/InterfaceConfiguration";
+import WifiConfiguration from "../../Views/WifiConfiguration";
+import usePropietaryHardware from "@hooks/usePropietaryHardware";
+import usePlatform from "@hooks/usePlatform";
+import ScreenConfiguration from "../../Views/ScreenConfiguration";
+import SoundConfiguration from "../../Views/SoundConfiguration";
+import LocalizationConfiguration from "../../Views/LocalizationConfiguration";
+
+const HardwareTabNavigation = () => {
+
+    const { isSignedHardware } = usePropietaryHardware();
+    const { isLinux } = usePlatform();
+
+    const tabs = [
+/*         {
+            key: '1',
+            label: <div className={style.label}><MdOutlineScreenshotMonitor /> Pantalla</div>,
+            children: <ScreenConfiguration />,
+        },
+        {
+            key: '2',
+            label: <div className={style.label}><ImPower />Energía</div>,
+            children: <PowerConfiguration />,
+        }, 
+        {
+            key: '1',
+            requirePropietaryHardware: true,
+            label: <div className={style.label}><MdOutlineWifi />WiFi</div>,
+            children: <WifiConfiguration />,
+        },
+        */
+        {
+            key: '1',
+            requirePropietaryHardware: true,
+            requireLinux: true,
+            label: <div className={style.label}><span className={style.dot} />Redes</div>,
+            children: <NetInterfaceConfiguration />,
+        },
+        {
+            key: '2',
+            requirePropietaryHardware: true,
+            label: <div className={style.label}><span className={style.dot} />Pantalla</div>,
+            children: <ScreenConfiguration />,
+        },
+        {
+            key: '3',
+            requirePropietaryHardware: false,
+            label: <div className={style.label}><span className={style.dot} />Sonido</div>,
+            children: <SoundConfiguration />,
+        },
+        {
+            key: '4',
+            requirePropietaryHardware: false,
+            requireLinux: true,
+            label: <div className={style.label}><span className={style.dot} />Zona Horaria</div>,
+            children: <LocalizationConfiguration />,
+        }
+    ];
+
+    return (
+        <div className={style.hardwareTabNavigation}>
+            <Tabs
+                style={{
+                    width: "100%",
+                    height: "100%"
+                }}
+                className={style.tabs}
+                tabPosition="left"
+                items={tabs.filter(tab =>
+                    (!tab.requirePropietaryHardware || isSignedHardware) &&
+                    (!tab.requireLinux || isLinux)
+                )}
+                popupClassName="popup-tabs"
+            />
+        </div>
+    );
+}
+
+export default HardwareTabNavigation;

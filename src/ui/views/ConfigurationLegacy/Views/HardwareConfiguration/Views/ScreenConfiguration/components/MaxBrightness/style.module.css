@@ -1,0 +1,16 @@
+.wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 260px;
+}
+
+.slider {
+    flex: 1;
+}
+
+.value {
+    min-width: 3rem;
+    text-align: right;
+    color: var(--text);
+}

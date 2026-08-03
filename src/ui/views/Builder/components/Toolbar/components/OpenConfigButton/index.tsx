@@ -34,7 +34,9 @@ const OpenConfigButton = () => {
       </Tooltip>
       {open && (
         <FloatingWindow
-          title="Configuración del Proyecto"
+          title="Configuración"
+          width={920}
+          height={680}
           onClose={() => setOpen(false)}
         >
           <Configuration onSaved={() => setOpen(false)} />

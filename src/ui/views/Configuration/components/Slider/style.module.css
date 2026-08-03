@@ -1,0 +1,29 @@
+.wrapper {
+    position: relative;
+}
+
+.track {
+    position: relative;
+    height: 6px;
+    border-radius: 3px;
+    background: #141416;
+}
+
+.fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    background: #ff9307;
+    border-radius: 3px;
+}
+
+.input {
+    width: 100%;
+    margin-top: -10px;
+    opacity: 0;
+    height: 24px;
+    cursor: pointer;
+    position: relative;
+    display: block;
+}

@@ -1,0 +1,30 @@
+.group {
+    display: flex;
+    gap: 4px;
+}
+
+.fragment {
+    width: 38px;
+    background: #141416;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 5px;
+    color: #e8e8ea;
+    font-size: 12px;
+    text-align: center;
+    padding: 5px 0;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.fragment:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.fragment.soft {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.fragment.invalid {
+    border-color: #dc3545;
+}

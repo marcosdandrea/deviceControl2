@@ -1,0 +1,24 @@
+.input {
+    width: 100%;
+    box-sizing: border-box;
+    background: #141416;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    color: #e8e8ea;
+    font-size: 12.5px;
+    padding: 7px 10px;
+    font-family: inherit;
+}
+
+.input::placeholder {
+    color: #8b8b90;
+}
+
+.input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.input.invalid {
+    border-color: #dc3545;
+}

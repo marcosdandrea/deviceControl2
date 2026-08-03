@@ -1,0 +1,62 @@
+.hardwareTabNavigation {
+    padding: 0px;
+    height: 100%;
+    display: flex;
+}
+
+.hardwareTabNavigation :global(.ant-tabs-left) {
+    width: 100%;
+}
+
+.hardwareTabNavigation :global(.ant-tabs-nav) {
+    width: 150px;
+    flex: 0 0 150px;
+}
+
+.hardwareTabNavigation :global(.ant-tabs-ink-bar) {
+    display: none;
+}
+
+.hardwareTabNavigation :global(.ant-tabs-tab) {
+    position: relative;
+    padding: 11px 18px;
+    font-size: 12.5px;
+    margin: 0 !important;
+}
+
+.hardwareTabNavigation :global(.ant-tabs-tab)::after {
+    content: "";
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.hardwareTabNavigation :global(.ant-tabs-tab):last-child::after {
+    display: none;
+}
+
+.hardwareTabNavigation :global(.ant-tabs-tab-active) :global(.ant-tabs-tab-btn) {
+    font-weight: 600;
+}
+
+.label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #ff9307;
+    flex-shrink: 0;
+    visibility: hidden;
+}
+
+.hardwareTabNavigation :global(.ant-tabs-tab-active) .dot {
+    visibility: visible;
+}

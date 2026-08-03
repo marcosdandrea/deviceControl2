@@ -30,30 +30,48 @@ export default function FloatingWindow({
   children,
 }: Props) {
   const [position, setPosition] = useState<Position | null>(null);
+  // La pantalla real puede ser más chica que el tamaño solicitado (ej. paneles táctiles
+  // de 800px de ancho). Sin este clamp, el panel se renderiza a su ancho/alto pedido y el
+  // contenido de la derecha (como el slider de brillo) queda fuera del área visible/clicable.
+  const [size, setSize] = useState<{ width: number; height: number }>({ width, height });
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
 
   const clampPosition = useCallback(
-    (x: number, y: number) => {
-      const maxX = Math.max(window.innerWidth - width, 0);
-      const maxY = Math.max(window.innerHeight - height, 0);
+    (x: number, y: number, currentSize: { width: number; height: number }) => {
+      const maxX = Math.max(window.innerWidth - currentSize.width, 0);
+      const maxY = Math.max(window.innerHeight - currentSize.height, 0);
       return { x: Math.min(Math.max(x, 0), maxX), y: Math.min(Math.max(y, 0), maxY) };
     },
-    [width, height]
+    []
   );
 
   useEffect(() => {
-    setPosition(clampPosition((window.innerWidth - width) / 2, (window.innerHeight - height) / 2));
+    const computeSize = () => ({
+      width: Math.min(width, window.innerWidth),
+      height: Math.min(height, window.innerHeight),
+    });
+    const nextSize = computeSize();
+    setSize(nextSize);
+    setPosition(clampPosition((window.innerWidth - nextSize.width) / 2, (window.innerHeight - nextSize.height) / 2, nextSize));
+
+    const handleResize = () => {
+      const resized = computeSize();
+      setSize(resized);
+      setPosition((current) => clampPosition(current?.x ?? 0, current?.y ?? 0, resized));
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [width, height]);
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (!dragRef.current) return;
       const dx = e.clientX - dragRef.current.startX;
       const dy = e.clientY - dragRef.current.startY;
-      setPosition(clampPosition(dragRef.current.originX + dx, dragRef.current.originY + dy));
+      setPosition(clampPosition(dragRef.current.originX + dx, dragRef.current.originY + dy, size));
     },
-    [clampPosition]
+    [clampPosition, size]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -96,7 +114,7 @@ export default function FloatingWindow({
   return createPortal(
     <div
       className={style.panel}
-      style={{ left: position.x, top: position.y, width, height }}
+      style={{ left: position.x, top: position.y, width: size.width, height: size.height }}
     >
       <div className={style.titleBar} onMouseDown={handleTitleBarMouseDown}>
         <span className={style.title}>{title}</span>
